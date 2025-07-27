@@ -11,7 +11,6 @@ const OnboardingWrapper = ({ children }: { children: JSX.Element }) => {
   const router = useRouter();
   const { currentStep, totalSteps } = useCurrentStep();
 
-  console.log(currentStep);
   return (
     <SafeAreaView className="flex-1 p-3 gap-y-3">
       {/* progress bar */}
