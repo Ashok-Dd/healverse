@@ -1,27 +1,49 @@
-import Button from "@/components/Button";
-import { useRouter } from "expo-router";
-import React from "react";
-import { Text, View } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import React, { useState } from 'react';
+import {SafeAreaView, ScrollView, StatusBar} from 'react-native';
+import Header from '@/components/Header';
+import WelcomeContent from "@/components/WelcomeContent";
+import ActionButtons from "@/components/ActionButtons";
+import {router} from "expo-router";
 
-const welcome = () => {
-  const router = useRouter();
+const Welcome : React.FC = () => {
 
-  return (
-    <SafeAreaView className="flex-1">
-      <View className="flex-1 items-center justify-center">
-        <Text className="text-black text-5xl font-bold ">
-          Heal<Text className="text-green-500">Verse</Text>
-        </Text>
-      </View>
-      <View className="w-[90%] mx-auto">
-        <Button
-          icon="arrow-forward"
-          onPress={() => router.push("/(auth)/(onboarding)/step1")}
-        />
-      </View>
-    </SafeAreaView>
-  );
-};
+    const [loading, setLoading] = useState(false);
+    const handleSyncHealth = () => {
 
-export default welcome;
+    }
+
+    const handleContinue = () => {
+        setLoading(true);
+        // Navigate to onboarding section
+        setTimeout(() => {
+            router.push('/(auth)/(onboarding)/step1');
+            setLoading(false);
+        }, 500); // Small delay for UX
+    }
+
+    const handleSignIn = () => {
+
+    }
+
+    return (
+        <>
+            <StatusBar barStyle="dark-content" backgroundColor="#ffffff" />
+            <SafeAreaView className="flex-1 bg-white">
+                <ScrollView
+
+                >
+                    <Header progress={1} showProgress={true} />
+                    <WelcomeContent />
+                    <ActionButtons
+                        onSyncHealth={handleSyncHealth}
+                        onSignIn={handleSignIn}
+                        onContinue={handleContinue}
+                        loading={loading}
+                    />
+                </ScrollView>
+            </SafeAreaView>
+        </>
+    )
+}
+
+export default Welcome;

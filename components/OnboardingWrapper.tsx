@@ -11,20 +11,19 @@ const OnboardingWrapper = ({ children }: { children: JSX.Element }) => {
   const router = useRouter();
   const { currentStep, totalSteps } = useCurrentStep();
 
-  console.log(currentStep);
   return (
-    <SafeAreaView className="flex-1 p-3 gap-y-3">
+    <SafeAreaView className="flex-1 p-3 gap-y-3 bg-white">
       {/* progress bar */}
       <StepProgressBar currentStep={currentStep} totalSteps={totalSteps} />
 
       {/* ttile */}
       <View className=" items-center justify-center">
         <Text className=" text-3xl">
-          Heal<Text className="text-green-500">Verse</Text>
+          Heal<Text className="text-primary-500">Verse</Text>
         </Text>
       </View>
 
-      {/* iamge */}
+      {/* image */}
       <View className="w-full flex items-center justify-center my-3">
         <Image
           source={
@@ -32,7 +31,7 @@ const OnboardingWrapper = ({ children }: { children: JSX.Element }) => {
               ("onboarding" + currentStep) as string
             ] as ImageSourcePropType
           }
-          className="h-28 w-28 object-contain"
+          className="h-32 w-28 object-contain"
         />
       </View>
 
@@ -41,12 +40,15 @@ const OnboardingWrapper = ({ children }: { children: JSX.Element }) => {
 
       {/* buttton */}
       <Button
+          title={currentStep === totalSteps ? "Register" : "Continue"}
         onPress={() => {
           currentStep < totalSteps
             ? router.push(`/(auth)/(onboarding)/step${currentStep + 1}` as any)
             : router.push("/(auth)/register" as any);
         }}
-        className="!max-w-[75%] mx-auto mb-10"
+
+          className="mb-10 bg-primary-500 rounded-lg w-full shadow-medium"
+          textClassName="text-white font-jakarta-semi-bold text-lg"
       />
     </SafeAreaView>
   );

@@ -1,67 +1,55 @@
-import { Ionicons } from "@expo/vector-icons";
-import React from "react";
-import { Text, TouchableOpacity, View } from "react-native";
+import React from 'react';
+import { TouchableOpacity, Text, ActivityIndicator, View } from 'react-native';
+import { ButtonProps } from '@/types/type';
 
-interface ContinueButtonProps {
-  onPress?: () => void;
-  title?: string;
-  disabled?: boolean;
-  loading?: boolean;
-  icon?: keyof typeof Ionicons.glyphMap;
-  className?: string;
-}
+const Button: React.FC<ButtonProps> = ({
+                                           title,
+                                           onPress,
+                                           variant = 'primary',
+                                           disabled = false,
+                                           loading = false,
+                                           className = '',
+                                           textClassName = '',
+                                           icon,
+                                       }) => {
+    const getButtonStyles = () => {
+        const baseStyles = 'flex-row items-center justify-center rounded-full px-2 py-3';
 
-export default function Button({
-  onPress,
-  title = "Continue",
-  disabled = false,
-  loading = false,
-  icon = "arrow-forward",
-  className = "",
-}: ContinueButtonProps) {
-  const baseStyle = `
-    flex w-full justify-center items-center 
-    px-6 py-4 rounded-xl min-h-[56px] 
-    flex-row
-  `;
+        if (variant === 'primary') {
+            return `${baseStyles} bg-primary-600 ${disabled ? 'opacity-50' : ''} ${className}`;
+        }
 
-  const bgStyle = disabled
-    ? "bg-gray-300  shadow-none"
-    : loading
-    ? "bg-lime-500 "
-    : "bg-green-500";
+        return `${baseStyles} border border-gray-300 ${disabled ? 'opacity-50' : ''} ${className}`;
+    };
 
-  const textStyle = disabled ? "text-gray-500" : "text-white";
+    const getTextStyles = () => {
+        if (variant === 'primary') {
+            return `text-white text-base font-semibold ${textClassName}`;
+        }
 
-  return (
-    <TouchableOpacity
-      onPress={onPress}
-      disabled={disabled || loading}
-      activeOpacity={0.8}
-      className={`${baseStyle} ${bgStyle} ${className}`}
-    >
-      <View className="flex-row items-center justify-center">
-        <Text className={`text-base font-semibold ${textStyle}`}>
-          {loading ? "Please wait..." : title}
-        </Text>
+        return `text-base font-semibold ${textClassName}`;
+    };
 
-        {!loading && (
-          <Ionicons
-            name={icon}
-            size={20}
-            color={disabled ? "#A0A0A0" : "white"}
-            style={{ marginLeft: 8 }}
-          />
-        )}
+    return (
+        <TouchableOpacity
+            className={getButtonStyles()}
+            onPress={onPress}
+            disabled={disabled || loading}
+            activeOpacity={0.8}
+        >
+            {loading ? (
+                <ActivityIndicator
+                    size="small"
+                    color={variant === 'primary' ? '#ffffff' : '#374151'}
+                />
+            ) : (
+                <>
+                    {icon && <View className="mr-2">{icon}</View>}
+                    <Text className={getTextStyles()}>{title}</Text>
+                </>
+            )}
+        </TouchableOpacity>
+    );
+};
 
-        {loading && (
-          <View className="flex-row ml-2">
-            <Text className="text-white opacity-60 text-lg mx-0.5">•</Text>
-            <Text className="text-white opacity-60 text-lg mx-0.5">•</Text>
-            <Text className="text-white opacity-60 text-lg mx-0.5">•</Text>
-          </View>
-        )}
-      </View>
-    </TouchableOpacity>
-  );
-}
+export default Button;

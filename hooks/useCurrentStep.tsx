@@ -7,7 +7,7 @@ const useCurrentStep = () => {
 
   const currentStep = match ? parseInt(match[1]) : 1;
 
-  const totalSteps = 3;
+  const totalSteps = 7;
 
   return {
     currentStep,

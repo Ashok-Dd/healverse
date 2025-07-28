@@ -1,10 +1,10 @@
 import { SplashScreen, Stack } from "expo-router";
-import { useFonts } from "expo-font";
+import { useFonts} from "expo-font";
 import "./globals.css";
 import { useEffect } from "react";
 
 export default function RootLayout() {
-  const [loaded] = useFonts({
+  const [loaded, error] = useFonts({
     "Jakarta-Bold": require("../assets/fonts/PlusJakartaSans-Bold.ttf"),
     "Jakarta-ExtraBold": require("../assets/fonts/PlusJakartaSans-ExtraBold.ttf"),
     "Jakarta-ExtraLight": require("../assets/fonts/PlusJakartaSans-ExtraLight.ttf"),
@@ -15,21 +15,15 @@ export default function RootLayout() {
   });
 
   useEffect(() => {
-    if (loaded) {
-      SplashScreen.hideAsync();
-    }
-  }, [loaded]);
+    if(error) throw error;
+    if(loaded) SplashScreen.hideAsync();
+  }, [loaded, error]);
 
-  if (!loaded) {
+  if (!loaded ) {
     return null;
   }
 
   return (
-    <Stack>
-      <Stack.Screen name="index" options={{ headerShown: false }} />
-      <Stack.Screen name="(auth)" options={{ headerShown: false }} />
-      <Stack.Screen name="(root)" options={{ headerShown: false }} />
-      <Stack.Screen name="+not-found" />
-    </Stack>
+    <Stack screenOptions={{ headerShown: false }}/>
   );
 }
