@@ -1,9 +1,10 @@
 import { Redirect } from "expo-router";
+import {useAuthStore} from "@/store/authStore";
 
 const Page = () => {
-  const isSignedIn = false;
+  const  { isAuthenticated }  = useAuthStore();
 
-  if (isSignedIn) return <Redirect href="/(root)/(tabs)/home" />;
+  if (isAuthenticated) return <Redirect href="/(root)/(tabs)/home" />;
 
   return <Redirect href="/(auth)/welcome" />;
 };

@@ -1,7 +1,7 @@
 import {Image, ImageSourcePropType, Text, TouchableOpacity, View} from "react-native";
 import React from "react";
+import {Gender} from "@/types/type";
 
-type GenderType = "male" | "female" | null;
 
 const GenderCard = ({
                         gender,
@@ -9,10 +9,10 @@ const GenderCard = ({
                         selectedGender,
                         onSelect
                     }: {
-    gender: "male" | "female";
+    gender: Gender;
     image: ImageSourcePropType;
-    selectedGender: GenderType;
-    onSelect: (gender: "male" | "female") => void;
+    selectedGender: Gender;
+    onSelect: (gender: Gender) => void;
 }) => {
     const isSelected = selectedGender === gender;
 
@@ -35,7 +35,7 @@ const GenderCard = ({
                 <Image
                     source={image}
                     className={`mb-4 ${
-                        gender === "male" ? "w-36 h-64" : "w-34 h-60"
+                        gender === "MALE" ? "w-36 h-64" : "w-34 h-60"
                     }`}
                     resizeMode="contain"
                 />

@@ -2,20 +2,19 @@ import React, { useState } from 'react';
 import { View, ScrollView } from "react-native";
 import SelectableCard from "@/components/SelectableCard";
 import { BOY_OPTIONS, GIRL_OPTIONS } from "@/constants/data";
+import {ActivityLevel, Gender} from "@/types/type";
 
 type Props = {
-    gender: "male" | "female";
-    onSelectionChange?: (selectedValue: string | null) => void;
+    gender: Gender;
+    onSelectionChange?: (selectedValue: ActivityLevel) => void;
+    activityLevel?: ActivityLevel;
 }
 
-const ActiveDailyBasis: React.FC<Props> = ({ gender, onSelectionChange }) => {
-    const Options = gender === "female" ? GIRL_OPTIONS : BOY_OPTIONS;
-    const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
+const ActiveDailyBasis: React.FC<Props> = ({ gender, onSelectionChange ,activityLevel }) => {
+    const Options = gender === "FEMALE" ? GIRL_OPTIONS : BOY_OPTIONS;
 
-    const handleSelection = (index: number) => {
-        setSelectedIndex(index);
-        const selectedOption = Options[index];
-        onSelectionChange?.(selectedOption.value);
+    const handleSelection = (level : ActivityLevel) => {
+        onSelectionChange?.(level);
     };
 
     return (
@@ -30,8 +29,8 @@ const ActiveDailyBasis: React.FC<Props> = ({ gender, onSelectionChange }) => {
                         key={item.value}
                         label={item.label}
                         image={item.image}
-                        selected={index === selectedIndex}
-                        onPress={() => handleSelection(index)}
+                        selected={item.value === activityLevel}
+                        onPress={() => handleSelection(item.value)}
                     />
                 ))}
             </ScrollView>

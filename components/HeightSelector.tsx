@@ -8,7 +8,7 @@ function cmToFeetInches(cm: number): number {
     return +(cm / 30.48).toFixed(1);
 }
 
-function feetToCm(feet: number): number {
+export function feetToCm(feet: number): number {
     // convert feet.decimal to cm
     return Math.round(feet * 30.48);
 }
@@ -23,7 +23,7 @@ const HeightSelector: React.FC<HeightSelectorProps> = ({
                                                            onHeightChange,
                                                            initialHeight = 170,
                                                            initialUnit = 'cm',
-                                                           gender = 'male',
+                                                           gender = 'MALE',
                                                            maleAvatarSource,
                                                            femaleAvatarSource,
                                                        }) => {
@@ -119,12 +119,12 @@ const HeightSelector: React.FC<HeightSelectorProps> = ({
             </View>
 
             {/* Avatar & Scale */}
-            <View className={" mt-10"}  style={{ flexDirection: 'row', position : "relative", flex: 1, alignItems: 'center'}}>
+            <View className={" mt-20"}  style={{ flexDirection: 'row', position : "relative", flex: 1, alignItems: 'center'}}>
                 {/* Avatar on left */}
                 <View style={{ flex: 1, alignItems: 'center' }} >
                     {(maleAvatarSource || femaleAvatarSource) && (
                         <Image
-                            source={gender === 'male' ? maleAvatarSource : femaleAvatarSource}
+                            source={gender === 'MALE' ? maleAvatarSource : femaleAvatarSource}
                             style={{
                                 width: 300,
                                 height: 300,

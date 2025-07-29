@@ -15,6 +15,8 @@ export const images : Record<string , string> = {
     onboarding4,
     onboarding5,
     onboarding6,
+
+
     male ,
     female,
     logo

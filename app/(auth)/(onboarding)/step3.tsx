@@ -1,53 +1,67 @@
 import OnboardingWrapper from "@/components/OnboardingWrapper";
-import CustomSmoothPicker from "@/components/CustomSmoothPicker";
-import { Text, View } from "react-native";
 import React, { useState } from "react";
+import { Text, View } from "react-native";
+import HeightSelector, {feetToCm} from "@/components/HeightSelector";
+import {useUserProfileStore} from "@/store/userProfile";
+import {Gender} from "@/types/type";
 
-const AgeSelectionTitle = () => (
-    <View className="items-center mb-12">
-
-        <Text className="text-2xl font-jakarta-semi-bold text-center text-secondary-800">
-            What is your age?
-        </Text>
-    </View>
+const HeightSelectionTitle = () => (
+    <Text className="text-2xl font-jakarta-semi-bold text-center mb-8 text-secondary-800">
+        What is your Height?
+    </Text>
 );
 
 const Step3 = () => {
-    const [selectedAge, setSelectedAge] = useState<number>(25); // More reasonable default
 
-    // Generate ages from 13 to 100 (covering all potential users)
-    const ages = Array.from({ length: 88 }, (_, i) => i + 13);
+    const { gender , heightCm , setHeightCm } = useUserProfileStore();
 
-    const handleAgeChange = (age: string | number) => {
-        setSelectedAge(age as number);
-        console.log('Selected age:', age);
+    // const [selectedHeight, setSelectedHeight] = useState<{
+    //     value: number;
+    //     unit: 'cm' | 'ft';
+    // }>({ value: heightCm, unit: 'cm' });
+
+    // Get gender from your global state/context from step 1
+
+    const handleHeightChange = (height: number, unit: 'cm' | 'ft') => {
+        const newHeight = { value: height, unit };
+        // setSelectedHeight(newHeight);
+
+        setHeightCm(unit === 'cm' ? height : feetToCm(height));
+
+        // Store this in your global state/context here
+        // console.log(`Selected height: ${height} ${unit}`);
+
+        // You can also validate the height here
+        // if (unit === 'cm' && (height < 100 || height > 250)) {
+        //     console.warn('Height out of normal range for cm');
+        // } else if (unit === 'ft' && (height < 3 || height > 8.5)) {
+        //     console.warn('Height out of normal range for ft');
+        // }
     };
 
     return (
         <OnboardingWrapper>
             <View className="flex-1">
-                <AgeSelectionTitle />
+                <HeightSelectionTitle />
+                <HeightSelector
+                    onHeightChange={handleHeightChange}
+                    initialHeight={heightCm}
+                    initialUnit={"cm"}
+                    gender={gender as Gender}
+                    maleAvatarSource={require('@/assets/images/boy.png')}
+                    femaleAvatarSource={require('@/assets/images/girl.png')}
+                />
 
-                <View className="flex-1 justify-center items-center">
-                    <CustomSmoothPicker
-                        data={ages}
-                        selectedValue={selectedAge}
-                        onValueChange={handleAgeChange}
-                        itemHeight={60}
-                        width={120}
-                        highlightColor="#22c55e" // Using your primary green
-                        highlightBgColor="#f0fdf4" // Using your primary-50
-                        textColor="#64748b" // Using your secondary-500
-                        selectedTextColor="#1e293b" // Using your secondary-800
-                    />
-
-                    {/* Show selected age for feedback */}
-                    <View className="mt-8">
-                        <Text className="text-center text-secondary-600 font-jakarta-medium">
-                            Selected Age: {selectedAge}
-                        </Text>
-                    </View>
-                </View>
+                {/* Display current selection for debugging */}
+                {/*<View className="px-4 py-2 bg-gray-100 rounded-lg mx-4 mt-4">*/}
+                {/*    <Text className="text-center text-gray-600 text-sm">*/}
+                {/*        Selected: {selectedHeight.value} {selectedHeight.unit}*/}
+                {/*        {selectedHeight.unit === 'cm' ?*/}
+                {/*            ` (${Math.floor(selectedHeight.value / 30.48)}'${Math.round((selectedHeight.value / 2.54) % 12)}")` :*/}
+                {/*            ` (${Math.round(selectedHeight.value * 30.48)} cm)`*/}
+                {/*        }*/}
+                {/*    </Text>*/}
+                {/*</View>*/}
             </View>
         </OnboardingWrapper>
     );
