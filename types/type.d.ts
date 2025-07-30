@@ -58,6 +58,16 @@ export interface UserProfile {
 }
 
 
+export interface GoogleAccountDetails {
+    googleId: string;
+    email: string;
+    name: string;
+    photo?: string;
+    familyName?: string;
+    givenName?: string;
+}
+
+
 /*=--------------------------------------------------------------------------*/
 export interface AuthTokens {
     token: string;
@@ -73,7 +83,7 @@ export interface RegisterCredentials {
         username: string;
         password: string;
     };
-    profile: Omit<UserProfile , "id">;
+    profile: Omit<UserProfile , "id" | "createdAt" | "updatedAt" >;
 }
 
 export interface AuthResponse {

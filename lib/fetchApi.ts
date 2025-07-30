@@ -1,6 +1,12 @@
 import { appTokenCache } from './auth';
 
-const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL || 'https://your-api-url.com/api';
+const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL;
+
+if(!API_BASE_URL){
+    throw new Error(
+        'API_BASE_URL is not defined. Please define it in .env.local'
+    )
+}
 
 class ApiError extends Error {
     status: number;
@@ -35,6 +41,8 @@ export const fetchApi = async <T = any>(
     } = options;
 
     const url = `${API_BASE_URL}${endpoint}`;
+
+    console.log(`[fetchApi] ${method} ${url}`);
 
     const config: RequestInit = {
         method,

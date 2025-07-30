@@ -1,11 +1,11 @@
 import { Text, View } from "react-native";
 
-const Saved = () => {
+const Profile = () => {
     return (
         <View className="h-screen flex items-center justify-center ">
-            <Text className="text-red-500 font-bold text-5xl">Saved here ...</Text>
+            <Text className="text-blue-500 font-bold text-5xl">Ai here ...</Text>
         </View>
     )
 }
 
-export default Saved ;
+export default Profile ;

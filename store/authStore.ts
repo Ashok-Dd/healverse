@@ -4,13 +4,12 @@ import * as SecureStore from 'expo-secure-store';
 import { fetchApi } from '@/lib/fetchApi';
 import type {
     User,
-    AuthTokens,
     LoginCredentials,
     RegisterCredentials,
     AuthResponse,
     ApiError
 } from '@/types/type';
-import {appTokenCache} from "@/lib/auth";
+import { appTokenCache } from "@/lib/auth";
 
 interface AuthState {
     // State
@@ -23,39 +22,27 @@ interface AuthState {
     // Actions
     login: (credentials: LoginCredentials) => Promise<void>;
     register: (credentials: RegisterCredentials) => Promise<void>;
+    checkAuth: () => Promise<boolean>;
     logout: () => Promise<void>;
-    refreshToken: () => Promise<boolean>;
-    loadUserFromStorage: () => Promise<void>;
     clearError: () => void;
     updateUser: (userData: Partial<User>) => void;
 }
 
-// Secure storage keys
-const STORAGE_KEYS = {
-    TOKEN: 'token',
-    USER_DATA: 'userData'
-} as const;
+// Secure storage key - only for token
+const TOKEN_KEY = 'token';
 
-// Helper functions for secure storage
+// Helper functions for secure storage (only token)
 const storeToken = async (token: string): Promise<void> => {
-    await SecureStore.setItemAsync(STORAGE_KEYS.TOKEN, token);
+    await appTokenCache?.saveToken(TOKEN_KEY, token);
 };
 
-const storeUserData = async (user: User): Promise<void> => {
-    await SecureStore.setItemAsync(STORAGE_KEYS.USER_DATA, JSON.stringify(user));
+const clearTokenStorage = async (): Promise<void> => {
+    await SecureStore.deleteItemAsync(TOKEN_KEY);
 };
 
-const clearStorage = async (): Promise<void> => {
-    await Promise.all([
-        SecureStore.deleteItemAsync(STORAGE_KEYS.TOKEN),
-        SecureStore.deleteItemAsync(STORAGE_KEYS.USER_DATA)
-    ]);
-};
-
-const getStoredUserData = async (): Promise<User | null> => {
+const getStoredToken = async (): Promise<string | null> => {
     try {
-        const userData = await SecureStore.getItemAsync(STORAGE_KEYS.USER_DATA);
-        return userData ? JSON.parse(userData) : null;
+        return await appTokenCache?.getToken(TOKEN_KEY) || null;
     } catch {
         return null;
     }
@@ -80,10 +67,10 @@ export const useAuthStore = create<AuthState>()(
                     body: credentials
                 });
 
-                // Store token and user data
+                // Store only token in secure storage
                 await storeToken(response.token);
-                await storeUserData(response.user);
 
+                // Store user data only in state
                 set({
                     user: response.user,
                     isAuthenticated: true,
@@ -110,10 +97,10 @@ export const useAuthStore = create<AuthState>()(
                     body: credentials
                 });
 
-                // Store token and user data
+                // Store only token in secure storage
                 await storeToken(response.token);
-                await storeUserData(response.user);
 
+                // Store user data only in state
                 set({
                     user: response.user,
                     isAuthenticated: true,
@@ -130,23 +117,67 @@ export const useAuthStore = create<AuthState>()(
             }
         },
 
+        // Check auth action (replaces refresh token)
+        checkAuth: async (): Promise<boolean> => {
+            try {
+                const token = await getStoredToken();
+
+                if (!token) {
+                    set({
+                        user: null,
+                        isAuthenticated: false,
+                        isInitializing: false
+                    });
+                    return false;
+                }
+
+                const response = await fetchApi<AuthResponse>('/auth/check-auth', {
+                    method: 'POST',
+                    requiresAuth: true,
+                });
+
+                // Store new token in secure storage
+                await storeToken(response.token);
+
+                // Update state with fresh user data
+                set({
+                    user: response.user,
+                    isAuthenticated: true,
+                    isInitializing: false
+                });
+
+                return true;
+            } catch (error) {
+                console.warn('Auth check failed:', error);
+                // Clear invalid token and reset state
+                await clearTokenStorage();
+                set({
+                    user: null,
+                    isAuthenticated: false,
+                    isInitializing: false,
+                    error: null
+                });
+                return false;
+            }
+        },
+
         // Logout action
         logout: async () => {
             set({ isLoading: true });
 
             try {
-                // Call logout endpoint to invalidate tokens on server
-                await fetchApi('/auth/logout', {
-                    method: 'POST',
-                    requiresAuth: true
-                });
+                // Optional: Call logout endpoint if you have one
+                // await fetchApi('/auth/logout', {
+                //     method: 'POST',
+                //     requiresAuth: true
+                // });
             } catch (error) {
                 console.warn('Logout request failed:', error);
                 // Continue with local logout even if server request fails
             }
 
-            // Clear local storage and state
-            await clearStorage();
+            // Clear token storage and reset state
+            await clearTokenStorage();
             set({
                 user: null,
                 isAuthenticated: false,
@@ -155,98 +186,23 @@ export const useAuthStore = create<AuthState>()(
             });
         },
 
-        // Refresh token action
-        refreshToken: async (): Promise<boolean> => {
-            try {
-                const token = await appTokenCache?.getToken(STORAGE_KEYS.TOKEN);
-
-                if (!token) {
-                    return false;
-                }
-
-                const response = await fetchApi<AuthResponse>('/auth/refresh', {
-                    method: 'POST',
-                    isRefreshRequest: true
-                });
-
-                // Store new token and user data
-                await storeToken(response.token);
-                await storeUserData(response.user);
-
-                // Update state with refreshed user data
-                set({
-                    user: response.user,
-                    isAuthenticated: true
-                });
-
-                return true;
-            } catch (error) {
-                console.warn('Token refresh failed:', error);
-                // Clear invalid token
-                await clearStorage();
-                set({
-                    user: null,
-                    isAuthenticated: false,
-                    error: null
-                });
-                return false;
-            }
-        },
-
-        // Load user from storage (called on app start)
-        loadUserFromStorage: async () => {
+        // Initialize auth (called on app start)
+        initializeAuth: async () => {
             set({ isInitializing: true });
-
-            try {
-                const [token, storedUser] = await Promise.all([
-                    appTokenCache?.getToken(STORAGE_KEYS.TOKEN),
-                    getStoredUserData()
-                ]);
-
-                if (!token || !storedUser) {
-                    set({ isInitializing: false });
-                    return;
-                }
-
-                // Try to refresh token and get fresh user data
-                try {
-                    const refreshSuccess = await get().refreshToken();
-
-                    if (refreshSuccess) {
-                        // Token refresh successful, user data is already updated in refreshToken()
-                        set({ isInitializing: false });
-                    } else {
-                        // Refresh failed, clear storage and require login
-                        await clearStorage();
-                        set({ isInitializing: false });
-                    }
-                } catch (error) {
-                    console.error('Error refreshing token on app start:', error);
-                    // Use cached user data if refresh fails but token exists
-                    set({
-                        user: storedUser,
-                        isAuthenticated: true,
-                        isInitializing: false
-                    });
-                }
-            } catch (error) {
-                console.error('Error loading user from storage:', error);
-                await clearStorage();
-                set({ isInitializing: false });
-            }
+            await get().checkAuth();
         },
 
         // Clear error
         clearError: () => set({ error: null }),
 
-        // Update user data
+        // Update user data (only in state, not in storage)
         updateUser: (userData: Partial<User>) => {
             const { user } = get();
             if (user) {
                 const updatedUser = { ...user, ...userData };
-                storeUserData(updatedUser);
                 set({ user: updatedUser });
             }
         }
     }))
 );
+

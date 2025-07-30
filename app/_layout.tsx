@@ -1,14 +1,14 @@
-import { SplashScreen, Stack } from "expo-router";
-import { useFonts} from "expo-font";
+import { Slot, SplashScreen, useRouter , router } from "expo-router";
+import { useFonts } from "expo-font";
 import "./globals.css";
-import { useEffect } from "react";
-
+import { useEffect, useState } from "react";
 import {
   configureReanimatedLogger,
   ReanimatedLogLevel,
-} from 'react-native-reanimated';
+} from "react-native-reanimated";
+import { Text, View } from "react-native";
+import { useAuthStore } from "@/store/authStore";
 
-// This is the default configuration
 configureReanimatedLogger({
   level: ReanimatedLogLevel.warn,
   strict: false,
@@ -25,16 +25,42 @@ export default function RootLayout() {
     "Jakarta-SemiBold": require("../assets/fonts/PlusJakartaSans-SemiBold.ttf"),
   });
 
+  // const router = useRouter();
+  const { checkAuth, isLoading } = useAuthStore();
+  const [appReady, setAppReady] = useState(false);
+
   useEffect(() => {
-    if(error) throw error;
-    if(loaded) SplashScreen.hideAsync();
+    if (error) throw error;
+    if (loaded) SplashScreen.hideAsync();
   }, [loaded, error]);
 
-  if (!loaded ) {
-    return null;
+  useEffect(() => {
+    const bootstrap = async () => {
+      await checkAuth();
+      setAppReady(true); // Ensure layout has rendered before navigating
+    };
+    bootstrap();
+  }, []);
+
+  useEffect(() => {
+    if (appReady && !isLoading) {
+      const { isAuthenticated } = useAuthStore.getState();
+      console.log("isAuthenticated", isAuthenticated);
+      if (isAuthenticated) {
+        router.replace("/(root)/(tabs)/tracker");
+      } else {
+        router.replace("/(auth)/welcome");
+      }
+    }
+  }, [appReady, isLoading]);
+
+  if (!loaded || isLoading) {
+    return (
+        <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+          <Text style={{ fontSize: 16 }}>Loading...</Text>
+        </View>
+    );
   }
 
-  return (
-    <Stack screenOptions={{ headerShown: false }}/>
-  );
+  return <Slot screenOptions={{ headerShown: false }} />;
 }

@@ -2,10 +2,13 @@ import { UserProfile } from '@/types/type';
 import { create } from "zustand"
 
 // Base user profile data without actions
-export type UserProfileData = Omit<UserProfile, 'id' | 'createdAt' | 'updatedAt'>;
+export type UserProfileData = Omit<UserProfile, 'id' | 'createdAt' | 'updatedAt'> & {
+    username : string;
+};
 
 // Actions interface
 type UserProfileActions = {
+    setUsername: (username: string) => void;
     setGender: (gender: UserProfileData['gender']) => void;
     setAge: (age: number) => void;
     setHeightCm: (height: number) => void;
@@ -19,13 +22,14 @@ type UserProfileActions = {
     setOtherHealthConditionDescription: (description: string) => void;
     updateProfile: (updates: Partial<UserProfileData>) => void;
     clearProfile: () => void;
-    resetToDefaults: () => void;
 }
 
 // Combined state type
 export type UserProfileState = UserProfileData & UserProfileActions;
 
-const defaultState: UserProfileData = {
+
+export const useUserProfileStore = create<UserProfileState>((set, get) => ({
+    username : '',
     gender: 'MALE' as const,
     age: 20,
     heightCm: 170,
@@ -37,12 +41,10 @@ const defaultState: UserProfileData = {
     dietaryRestriction: 'NONE' as const,
     healthCondition: 'NONE' as const,
     otherHealthConditionDescription: '',
-};
-
-export const useUserProfileStore = create<UserProfileState>((set, get) => ({
-    ...defaultState,
 
     // Individual field setters
+
+    setUsername : (username) => set({ username }),
     setGender: (gender) => set({ gender }),
     setAge: (age) => set({ age }),
     setHeightCm: (height) => set({ heightCm: height }),
@@ -74,5 +76,4 @@ export const useUserProfileStore = create<UserProfileState>((set, get) => ({
     }),
 
     // Reset to default values (same as clear in this case)
-    resetToDefaults: () => set(defaultState),
 }));

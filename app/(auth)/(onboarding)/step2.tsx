@@ -1,8 +1,9 @@
 import OnboardingWrapper from "@/components/OnboardingWrapper";
 import CustomSmoothPicker from "@/components/CustomSmoothPicker";
 import { Text, View } from "react-native";
-import React, { useState } from "react";
+import React, {useEffect, useRef, useState} from "react";
 import {useUserProfileStore} from "@/store/userProfile";
+import {shallow} from "zustand/vanilla/shallow";
 
 const AgeSelectionTitle = () => (
     <View className="items-center mb-12">
@@ -14,15 +15,32 @@ const AgeSelectionTitle = () => (
 );
 
 const Step2 = () => {
-    const  {age, setAge} = useUserProfileStore();
 
-    // Generate ages from 13 to 100 (covering all potential users)
+    const { age, setAge } = useUserProfileStore();
+    const [selectedAge, setSelectedAge] = useState<number>(age);
+
+    const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
     const ages = Array.from({ length: 88 }, (_, i) => i + 13);
 
-    const handleAgeChange = (age: string | number) => {
-        setAge(age as number);
-        // console.log('Selected age:', age);
+    const handleAgeChange = (value: string | number) => {
+        const newAge = Number(value);
+        setSelectedAge(newAge);
+
+        // Debounce Zustand update
+        if (timerRef.current) clearTimeout(timerRef.current);
+
+        timerRef.current = setTimeout(() => {
+            setAge(newAge);
+        }, 150); // Adjust the delay if needed
     };
+
+    // Clean up the timer on unmount
+    useEffect(() => {
+        return () => {
+            if (timerRef.current) clearTimeout(timerRef.current);
+        };
+    }, []);
 
     return (
         <OnboardingWrapper>
@@ -32,7 +50,7 @@ const Step2 = () => {
                 <View className="flex-1 justify-center items-center">
                     <CustomSmoothPicker
                         data={ages}
-                        selectedValue={age}
+                        selectedValue={selectedAge}
                         onValueChange={handleAgeChange}
                         itemHeight={60}
                         width={120}
@@ -40,6 +58,7 @@ const Step2 = () => {
                         highlightBgColor="#f0fdf4" // Using your primary-50
                         textColor="#64748b" // Using your secondary-500
                         selectedTextColor="#1e293b" // Using your secondary-800
+
                     />
 
                     {/* Show selected age for feedback */}

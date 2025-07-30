@@ -10,7 +10,7 @@ const useCurrentStep = () => {
 
   return {
     currentStep,
-    totalSteps : 12,
+    totalSteps : 11,
   };
 };
 

@@ -17,6 +17,7 @@ const CustomSmoothPicker: React.FC<CustomSmoothPickerProps> = ({
     const renderItem = (item: string | number, index: number) => {
         const isSelected = item === selectedValue;
 
+
         return (
             <View
                 className="justify-center items-center"

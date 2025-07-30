@@ -1,234 +1,86 @@
 import OnboardingWrapper from "@/components/OnboardingWrapper";
 import { convertWeight } from "@/lib/utils";
-import React, { useState } from "react";
+import React, {
+    useState,
+    useMemo,
+    useCallback,
+    memo, useEffect
+} from "react";
 import {
     Text,
     TextStyle,
-    TouchableOpacity,
     View,
     ViewStyle,
 } from "react-native";
-import { RulerPicker } from "react-native-ruler-picker";
+import BMIIndicator from "@/components/BmiIndicator";
+import WeightRulerPicker from "@/components/WeightRulerPicker";
+import WeightValidation from "@/components/WeightValidation";
+import UnitToggle from "@/components/UnitToggle";
 import {useUserProfileStore} from "@/store/userProfile";
 
-// Lightweight BMI Indicator Component
-// eslint-disable-next-line react/display-name
-const BMIIndicator = React.memo(
-    ({ height, weight }: { height: number; weight: number }) => {
-        const bmi = (weight / (height / 100) ** 2).toFixed(1);
 
-        const getBMICategory = (bmiValue: number) => {
-            if (bmiValue < 18.5)
-                return { category: "Underweight", color: "#3B82F6", position: "15%" };
-            if (bmiValue < 25)
-                return { category: "Normal", color: "#10B981", position: "35%" };
-            if (bmiValue < 30)
-                return { category: "Overweight", color: "#F59E0B", position: "60%" };
-            if (bmiValue < 35)
-                return { category: "Obese", color: "#EF4444", position: "80%" };
-            return { category: "Extremely Obese", color: "#7C2D12", position: "95%" };
-        };
 
-        const bmiInfo = getBMICategory(parseFloat(bmi));
 
-        const bmiCategories = [
-            { label: "Underweight", range: "18.5", color: "#3B82F6", width: "20%" },
-            { label: "Normal", range: "25.0", color: "#10B981", width: "25%" },
-            { label: "Overweight", range: "30.0", color: "#F59E0B", width: "20%" },
-            { label: "Obese", range: "35.0", color: "#EF4444", width: "20%" },
-            { label: "Extremely Obese", range: "", color: "#7C2D12", width: "15%" },
-        ];
-
-        return (
-            <View className="mb-6">
-                {/* BMI Color Bar */}
-                <View className="flex-row h-3 rounded-full overflow-hidden mb-2">
-                    {bmiCategories.map((category, index) => (
-                        <View
-                            key={index}
-                            className="h-full"
-                            style={
-                                {
-                                    backgroundColor: category.color,
-                                    width: category.width,
-                                } as ViewStyle
-                            }
-                        />
-                    ))}
-                </View>
-
-                {/* BMI Labels */}
-                <View className="flex-row justify-between mb-1">
-                    {bmiCategories.map((category, index) => (
-                        <View
-                            key={index}
-                            className="items-center"
-                            style={{ width: category.width } as ViewStyle}
-                        >
-                            {category.range && (
-                                <Text className="text-xs text-gray-600 font-medium">
-                                    {category.range}
-                                </Text>
-                            )}
-                        </View>
-                    ))}
-                </View>
-
-                <View className="flex-row justify-between mb-4">
-                    {bmiCategories.map((category, index) => (
-                        <View
-                            key={index}
-                            className="items-center"
-                            style={{ width: category.width } as ViewStyle}
-                        >
-                            <Text className="text-xs text-gray-500">{category.label}</Text>
-                        </View>
-                    ))}
-                </View>
-
-                {/* BMI Indicator */}
-                <View className="relative h-8">
-                    <View
-                        className="absolute w-3 h-3 rounded-full border-2 border-white shadow-lg"
-                        style={
-                            {
-                                backgroundColor: bmiInfo.color,
-                                left: bmiInfo.position,
-                                top: -8,
-                                marginLeft: -6,
-                            } as ViewStyle
-                        }
-                    />
-                    <Text
-                        className="absolute text-xs font-bold text-white text-center"
-                        style={
-                            {
-                                left: bmiInfo.position,
-                                top: -23,
-                                marginLeft: -15,
-                                backgroundColor: bmiInfo.color,
-                                paddingHorizontal: 6,
-                                paddingVertical: 2,
-                                borderRadius: 8,
-                                minWidth: 30,
-                            } as TextStyle
-                        }
-                    >
-                        {bmi}
-                    </Text>
-                </View>
-            </View>
-        );
-    }
-);
-
-// Lightweight Weight Validation Component
-// eslint-disable-next-line react/display-name
-const WeightValidation = React.memo(
-    ({
-         weight,
-         height = 165,
-         unit,
-     }: {
-        weight: number;
-        height: number;
-        unit: "kg" | "lbs";
-    }) => {
-        const bmi = weight / (height / 100) ** 2;
-        const minHealthyWeight = Math.round(18.5 * (height / 100) ** 2);
-        const maxHealthyWeight = Math.round(25 * (height / 100) ** 2);
-
-        const isHealthy = bmi >= 18.5 && bmi <= 25;
-        const isTooLow = bmi < 18.5;
-
-        if (isHealthy) {
-            return (
-                <View className="bg-green-100 rounded-xl p-4 mb-6 flex-row items-start">
-                    <View className="mr-3 mt-1">
-                        <View className="bg-green-500 rounded-full w-6 h-6 items-center justify-center">
-                            <Text className="text-white text-xs font-bold">✓</Text>
-                        </View>
-                    </View>
-                    <View className="flex-1">
-                        <Text className="text-green-700 font-semibold text-base mb-1">
-                            Great target weight!
-                        </Text>
-                        <Text className="text-green-600 text-sm leading-5">
-                            This weight is within the healthy range for your height
-                        </Text>
-                    </View>
-                </View>
-            );
-        }
-
-        if (isTooLow) {
-            return (
-                <View className="bg-blue-100 rounded-xl p-4 mb-6 flex-row items-start">
-                    <View className="mr-3 mt-1">
-                        <View className="bg-blue-500 rounded-full w-6 h-6 items-center justify-center">
-                            <Text className="text-white text-xs font-bold">i</Text>
-                        </View>
-                    </View>
-                    <View className="flex-1">
-                        <Text className="text-blue-700 font-semibold text-base mb-1">
-                            Target weight is too low!
-                        </Text>
-                        <Text className="text-blue-600 text-sm leading-5">
-                            It is advisable to maintain a weight range of {minHealthyWeight}{" "}
-                            {unit} to {maxHealthyWeight} {unit} for your current height
-                        </Text>
-                    </View>
-                </View>
-            );
-        }
-
-        return (
-            <View className="bg-orange-100 rounded-xl p-4 mb-6 flex-row items-start">
-                <View className="mr-3 mt-1">
-                    <View className="bg-orange-500 rounded-full w-6 h-6 items-center justify-center">
-                        <Text className="text-white text-xs font-bold">!</Text>
-                    </View>
-                </View>
-                <View className="flex-1">
-                    <Text className="text-orange-700 font-semibold text-base mb-1">
-                        Target weight is high
-                    </Text>
-                    <Text className="text-orange-600 text-sm leading-5">
-                        Consider a weight range of {minHealthyWeight} {unit} to{" "}
-                        {maxHealthyWeight} {unit} for optimal health
-                    </Text>
-                </View>
-            </View>
-        );
-    }
-);
-
-// Main Step2 Component
-const Step2 = () => {
+const Step2 = memo(() => {
     const [selectedUnit, setSelectedUnit] = useState<"kg" | "lbs">("kg");
 
-    const {heightCm : userHeight , targetWeightKg : targetWeight , setCurrentWeightKg : setTargetWeight} = useUserProfileStore();
+    const { targetWeightKg , setTargetWeightKg  , heightCm : userHeight } = useUserProfileStore();
 
-    const handleUnitChange = (newUnit: "kg" | "lbs") => {
+    const [targetWeight, setTargetWeight] = useState<number>(targetWeightKg);
+
+
+    // Memoize unit change handler
+    const handleUnitChange = useCallback((newUnit: "kg" | "lbs") => {
         const convertedWeight = convertWeight(targetWeight, selectedUnit, newUnit);
         setSelectedUnit(newUnit);
         setTargetWeight(convertedWeight);
-    };
+    }, [targetWeight, selectedUnit]);
 
-    const handleWeightChange = (value: string) => {
-        const weight = parseFloat(value);
-        if (!isNaN(weight)) {
-            setTargetWeight(weight);
-        }
-    };
+    // Memoize weight change handler
+    const handleWeightChange = useCallback((weight: number) => {
+        setTargetWeight(weight);
+    }, []);
 
-    const getWeightRange = () => {
+    // Memoize weight range calculation
+    const weightRange = useMemo(() => {
         return selectedUnit === "kg"
-            ? { min: 30, max: 150, step: 0.1 }
-            : { min: 66, max: 330, step: 0.2 };
-    };
+            ? { min: 30, max: 150, initial: 56 }
+            : { min: 66, max: 330, initial: 123 };
+    }, [selectedUnit]);
 
-    const range = getWeightRange();
+    // Memoize weight for BMI calculation
+    const weightForBMI = useMemo(() => {
+        return selectedUnit === "kg"
+            ? targetWeight
+            : convertWeight(targetWeight, "lbs", "kg");
+    }, [targetWeight, selectedUnit]);
+
+    // // Memoize display weight calculation
+    // const displayWeight = useMemo(() => {
+    //     return selectedUnit === "kg"
+    //         ? targetWeight.toFixed(1)
+    //         : Math.round(targetWeight).toString();
+    // }, [targetWeight, selectedUnit]);
+    //
+    // // Unit button styles
+    // const getUnitButtonStyle = useCallback((isSelected: boolean): ViewStyle => ({
+    //     paddingHorizontal: 24,
+    //     paddingVertical: 8,
+    //     backgroundColor: isSelected ? "#10B981" : "transparent",
+    // }), []);
+    //
+    // const getUnitTextStyle = useCallback((isSelected: boolean): TextStyle => ({
+    //     fontWeight: "600" as const,
+    //     color: isSelected ? "#FFFFFF" : "#6B7280",
+    // }), []);
+
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            setTargetWeightKg(targetWeight);
+        }, 100); // 100ms delay
+
+        return () => clearTimeout(timer);
+    }, [targetWeight]);
 
     return (
         <OnboardingWrapper>
@@ -237,82 +89,38 @@ const Step2 = () => {
                     What is your target weight?
                 </Text>
 
-                {/* Unit Toggle */}
-                <View className="flex-row self-center mb-8 bg-gray-200 rounded-full overflow-hidden">
-                    <TouchableOpacity
-                        className={`px-6 py-2 ${
-                            selectedUnit === "kg" ? "bg-green-500" : "bg-transparent"
-                        }`}
-                        onPress={() => handleUnitChange("kg")}
-                        activeOpacity={0.7}
-                    >
-                        <Text
-                            className={`font-medium ${
-                                selectedUnit === "kg" ? "text-white" : "text-gray-700"
-                            }`}
-                        >
-                            kg
-                        </Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                        className={`px-6 py-2 ${
-                            selectedUnit === "lbs" ? "bg-green-500" : "bg-transparent"
-                        }`}
-                        onPress={() => handleUnitChange("lbs")}
-                        activeOpacity={0.7}
-                    >
-                        <Text
-                            className={`font-medium ${
-                                selectedUnit === "lbs" ? "text-white" : "text-gray-700"
-                            }`}
-                        >
-                            lbs
-                        </Text>
-                    </TouchableOpacity>
-                </View>
 
-                {/* Weight Validation */}
+                <UnitToggle selectedUnit={selectedUnit}   onUnitChange={handleUnitChange}/>
+
                 <WeightValidation
-                    weight={
-                        selectedUnit === "kg"
-                            ? targetWeight
-                            : convertWeight(targetWeight, "lbs", "kg")
-                    }
+                    weight={weightForBMI}
                     height={userHeight}
                     unit={selectedUnit}
                 />
 
-                {/* BMI Indicator */}
                 <BMIIndicator
                     height={userHeight}
-                    weight={
-                        selectedUnit === "kg"
-                            ? targetWeight
-                            : convertWeight(targetWeight, "lbs", "kg")
-                    }
+                    weight={weightForBMI}
                 />
 
-                {/* RulerPicker Component */}
-                <View className="mb-8">
-                    <RulerPicker
-                        min={range.min}
-                        max={range.max}
-                        step={range.step}
-                        initialValue={targetWeight}
-                        onValueChange={handleWeightChange}
-                        onValueChangeEnd={handleWeightChange}
-                        width={350}
-                        height={80}
-                        indicatorColor="#3B82F6"
-                        indicatorHeight={30}
-                        shortStepColor="#E5E7EB"
-                        longStepColor="#9CA3AF"
-                        longStepHeight={24}
-                    />
+                <View className="items-center mb-8">
+                    <Text className="text-sm text-gray-500 mb-4">
+                        Drag the scale below to adjust
+                    </Text>
                 </View>
+
+                <WeightRulerPicker
+                    minWeight={weightRange.min}
+                    maxWeight={weightRange.max}
+                    initialWeight={targetWeight}
+                    unit={selectedUnit}
+                    onWeightChange={handleWeightChange}
+                />
             </View>
         </OnboardingWrapper>
     );
-};
+});
+
+Step2.displayName = "Step2";
 
 export default Step2;

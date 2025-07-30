@@ -11,18 +11,7 @@ const ActionButtons: React.FC<ActionButtonsProps> = ({
                                                      }) => {
     return (
         <View className="px-6 pb-6">
-            {/* Health Sync Button */}
-            {onSyncHealth && (
-                <View className="mb-6">
-                    <Button
-                        title="💙 Sync with Google Health Connect"
-                        onPress={onSyncHealth}
-                        variant="secondary"
-                        className="bg-blue-50 py-3 rounded-full"
-                        textClassName="text-blue-600 font-jakarta-medium text-xs"
-                    />
-                </View>
-            )}
+
 
             {/* Sign In Link */}
             {onSignIn && (
@@ -38,14 +27,7 @@ const ActionButtons: React.FC<ActionButtonsProps> = ({
             )}
 
             {/* Continue Button */}
-            <Button
-                title={loading ? "Loading..." : "Continue"}
-                onPress={onContinue}
-                variant="primary"
-                loading={loading}
-                className="bg-primary-500 py-3 rounded-2xl shadow-medium"
-                textClassName="text-white font-jakarta-semi-bold text-lg"
-            />
+
         </View>
     );
 };

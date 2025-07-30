@@ -1,12 +1,11 @@
-import { Redirect } from "expo-router";
-import {useAuthStore} from "@/store/authStore";
+// app/index.tsx
+import { View, Text } from "react-native";
 
-const Page = () => {
-  const  { isAuthenticated }  = useAuthStore();
-
-  if (isAuthenticated) return <Redirect href="/(root)/(tabs)/home" />;
-
-  return <Redirect href="/(auth)/welcome" />;
+export default function Index() {
+    // Remove navigation logic from here - let layout.tsx handle it
+    return (
+        <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+            <Text style={{ fontSize: 16 }}>Initializing...</Text>
+        </View>
+    );
 };
-
-export default Page;

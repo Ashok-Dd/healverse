@@ -17,8 +17,8 @@ const Step5 = () => {
     const {goal, setGoal , gender} = useUserProfileStore();
 
     const handleSelectionDiet = (value: Goal) => {
-        setGoal(value);
-    }
+        setGoal(value ) ;
+    };
 
     return (
         <OnboardingWrapper>

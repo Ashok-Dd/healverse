@@ -3,7 +3,7 @@ import { View, Text } from 'react-native';
 
 const WelcomeContent: React.FC = () => {
     return (
-        <View className="px-6 py-8">
+        <View className="px-6 py-8 flex-1">
             {/* 🎉 Title Section */}
             <View className="mb-4">
                 <Text className="text-sm text-center">
