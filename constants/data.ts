@@ -1,7 +1,15 @@
 // Place this in your screen/component file
 
 
-import {ActivityLevel, DietaryRestriction, Goal, HealthCondition, OptionsCardProps} from "@/types/type";
+import {
+    ActivityLevel,
+    DailySummary,
+    DietaryRestriction,
+    Goal,
+    HealthCondition,
+    HealthData,
+    OptionsCardProps
+} from "@/types/type";
 
 export const BOY_OPTIONS : {label: string, image: any, value: ActivityLevel, icon: string}[] = [
     {
@@ -193,3 +201,32 @@ export const healthConditions: OptionsCardProps<HealthCondition>[] = [
         value: "HIGH_CHOLESTEROL",
     },
 ];
+
+
+export const createDefaultSummary = (date: string): DailySummary => ({
+    date,
+    targetCalories: 0,
+    consumedCalories: 0,
+    caloriesBurned: 0,
+    remainingCalories: 0,
+    targetProtein: 0,
+    consumedProtein: 0,
+    targetCarbs: 0,
+    consumedCarbs: 0,
+    targetFat: 0,
+    consumedFat: 0,
+    waterConsumedMl: 0,
+    targetWaterMl: 0,
+    caloriesProgress: 0,
+    proteinProgress: 0,
+    carbsProgress: 0,
+    fatProgress: 0,
+    waterProgress: 0,
+});
+
+export const createDefaultHealthData = (date: string): HealthData => ({
+    summary: createDefaultSummary(date),
+    foodLogs: [],
+    exerciseLogs: [],
+    waterLogs: [],
+});

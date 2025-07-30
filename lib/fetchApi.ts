@@ -1,6 +1,6 @@
 import { appTokenCache } from './auth';
 
-const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL;
+const API_BASE_URL = "http://192.168.68.104:8080";
 
 if(!API_BASE_URL){
     throw new Error(

@@ -24,6 +24,20 @@ export type HealthCondition =
 
 export type WeightLossSpeed = 'SLOW' | 'MODERATE' | 'FAST';
 
+export enum MealType {
+    BREAKFAST = 'BREAKFAST',
+    LUNCH = 'LUNCH',
+    DINNER = 'DINNER',
+    SNACK = 'SNACK'
+}
+
+export enum ExerciseIntensity {
+    LOW = 'LOW',
+    MODERATE = 'MODERATE',
+    HIGH = 'HIGH',
+    VERY_HIGH = 'VERY_HIGH'
+}
+
 
 // Interfaces
 
@@ -67,8 +81,176 @@ export interface GoogleAccountDetails {
     givenName?: string;
 }
 
+export interface DietPlan {
+    id: number;
+    user?: User;
+    planDate: string; // ISO date format, e.g. '2025-07-30'
+    totalCalories: number;
+    totalProtein: number;
+    totalCarbs: number;
+    totalFat: number;
+    isGenerated: boolean;
+    createdAt: string; // ISO datetime format, e.g. '2025-07-30T12:34:56'
+    meals: Meal[];
+}
+
+
+
+export interface Meal {
+    id: number;
+    dietPlan?: DietPlan; // or full `DietPlan` object if needed or null
+    mealType: MealType;
+    mealName: string;
+    calories: number;
+    protein: number;
+    carbs: number;
+    fat: number;
+    preparationTimeMinutes?: number;
+    instructions?: string;
+    healthBenefits?: string;
+    createdAt?: string; // ISO string if coming from JSON
+    ingredients: string[];
+}
+
+
+export interface FoodLog {
+    id: number;
+    user: User;
+    dietPlan?: DietPlan;
+    mealType: MealType;
+    foodName: string;
+    quantity: number;
+    unit: string;
+    calories: number;
+    protein: number;
+    carbs: number;
+    fat: number;
+    loggedAt: string; // ISO string format
+    isFromCamera?: boolean;
+    imageDescription?: string;
+    createdAt: string; // ISO string format
+}
+
+export interface ExerciseLog {
+    id: number;
+    user: User;
+    exerciseName: string;
+    durationMinutes: number;
+    intensity: ExerciseIntensity;
+    caloriesBurned: number;
+    loggedAt: string; // ISO string format
+    createdAt: string; // ISO string format
+}
+
+export interface WaterLog {
+    id: number;
+    user: User;
+    amountMl: number;
+    loggedAt: string; // ISO string format
+    createdAt: string; // ISO string format
+}
+
+export interface DailySummary {
+    date: string; // YYYY-MM-DD format
+    targetCalories: number;
+    consumedCalories: number;
+    caloriesBurned: number;
+    remainingCalories: number;
+    targetProtein: number;
+    consumedProtein: number;
+    targetCarbs: number;
+    consumedCarbs: number;
+    targetFat: number;
+    consumedFat: number;
+    waterConsumedMl: number;
+    targetWaterMl: number;
+    caloriesProgress: number; // percentage
+    proteinProgress: number; // percentage
+    carbsProgress: number; // percentage
+    fatProgress: number; // percentage
+    waterProgress: number; // percentage
+}
+
+export interface HealthData {
+    summary: DailySummary;
+    foodLogs: FoodLog[];
+    exerciseLogs: ExerciseLog[];
+    waterLogs: WaterLog[];
+}
+
+
+export type CreateFoodLogData = Omit<FoodLog, 'id' | 'createdAt'>;
+export type UpdateFoodLogData = Partial<Omit<FoodLog, 'id' | 'user' | 'createdAt'>>;
+
+export type CreateExerciseLogData = Omit<ExerciseLog, 'id' | 'createdAt'>;
+export type UpdateExerciseLogData = Partial<Omit<ExerciseLog, 'id' | 'user' | 'createdAt'>>;
+
+export type CreateWaterLogData = Omit<WaterLog, 'id' | 'createdAt'>;
+export type UpdateWaterLogData = Partial<Omit<WaterLog, 'id' | 'user' | 'createdAt'>>;
+
+
+/*=------------------------------STORE TYPES-----------------------------*/
+
+export interface HealthStore {
+    // State
+    currentDate: string;
+    selectedDate: string;
+    currentUser: User | null;
+    healthData: HealthData | null;
+    isLoading: boolean;
+    error: string | null;
+
+    // Actions
+    setCurrentDate: (date: string) => void;
+    setSelectedDate: (date: string) => void;
+    setCurrentUser: (user: User) => void;
+    setHealthData: (data: HealthData) => void;
+    setLoading: (loading: boolean) => void;
+    setError: (error: string | null) => void;
+
+    // Data fetching
+    fetchDashboardData: (date?: string) => Promise<void>;
+    isValidDateForData: (date: string) => boolean;
+
+    // Food Log Actions
+    addFoodLog: (foodLog: CreateFoodLogData) => void;
+    updateFoodLog: (id: number, updates: UpdateFoodLogData) => void;
+    deleteFoodLog: (id: number) => void;
+    getFoodLogById: (id: number) => FoodLog | undefined;
+    getFoodLogsByMealType: (mealType: MealType) => FoodLog[];
+    getFoodLogsByDate: (date: string) => FoodLog[];
+
+    // Exercise Log Actions
+    addExerciseLog: (exerciseLog: CreateExerciseLogData) => void;
+    updateExerciseLog: (id: number, updates: UpdateExerciseLogData) => void;
+    deleteExerciseLog: (id: number) => void;
+    getExerciseLogById: (id: number) => ExerciseLog | undefined;
+    getExerciseLogsByDate: (date: string) => ExerciseLog[];
+    getExerciseLogsByIntensity: (intensity: ExerciseIntensity) => ExerciseLog[];
+
+    // Water Log Actions
+    addWaterLog: (waterLog: CreateWaterLogData) => void;
+    updateWaterLog: (id: number, updates: UpdateWaterLogData) => void;
+    deleteWaterLog: (id: number) => void;
+    getWaterLogById: (id: number) => WaterLog | undefined;
+    getWaterLogsByDate: (date: string) => WaterLog[];
+
+    // Summary Actions
+    updateSummary: (summary: Partial<DailySummary>) => void;
+    recalculateProgress: () => void;
+
+    // Utility Actions
+    clearAllData: () => void;
+    syncData: (data: HealthData) => void;
+    getTotalCaloriesConsumed: () => number;
+    getTotalCaloriesBurned: () => number;
+    getTotalWaterConsumed: () => number;
+    getTotalNutrients: () => { protein: number; carbs: number; fat: number };
+}
+
 
 /*=--------------------------------------------------------------------------*/
+
 export interface AuthTokens {
     token: string;
 }
