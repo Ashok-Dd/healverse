@@ -195,7 +195,6 @@ export interface HealthStore {
     // State
     currentDate: string;
     selectedDate: string;
-    currentUser: User | null;
     healthData: HealthData | null;
     isLoading: boolean;
     error: string | null;
@@ -203,7 +202,6 @@ export interface HealthStore {
     // Actions
     setCurrentDate: (date: string) => void;
     setSelectedDate: (date: string) => void;
-    setCurrentUser: (user: User) => void;
     setHealthData: (data: HealthData) => void;
     setLoading: (loading: boolean) => void;
     setError: (error: string | null) => void;
@@ -249,7 +247,7 @@ export interface HealthStore {
 }
 
 
-/*=--------------------------------------------------------------------------*/
+/*=-------------------------FETCH API TYPES-------------------------------------*/
 
 export interface AuthTokens {
     token: string;
@@ -281,8 +279,15 @@ export interface ApiError {
 }
 
 
-/*=--------------------------------------------------------------------------*/
+/*=---------------------------------PROPS-----------------------------------------*/
 
+
+export interface NutritionInfoProps {
+    calories : number;
+    protein : number;
+    fat : number;
+    carbs : number;
+}
 
 export interface ButtonProps {
     title: string;

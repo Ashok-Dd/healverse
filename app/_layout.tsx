@@ -1,13 +1,13 @@
-import { Slot, SplashScreen, useRouter , router } from "expo-router";
+import { useAuthStore } from "@/store/authStore";
 import { useFonts } from "expo-font";
-import "./globals.css";
+import { router, Slot, SplashScreen } from "expo-router";
 import { useEffect, useState } from "react";
+import { Text, View } from "react-native";
 import {
   configureReanimatedLogger,
   ReanimatedLogLevel,
 } from "react-native-reanimated";
-import { Text, View } from "react-native";
-import { useAuthStore } from "@/store/authStore";
+import "./globals.css";
 
 configureReanimatedLogger({
   level: ReanimatedLogLevel.warn,
@@ -42,23 +42,23 @@ export default function RootLayout() {
     bootstrap();
   }, []);
 
-  useEffect(() => {
-    if (appReady && !isLoading) {
-      const { isAuthenticated } = useAuthStore.getState();
-      console.log("isAuthenticated", isAuthenticated);
-      if (isAuthenticated) {
-        router.replace("/(root)/(tabs)/tracker");
-      } else {
-        router.replace("/(auth)/welcome");
-      }
-    }
-  }, [appReady, isLoading]);
+  // useEffect(() => {
+  //   if (appReady && !isLoading) {
+  //     const { isAuthenticated } = useAuthStore.getState();
+  //     console.log("isAuthenticated", isAuthenticated);
+  //     if (isAuthenticated) {
+  //       router.replace("/(root)/(tabs)/tracker");
+  //     } else {
+  //       router.replace("/(auth)/welcome");
+  //     }
+  //   }
+  // }, [appReady, isLoading]);
 
   if (!loaded || isLoading) {
     return (
-        <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
-          <Text style={{ fontSize: 16 }}>Loading...</Text>
-        </View>
+      <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+        <Text style={{ fontSize: 16 }}>Loading...</Text>
+      </View>
     );
   }
 

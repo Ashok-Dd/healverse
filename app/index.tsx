@@ -1,11 +1,7 @@
 // app/index.tsx
-import { View, Text } from "react-native";
+import { Redirect } from "expo-router";
 
 export default function Index() {
-    // Remove navigation logic from here - let layout.tsx handle it
-    return (
-        <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
-            <Text style={{ fontSize: 16 }}>Initializing...</Text>
-        </View>
-    );
-};
+  // Remove navigation logic from here - let layout.tsx handle it
+  return <Redirect href={"/(root)/(tabs)/tracker"} />;
+}
