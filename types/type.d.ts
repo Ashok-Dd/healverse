@@ -195,15 +195,13 @@ export interface HealthStore {
     // State
     currentDate: string;
     selectedDate: string;
-    currentUser: User | null;
     healthData: HealthData | null;
     isLoading: boolean;
     error: string | null;
 
-    // Actions
+    // Basic Actions
     setCurrentDate: (date: string) => void;
     setSelectedDate: (date: string) => void;
-    setCurrentUser: (user: User) => void;
     setHealthData: (data: HealthData) => void;
     setLoading: (loading: boolean) => void;
     setError: (error: string | null) => void;
@@ -213,39 +211,92 @@ export interface HealthStore {
     isValidDateForData: (date: string) => boolean;
 
     // Food Log Actions
-    addFoodLog: (foodLog: CreateFoodLogData) => void;
-    updateFoodLog: (id: number, updates: UpdateFoodLogData) => void;
-    deleteFoodLog: (id: number) => void;
+    addFoodLog: (foodLog: CreateFoodLogData) => Promise<FoodLog>;
+    updateFoodLog: (id: number, updates: UpdateFoodLogData) => Promise<FoodLog>;
+    deleteFoodLog: (id: number) => Promise<void>;
     getFoodLogById: (id: number) => FoodLog | undefined;
     getFoodLogsByMealType: (mealType: MealType) => FoodLog[];
     getFoodLogsByDate: (date: string) => FoodLog[];
+    fetchTodaysFoodLogs: () => Promise<FoodLog[]>;
+    fetchFoodLogsByMealType: (mealType: MealType) => Promise<FoodLog[]>;
 
     // Exercise Log Actions
-    addExerciseLog: (exerciseLog: CreateExerciseLogData) => void;
-    updateExerciseLog: (id: number, updates: UpdateExerciseLogData) => void;
-    deleteExerciseLog: (id: number) => void;
+    addExerciseLog: (exerciseLog: CreateExerciseLogData) => Promise<ExerciseLog>;
+    updateExerciseLog: (id: number, updates: UpdateExerciseLogData) => Promise<ExerciseLog>;
+    deleteExerciseLog: (id: number) => Promise<void>;
     getExerciseLogById: (id: number) => ExerciseLog | undefined;
     getExerciseLogsByDate: (date: string) => ExerciseLog[];
     getExerciseLogsByIntensity: (intensity: ExerciseIntensity) => ExerciseLog[];
+    fetchTodaysExerciseLogs: () => Promise<ExerciseLog[]>;
+    fetchExerciseTypes: () => Promise<{name: string, metValue: number, category: string}[]>;
 
     // Water Log Actions
-    addWaterLog: (waterLog: CreateWaterLogData) => void;
+    addWaterLog: (waterLog: CreateWaterLogData) => Promise<WaterLog>;
+    addQuickWaterLog: (presetType: 'GLASS' | 'BOTTLE' | 'LARGE') => Promise<WaterLog>;
     updateWaterLog: (id: number, updates: UpdateWaterLogData) => void;
-    deleteWaterLog: (id: number) => void;
+    deleteWaterLog: (id: number) => Promise<void>;
     getWaterLogById: (id: number) => WaterLog | undefined;
     getWaterLogsByDate: (date: string) => WaterLog[];
+    fetchTodaysWaterLogs: () => Promise<WaterLog[]>;
+    fetchTodaysWaterTotal: () => Promise<number>;
 
     // Summary Actions
     updateSummary: (summary: Partial<DailySummary>) => void;
     recalculateProgress: () => void;
 
+    // Dashboard & Analytics
+    fetchWeeklyDashboard: () => Promise<{
+        weeklySummaries: DailySummary[],
+        weeklyStats: {
+            avgCaloriesConsumed: number,
+            avgCaloriesBurned: number,
+            avgWaterIntake: number,
+            daysOnTrack: number,
+            totalDays: number
+        }
+    }>;
+
+    // Nutrition Sync
+    syncTodaysNutrition: () => Promise<DailySummary>;
+    syncNutritionByDate: (date: string) => Promise<DailySummary>;
+
     // Utility Actions
+    initializeDefaultData: () => void;
     clearAllData: () => void;
     syncData: (data: HealthData) => void;
     getTotalCaloriesConsumed: () => number;
     getTotalCaloriesBurned: () => number;
     getTotalWaterConsumed: () => number;
     getTotalNutrients: () => { protein: number; carbs: number; fat: number };
+}
+
+export interface DietPlanStore {
+    // State
+    currentDate: string;
+    selectedDate: string;
+    dietPlan: DietPlan | null;
+    isLoading: boolean;
+    error: string | null;
+
+    // Basic Actions
+    setCurrentDate: (date: string) => void;
+    setSelectedDate: (date: string) => void;
+    setDietPlan: (dietPlan: DietPlan | null) => void;
+    setLoading: (loading: boolean) => void;
+    setError: (error: string | null) => void;
+
+    // Utility
+    isValidDateForData: (date: string) => boolean;
+
+    // Diet Plan Actions
+    generateDietPlan: (planDate?: string) => Promise<DietPlan>;
+    fetchDietPlan: (date?: string) => Promise<DietPlan>;
+    fetchTodaysDietPlan: () => Promise<DietPlan>;
+    getMealsByType: (mealType: MealType) => Meal[];
+    getMealById: (id: number) => Meal | undefined;
+
+    // Utility Actions
+    clearData: () => void;
 }
 
 
@@ -282,6 +333,13 @@ export interface ApiError {
 
 
 /*=--------------------------------------------------------------------------*/
+
+export interface NutritionInfoProps {
+    calories : number;
+    protein : number;
+    fat : number;
+    carbs : number;
+}
 
 
 export interface ButtonProps {

@@ -25,6 +25,8 @@ export default function RootLayout() {
     "Jakarta-SemiBold": require("../assets/fonts/PlusJakartaSans-SemiBold.ttf"),
   });
 
+
+
   // const router = useRouter();
   const { checkAuth, isLoading } = useAuthStore();
   const [appReady, setAppReady] = useState(false);

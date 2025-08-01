@@ -1,5 +1,3 @@
-// Place this in your screen/component file
-
 
 import {
     ActivityLevel,
@@ -7,8 +5,8 @@ import {
     DietaryRestriction,
     Goal,
     HealthCondition,
-    HealthData,
-    OptionsCardProps
+    HealthData, Meal,
+    OptionsCardProps, User
 } from "@/types/type";
 
 export const BOY_OPTIONS : {label: string, image: any, value: ActivityLevel, icon: string}[] = [
@@ -229,4 +227,85 @@ export const createDefaultHealthData = (date: string): HealthData => ({
     foodLogs: [],
     exerciseLogs: [],
     waterLogs: [],
+});
+
+export const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+
+
+enum MealType {
+    BREAKFAST = 'BREAKFAST',
+    LUNCH = 'LUNCH',
+    DINNER = 'DINNER',
+    SNACK = 'SNACK'
+}
+
+
+interface DietPlan {
+    id: number;
+    user?: User;
+    planDate: string; // ISO date format, e.g. '2025-07-30'
+    totalCalories: number;
+    totalProtein: number;
+    totalCarbs: number;
+    totalFat: number;
+    isGenerated: boolean;
+    createdAt: string; // ISO datetime format, e.g. '2025-07-30T12:34:56'
+    meals: Meal[];
+}
+
+
+
+export const getDummyDietPlan = (): DietPlan => ({
+        id: 1,
+        planDate: "2025-07-30",
+        totalCalories: 2000,
+        totalProtein: 120,
+        totalCarbs: 250,
+        totalFat: 70,
+        isGenerated: true,
+        createdAt: "2025-07-30T09:00:00Z",
+        meals: [
+            {
+                id: 1,
+                mealType: MealType.BREAKFAST,
+                mealName: "Oatmeal with Fruits",
+                calories: 350,
+                protein: 15,
+                carbs: 60,
+                fat: 10,
+                preparationTimeMinutes: 10,
+                instructions: "Boil oats, mix with fruits and serve.",
+                healthBenefits: "Good source of fiber and vitamins.",
+                createdAt: "2025-07-30T07:00:00Z",
+                ingredients: ["Oats", "Banana", "Berries", "Milk"]
+            },
+            {
+                id: 2,
+                mealType: MealType.LUNCH,
+                mealName: "Grilled Chicken Salad",
+                calories: 500,
+                protein: 40,
+                carbs: 20,
+                fat: 25,
+                preparationTimeMinutes: 20,
+                instructions: "Grill chicken, chop vegetables, and mix with dressing.",
+                healthBenefits: "High in protein and healthy fats.",
+                createdAt: "2025-07-30T12:00:00Z",
+                ingredients: ["Chicken Breast", "Lettuce", "Olive Oil", "Tomatoes", "Cucumber"]
+            },
+            {
+                id: 3,
+                mealType: MealType.DINNER,
+                mealName: "Quinoa with Veggies",
+                calories: 450,
+                protein: 20,
+                carbs: 50,
+                fat: 15,
+                preparationTimeMinutes: 25,
+                instructions: "Cook quinoa, sauté vegetables, mix and serve.",
+                healthBenefits: "Rich in protein, fiber, and antioxidants.",
+                createdAt: "2025-07-30T19:00:00Z",
+                ingredients: ["Quinoa", "Bell Peppers", "Zucchini", "Spinach", "Olive Oil"]
+            }
+        ] as Meal[]
 });
