@@ -1,6 +1,6 @@
 import { appTokenCache } from './auth';
+import { API_URL as API_BASE_URL} from "@/constants/api";
 
-const API_BASE_URL = "http://192.168.68.141:8080";
 
 if(!API_BASE_URL){
     throw new Error(
@@ -32,6 +32,7 @@ export const fetchApi = async <T = any>(
     endpoint: string,
     options: FetchApiOptions = {}
 ): Promise<T> => {
+
     const {
         method = 'GET',
         body,

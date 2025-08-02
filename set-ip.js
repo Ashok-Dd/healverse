@@ -15,7 +15,7 @@ for (const name of Object.keys(interfaces)) {
     if (ip) break;
 }
 
-const envContent = `EXPO_PUBLIC_API_URL=http://${ip}:8080\n`;
+const envContent = `export const API_URL = "http://${ip}:8080"\n`;
 
-fs.writeFileSync('.env', envContent);
+fs.writeFileSync('./constants/api.ts', envContent);
 console.log('✅ Updated .env with IP:', ip);
