@@ -1,12 +1,13 @@
 import { useAuthStore } from "@/store/authStore";
 import { useFonts } from "expo-font";
-import { router, Slot, SplashScreen } from "expo-router";
+import { Slot, SplashScreen } from "expo-router";
 import { useEffect, useState } from "react";
 import { Text, View } from "react-native";
 import {
   configureReanimatedLogger,
   ReanimatedLogLevel,
 } from "react-native-reanimated";
+import { SafeAreaProvider } from "react-native-safe-area-context";
 import "./globals.css";
 
 configureReanimatedLogger({
@@ -62,5 +63,9 @@ export default function RootLayout() {
     );
   }
 
-  return <Slot screenOptions={{ headerShown: false }} />;
+  return (
+    <SafeAreaProvider>
+      <Slot screenOptions={{ headerShown: false }} />
+    </SafeAreaProvider>
+  );
 }

@@ -1,26 +1,25 @@
+import { createDefaultHealthData } from "@/constants/data";
+import { fetchApi } from "@/lib/fetchApi";
+import { useAuthStore } from "@/store/authStore";
 import {
+  CreateExerciseLogData,
   CreateFoodLogData,
+  CreateWaterLogData,
+  DailySummary,
+  ExerciseIntensity,
   ExerciseLog,
   FoodLog,
   HealthData,
   HealthStore,
   MealType,
-  UpdateFoodLogData,
   UpdateExerciseLogData,
+  UpdateFoodLogData,
   UpdateWaterLogData,
-  User,
-  DailySummary,
-  ExerciseIntensity,
-  CreateExerciseLogData,
-  CreateWaterLogData,
   WaterLog,
 } from "@/types/type";
 import { create } from "zustand";
 import { devtools, persist } from "zustand/middleware";
 import { immer } from "zustand/middleware/immer";
-import { fetchApi } from "@/lib/fetchApi";
-import { createDefaultHealthData } from "@/lib/utils";
-import { useAuthStore } from "./authStore";
 
 const useHealthStore = create<HealthStore>()(
   devtools(
@@ -43,9 +42,8 @@ const useHealthStore = create<HealthStore>()(
         setSelectedDate: (date: string) => {
           set((state) => {
             state.selectedDate = date;
+            void get().fetchDashboardData(date);
           });
-          // Automatically fetch data when date changes
-          get().fetchDashboardData(date);
         },
 
         setHealthData: (data: HealthData) => {
@@ -88,16 +86,13 @@ const useHealthStore = create<HealthStore>()(
             }
 
             // Fetch data from API
-            const response = await fetchApi<HealthData>(
-              "/api/dashboard/today",
-              {
-                method: "GET",
-                requiresAuth: true,
-              }
-            );
+            // const response = await fetchApi<HealthData>(/api/dashboard/${targetDate}, {
+            //     method: 'GET',
+            //     requiresAuth: true,
+            // });
 
             set((state) => {
-              state.healthData = response;
+              state.healthData = createDefaultHealthData(targetDate);
               state.isLoading = false;
             });
           } catch (error) {
@@ -116,6 +111,7 @@ const useHealthStore = create<HealthStore>()(
         isValidDateForData: (date: string) => {
           const { currentDate } = get();
           const { user: currentUser } = useAuthStore.getState();
+
           // If no user, return false
           if (!currentUser) return false;
 
@@ -134,86 +130,118 @@ const useHealthStore = create<HealthStore>()(
           return true;
         },
 
-        // Food Log Actions
-        addFoodLog: (foodLogData: CreateFoodLogData) => {
-          set((state) => {
-            if (!state.healthData) return;
+        // Food Log Actions (updated to work with API)
+        addFoodLog: async (foodLogData: CreateFoodLogData) => {
+          try {
+            const response = await fetchApi<FoodLog>("/api/food-logs/log", {
+              method: "POST",
+              requiresAuth: true,
+              body: foodLogData,
+            });
 
-            const newFoodLog: FoodLog = {
-              ...foodLogData,
-              id: Date.now(), // Temporary ID, should be replaced by backend
-              createdAt: new Date().toISOString(),
-            };
+            set((state) => {
+              if (!state.healthData) return;
+              state.healthData.foodLogs.push(response);
 
-            state.healthData.foodLogs.push(newFoodLog);
+              // Update summary
+              state.healthData.summary.consumedCalories += response.calories;
+              state.healthData.summary.consumedProtein += response.protein;
+              state.healthData.summary.consumedCarbs += response.carbs;
+              state.healthData.summary.consumedFat += response.fat;
+            });
 
-            // Update summary
-            state.healthData.summary.consumedCalories += newFoodLog.calories;
-            state.healthData.summary.consumedProtein += newFoodLog.protein;
-            state.healthData.summary.consumedCarbs += newFoodLog.carbs;
-            state.healthData.summary.consumedFat += newFoodLog.fat;
-          });
-          get().recalculateProgress();
+            get().recalculateProgress();
+            return response;
+          } catch (error) {
+            console.error("Failed to add food log:", error);
+            throw error;
+          }
         },
 
-        updateFoodLog: (id: number, updates: UpdateFoodLogData) => {
-          set((state) => {
-            if (!state.healthData) return;
+        updateFoodLog: async (id: number, updates: UpdateFoodLogData) => {
+          try {
+            const response = await fetchApi<FoodLog>(`/api/food-logs/${id}`, {
+              method: "PUT",
+              requiresAuth: true,
+              body: updates,
+            });
 
-            const index = (state.healthData.foodLogs as FoodLog[]).findIndex(
-              (log) => log.id === id
-            );
-            if (index !== -1) {
-              const oldLog = state.healthData.foodLogs[index];
-              const updatedLog = { ...oldLog, ...updates };
+            set((state) => {
+              if (!state.healthData) return;
 
-              // Update summary by removing old values and adding new ones
-              state.healthData.summary.consumedCalories +=
-                updatedLog.calories - oldLog.calories;
-              state.healthData.summary.consumedProtein +=
-                updatedLog.protein - oldLog.protein;
-              state.healthData.summary.consumedCarbs +=
-                updatedLog.carbs - oldLog.carbs;
-              state.healthData.summary.consumedFat +=
-                updatedLog.fat - oldLog.fat;
+              const index = (state.healthData.foodLogs as FoodLog[]).findIndex(
+                (log) => log.id === id
+              );
+              if (index !== -1) {
+                const oldLog = state.healthData.foodLogs[index];
 
-              state.healthData.foodLogs[index] = updatedLog;
-            }
-          });
-          get().recalculateProgress();
+                // Update summary by removing old values and adding new ones
+                state.healthData.summary.consumedCalories +=
+                  response.calories - oldLog.calories;
+                state.healthData.summary.consumedProtein +=
+                  response.protein - oldLog.protein;
+                state.healthData.summary.consumedCarbs +=
+                  response.carbs - oldLog.carbs;
+                state.healthData.summary.consumedFat +=
+                  response.fat - oldLog.fat;
+
+                state.healthData.foodLogs[index] = response;
+              }
+            });
+
+            get().recalculateProgress();
+            return response;
+          } catch (error) {
+            console.error("Failed to update food log:", error);
+            throw error;
+          }
         },
 
-        deleteFoodLog: (id: number) => {
-          set((state) => {
-            if (!state.healthData) return;
+        deleteFoodLog: async (id: number) => {
+          try {
+            await fetchApi(`/api/food-logs/${id}`, {
+              method: "DELETE",
+              requiresAuth: true,
+            });
 
-            const logToDelete = (state.healthData.foodLogs as FoodLog[]).find(
-              (log) => log.id === id
-            );
-            if (logToDelete) {
-              // Update summary by removing the deleted log's values
-              state.healthData.summary.consumedCalories -= logToDelete.calories;
-              state.healthData.summary.consumedProtein -= logToDelete.protein;
-              state.healthData.summary.consumedCarbs -= logToDelete.carbs;
-              state.healthData.summary.consumedFat -= logToDelete.fat;
+            set((state) => {
+              if (!state.healthData) return;
 
-              state.healthData.foodLogs = (
-                state.healthData.foodLogs as FoodLog[]
-              ).filter((log) => log.id !== id);
-            }
-          });
-          get().recalculateProgress();
+              const logToDelete = (state.healthData.foodLogs as FoodLog[]).find(
+                (log) => log.id === id
+              );
+              if (logToDelete) {
+                // Update summary by removing the deleted log's values
+                state.healthData.summary.consumedCalories -=
+                  logToDelete.calories;
+                state.healthData.summary.consumedProtein -= logToDelete.protein;
+                state.healthData.summary.consumedCarbs -= logToDelete.carbs;
+                state.healthData.summary.consumedFat -= logToDelete.fat;
+
+                state.healthData.foodLogs = (
+                  state.healthData.foodLogs as FoodLog[]
+                ).filter((log) => log.id !== id);
+              }
+            });
+
+            get().recalculateProgress();
+          } catch (error) {
+            console.error("Failed to delete food log:", error);
+            throw error;
+          }
         },
 
         getFoodLogById: (id: number) => {
           const { healthData } = get();
-          return healthData?.foodLogs.find((log) => log.id === id);
+          return (healthData?.foodLogs as FoodLog[]).find(
+            (log) => log.id === id
+          );
         },
 
         getFoodLogsByMealType: (mealType: MealType) => {
           const { healthData } = get();
           return (
-            healthData?.foodLogs.filter((log) => log.mealType === mealType) ||
+            healthData?.foodLogs?.filter((log) => log.mealType === mealType) ??
             []
           );
         },
@@ -221,76 +249,144 @@ const useHealthStore = create<HealthStore>()(
         getFoodLogsByDate: (date: string) => {
           const { healthData } = get();
           return (
-            healthData?.foodLogs.filter((log) =>
+            (healthData?.foodLogs as FoodLog[]).filter((log) =>
               log.loggedAt.startsWith(date)
             ) || []
           );
         },
 
-        // Exercise Log Actions
-        addExerciseLog: (exerciseLogData: CreateExerciseLogData) => {
-          set((state) => {
-            if (!state.healthData) return;
-
-            const newExerciseLog: ExerciseLog = {
-              ...exerciseLogData,
-              id: Date.now(),
-              createdAt: new Date().toISOString(),
-            };
-
-            state.healthData.exerciseLogs.push(newExerciseLog);
-            state.healthData.summary.caloriesBurned +=
-              newExerciseLog.caloriesBurned;
-          });
-          get().recalculateProgress();
+        fetchTodaysFoodLogs: async () => {
+          try {
+            const response = await fetchApi<FoodLog[]>("/api/food-logs/today", {
+              method: "GET",
+              requiresAuth: true,
+            });
+            return response;
+          } catch (error) {
+            console.error("Failed to fetch today's food logs:", error);
+            throw error;
+          }
         },
 
-        updateExerciseLog: (id: number, updates: UpdateExerciseLogData) => {
-          set((state) => {
-            if (!state.healthData) return;
+        fetchFoodLogsByMealType: async (mealType: MealType) => {
+          try {
+            const response = await fetchApi<FoodLog[]>(
+              `/api/food-logs/today/${mealType}`,
+              {
+                method: "GET",
+                requiresAuth: true,
+              }
+            );
+            return response;
+          } catch (error) {
+            console.error(`Failed to fetch ${mealType} food logs:`, error);
+            throw error;
+          }
+        },
 
-            const index = (
-              state.healthData.exerciseLogs as ExerciseLog[]
-            ).findIndex((log) => log.id === id);
-            if (index !== -1) {
-              const oldLog = state.healthData.exerciseLogs[index];
-              const updatedLog = { ...oldLog, ...updates };
+        // Exercise Log Actions (updated to work with API)
+        addExerciseLog: async (exerciseLogData: CreateExerciseLogData) => {
+          try {
+            const response = await fetchApi<ExerciseLog>(
+              "/api/exercise-logs/log",
+              {
+                method: "POST",
+                requiresAuth: true,
+                body: exerciseLogData,
+              }
+            );
 
+            set((state) => {
+              if (!state.healthData) return;
+              state.healthData.exerciseLogs.push(response);
               state.healthData.summary.caloriesBurned +=
-                updatedLog.caloriesBurned - oldLog.caloriesBurned;
-              state.healthData.exerciseLogs[index] = updatedLog;
-            }
-          });
-          get().recalculateProgress();
+                response.caloriesBurned;
+            });
+
+            get().recalculateProgress();
+            return response;
+          } catch (error) {
+            console.error("Failed to add exercise log:", error);
+            throw error;
+          }
         },
 
-        deleteExerciseLog: (id: number) => {
-          set((state) => {
-            if (!state.healthData) return;
+        updateExerciseLog: async (
+          id: number,
+          updates: UpdateExerciseLogData
+        ) => {
+          try {
+            const response = await fetchApi<ExerciseLog>(
+              `/api/exercise-logs/${id}`,
+              {
+                method: "PUT",
+                requiresAuth: true,
+                body: updates,
+              }
+            );
 
-            const logToDelete = (
-              state.healthData.exerciseLogs as ExerciseLog[]
-            ).find((log) => log.id === id);
-            if (logToDelete) {
-              state.healthData.summary.caloriesBurned -=
-                logToDelete.caloriesBurned;
-              state.healthData.exerciseLogs = (
+            set((state) => {
+              if (!state.healthData) return;
+
+              const index = (
                 state.healthData.exerciseLogs as ExerciseLog[]
-              ).filter((log) => log.id !== id);
-            }
-          });
-          get().recalculateProgress();
+              ).findIndex((log) => log.id === id);
+              if (index !== -1) {
+                const oldLog = state.healthData.exerciseLogs[index];
+                state.healthData.summary.caloriesBurned +=
+                  response.caloriesBurned - oldLog.caloriesBurned;
+                state.healthData.exerciseLogs[index] = response;
+              }
+            });
+
+            get().recalculateProgress();
+            return response;
+          } catch (error) {
+            console.error("Failed to update exercise log:", error);
+            throw error;
+          }
+        },
+
+        deleteExerciseLog: async (id: number) => {
+          try {
+            await fetchApi(`/api/exercise-logs/${id}`, {
+              method: "DELETE",
+              requiresAuth: true,
+            });
+
+            set((state) => {
+              if (!state.healthData) return;
+
+              const logToDelete = (
+                state.healthData.exerciseLogs as ExerciseLog[]
+              ).find((log) => log.id === id);
+              if (logToDelete) {
+                state.healthData.summary.caloriesBurned -=
+                  logToDelete.caloriesBurned;
+                state.healthData.exerciseLogs = (
+                  state.healthData.exerciseLogs as ExerciseLog[]
+                ).filter((log) => log.id !== id);
+              }
+            });
+
+            get().recalculateProgress();
+          } catch (error) {
+            console.error("Failed to delete exercise log:", error);
+            throw error;
+          }
         },
 
         getExerciseLogById: (id: number) => {
           const { healthData } = get();
-          return healthData?.exerciseLogs.find((log) => log.id === id);
+          return (healthData?.exerciseLogs as ExerciseLog[]).find(
+            (log) => log.id === id
+          );
         },
 
         getExerciseLogsByDate: (date: string) => {
           const { healthData } = get();
           return (
-            healthData?.exerciseLogs.filter((log) =>
+            (healthData?.exerciseLogs as ExerciseLog[]).filter((log) =>
               log.loggedAt.startsWith(date)
             ) || []
           );
@@ -299,27 +395,86 @@ const useHealthStore = create<HealthStore>()(
         getExerciseLogsByIntensity: (intensity: ExerciseIntensity) => {
           const { healthData } = get();
           return (
-            healthData?.exerciseLogs.filter(
+            (healthData?.exerciseLogs as ExerciseLog[]).filter(
               (log) => log.intensity === intensity
             ) || []
           );
         },
 
-        // Water Log Actions
-        addWaterLog: (waterLogData: CreateWaterLogData) => {
-          set((state) => {
-            if (!state.healthData) return;
+        fetchTodaysExerciseLogs: async () => {
+          try {
+            const response = await fetchApi<ExerciseLog[]>(
+              "/api/exercise-logs/today",
+              {
+                method: "GET",
+                requiresAuth: true,
+              }
+            );
+            return response;
+          } catch (error) {
+            console.error("Failed to fetch today's exercise logs:", error);
+            throw error;
+          }
+        },
 
-            const newWaterLog: WaterLog = {
-              ...waterLogData,
-              id: Date.now(),
-              createdAt: new Date().toISOString(),
-            };
+        fetchExerciseTypes: async () => {
+          try {
+            const response = await fetchApi<
+              { name: string; metValue: number; category: string }[]
+            >("/api/exercise-logs/types", {
+              method: "GET",
+              requiresAuth: true,
+            });
+            return response;
+          } catch (error) {
+            console.error("Failed to fetch exercise types:", error);
+            throw error;
+          }
+        },
 
-            state.healthData.waterLogs.push(newWaterLog);
-            state.healthData.summary.waterConsumedMl += newWaterLog.amountMl;
-          });
-          get().recalculateProgress();
+        // Water Log Actions (updated to work with API)
+        addWaterLog: async (waterLogData: CreateWaterLogData) => {
+          try {
+            const response = await fetchApi<WaterLog>("/api/water-logs/log", {
+              method: "POST",
+              requiresAuth: true,
+              body: waterLogData,
+            });
+
+            set((state) => {
+              if (!state.healthData) return;
+              state.healthData.waterLogs.push(response);
+              state.healthData.summary.waterConsumedMl += response.amountMl;
+            });
+
+            get().recalculateProgress();
+            return response;
+          } catch (error) {
+            console.error("Failed to add water log:", error);
+            throw error;
+          }
+        },
+
+        addQuickWaterLog: async (presetType: "GLASS" | "BOTTLE" | "LARGE") => {
+          try {
+            const response = await fetchApi<WaterLog>("/api/water-logs/quick", {
+              method: "POST",
+              requiresAuth: true,
+              body: { presetType },
+            });
+
+            set((state) => {
+              if (!state.healthData) return;
+              state.healthData.waterLogs.push(response);
+              state.healthData.summary.waterConsumedMl += response.amountMl;
+            });
+
+            get().recalculateProgress();
+            return response;
+          } catch (error) {
+            console.error("Failed to add quick water log:", error);
+            throw error;
+          }
         },
 
         updateWaterLog: (id: number, updates: UpdateWaterLogData) => {
@@ -331,7 +486,7 @@ const useHealthStore = create<HealthStore>()(
             );
             if (index !== -1) {
               const oldLog = state.healthData.waterLogs[index];
-              const updatedLog = { ...oldLog, ...updates };
+              const updatedLog = { ...oldLog, ...updates } as WaterLog;
 
               state.healthData.summary.waterConsumedMl +=
                 updatedLog.amountMl - oldLog.amountMl;
@@ -341,35 +496,81 @@ const useHealthStore = create<HealthStore>()(
           get().recalculateProgress();
         },
 
-        deleteWaterLog: (id: number) => {
-          set((state) => {
-            if (!state.healthData) return;
+        deleteWaterLog: async (id: number) => {
+          try {
+            await fetchApi(`/api/water-logs/${id}`, {
+              method: "DELETE",
+              requiresAuth: true,
+            });
 
-            const logToDelete = (state.healthData.waterLogs as WaterLog[]).find(
-              (log) => log.id === id
-            );
-            if (logToDelete) {
-              state.healthData.summary.waterConsumedMl -= logToDelete.amountMl;
-              state.healthData.waterLogs = (
+            set((state) => {
+              if (!state.healthData) return;
+
+              const logToDelete = (
                 state.healthData.waterLogs as WaterLog[]
-              ).filter((log) => log.id !== id);
-            }
-          });
-          get().recalculateProgress();
+              ).find((log) => log.id === id);
+              if (logToDelete) {
+                state.healthData.summary.waterConsumedMl -=
+                  logToDelete.amountMl;
+                state.healthData.waterLogs = (
+                  state.healthData.waterLogs as WaterLog[]
+                ).filter((log) => log.id !== id);
+              }
+            });
+
+            get().recalculateProgress();
+          } catch (error) {
+            console.error("Failed to delete water log:", error);
+            throw error;
+          }
         },
 
         getWaterLogById: (id: number) => {
           const { healthData } = get();
-          return healthData?.waterLogs.find((log) => log.id === id);
+          return (healthData?.waterLogs as WaterLog[]).find(
+            (log) => log.id === id
+          );
         },
 
         getWaterLogsByDate: (date: string) => {
           const { healthData } = get();
           return (
-            healthData?.waterLogs.filter((log) =>
+            (healthData?.waterLogs as WaterLog[]).filter((log) =>
               log.loggedAt.startsWith(date)
             ) || []
           );
+        },
+
+        fetchTodaysWaterLogs: async () => {
+          try {
+            const response = await fetchApi<WaterLog[]>(
+              "/api/water-logs/today",
+              {
+                method: "GET",
+                requiresAuth: true,
+              }
+            );
+            return response;
+          } catch (error) {
+            console.error("Failed to fetch today's water logs:", error);
+            throw error;
+          }
+        },
+
+        fetchTodaysWaterTotal: async () => {
+          try {
+            const response = await fetchApi<{ totalMl: number }>(
+              "/api/water-logs/today/total",
+              {
+                method: "GET",
+                requiresAuth: true,
+              }
+            );
+            return response.totalMl;
+          } catch (error) {
+            console.error("Failed to fetch today's water total:", error);
+            throw error;
+          }
         },
 
         // Summary Actions
@@ -408,6 +609,69 @@ const useHealthStore = create<HealthStore>()(
             summary.waterProgress =
               (summary.waterConsumedMl / summary.targetWaterMl) * 100;
           });
+        },
+
+        // Weekly Dashboard
+        fetchWeeklyDashboard: async () => {
+          try {
+            const response = await fetchApi<{
+              weeklySummaries: DailySummary[];
+              weeklyStats: {
+                avgCaloriesConsumed: number;
+                avgCaloriesBurned: number;
+                avgWaterIntake: number;
+                daysOnTrack: number;
+                totalDays: number;
+              };
+            }>("/api/dashboard/weekly", {
+              method: "GET",
+              requiresAuth: true,
+            });
+            return response;
+          } catch (error) {
+            console.error("Failed to fetch weekly dashboard:", error);
+            throw error;
+          }
+        },
+
+        // Nutrition Sync
+        syncTodaysNutrition: async () => {
+          try {
+            const response = await fetchApi<DailySummary>(
+              "/api/nutrition-sync/sync/today",
+              {
+                method: "POST",
+                requiresAuth: true,
+              }
+            );
+
+            set((state) => {
+              if (state.healthData) {
+                state.healthData.summary = response;
+              }
+            });
+
+            return response;
+          } catch (error) {
+            console.error("Failed to sync today's nutrition:", error);
+            throw error;
+          }
+        },
+
+        syncNutritionByDate: async (date: string) => {
+          try {
+            const response = await fetchApi<DailySummary>(
+              `/api/nutrition-sync/sync/${date}`,
+              {
+                method: "POST",
+                requiresAuth: true,
+              }
+            );
+            return response;
+          } catch (error) {
+            console.error("Failed to sync nutrition for date:", error);
+            throw error;
+          }
         },
 
         // Utility Actions

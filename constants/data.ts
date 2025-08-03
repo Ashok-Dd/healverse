@@ -1,15 +1,14 @@
-// Place this in your screen/component file
-
 
 import {
     ActivityLevel,
     DailySummary,
     DietaryRestriction,
+    ExerciseIntensity,
     Goal,
     HealthCondition,
-    HealthData,
-    OptionsCardProps
-} from "@/types/type";
+    HealthData, Meal,
+    OptionsCardProps, User
+} from "@/types/type.d";
 
 export const BOY_OPTIONS : {label: string, image: any, value: ActivityLevel, icon: string}[] = [
     {
@@ -203,6 +202,171 @@ export const healthConditions: OptionsCardProps<HealthCondition>[] = [
 ];
 
 
+export const createDefaultSummary = (date: string): DailySummary => ({
+    date,
+    targetCalories: 0,
+    consumedCalories: 0,
+    caloriesBurned: 0,
+    remainingCalories: 0,
+    targetProtein: 0,
+    consumedProtein: 0,
+    targetCarbs: 0,
+    consumedCarbs: 0,
+    targetFat: 0,
+    consumedFat: 0,
+    waterConsumedMl: 0,
+    targetWaterMl: 0,
+    caloriesProgress: 0,
+    proteinProgress: 0,
+    carbsProgress: 0,
+    fatProgress: 0,
+    waterProgress: 0,
+});
 
+export const createDefaultHealthData = (date: string): HealthData => ({
+    summary: createDefaultSummary(date),
+    foodLogs: [{
+            id: 1,
+            user : null ,
+            mealType: "BREAKFAST", // or MealType.BREAKFAST if you're using enums
+            foodName: "Oats with Milk",
+            quantity: 1,
+            unit: "bowl",
+            calories: 250,
+            protein: 8,
+            carbs: 40,
+            fat: 6,
+            loggedAt: new Date().toISOString(),
+            isFromCamera: false,
+            imageDescription: "A bowl of oats with sliced bananas",
+            createdAt: new Date().toISOString(),
+            } , {
+            id: 1,
+            user : null ,
+            mealType: "LUNCH", // or MealType.BREAKFAST if you're using enums
+            foodName: "Oats with Milk",
+            quantity: 1,
+            unit: "bowl",
+            calories: 250,
+            protein: 8,
+            carbs: 40,
+            fat: 6,
+            loggedAt: new Date().toISOString(),
+            isFromCamera: false,
+            imageDescription: "A bowl of oats with sliced bananas",
+            createdAt: new Date().toISOString(),
+            } ],
+    exerciseLogs: [{
+        id: 1,
+        user: null,
+        exerciseName: "Jogging",
+        durationMinutes: 30,
+        intensity: ExerciseIntensity.MODERATE , // or ExerciseIntensity.MODERATE if you're using an enum
+        caloriesBurned: 220,
+        loggedAt: new Date().toISOString(),
+        createdAt: new Date().toISOString(),
+    } , {
+        id: 2,
+        user: null,
+        exerciseName: "Running",
+        durationMinutes: 60,
+        intensity: ExerciseIntensity.MODERATE , // or ExerciseIntensity.MODERATE if you're using an enum
+        caloriesBurned: 220,
+        loggedAt: new Date().toISOString(),
+        createdAt: new Date().toISOString(),
+    }],
+    waterLogs: [{
+        id: 1,
+        user: null,
+        amountMl: 500,
+        loggedAt: new Date().toISOString(),
+        createdAt: new Date().toISOString(),
+    } , {
+        id: 1,
+        user: null,
+        amountMl: 500,
+        loggedAt: new Date().toISOString(),
+        createdAt: new Date().toISOString(),
+    }],
+});
 
 export const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+
+
+enum MealType {
+    BREAKFAST = 'BREAKFAST',
+    LUNCH = 'LUNCH',
+    DINNER = 'DINNER',
+    SNACK = 'SNACK'
+}
+
+
+interface DietPlan {
+    id: number;
+    user?: User;
+    planDate: string; // ISO date format, e.g. '2025-07-30'
+    totalCalories: number;
+    totalProtein: number;
+    totalCarbs: number;
+    totalFat: number;
+    isGenerated: boolean;
+    createdAt: string; // ISO datetime format, e.g. '2025-07-30T12:34:56'
+    meals: Meal[];
+}
+
+
+
+export const getDummyDietPlan = (): DietPlan => ({
+        id: 1,
+        planDate: "2025-07-30",
+        totalCalories: 2000,
+        totalProtein: 120,
+        totalCarbs: 250,
+        totalFat: 70,
+        isGenerated: true,
+        createdAt: "2025-07-30T09:00:00Z",
+        meals: [
+            {
+                id: 1,
+                mealType: MealType.BREAKFAST,
+                mealName: "Oatmeal with Fruits",
+                calories: 350,
+                protein: 15,
+                carbs: 60,
+                fat: 10,
+                preparationTimeMinutes: 10,
+                instructions: "Boil oats, mix with fruits and serve.",
+                healthBenefits: "Good source of fiber and vitamins.",
+                createdAt: "2025-07-30T07:00:00Z",
+                ingredients: ["Oats", "Banana", "Berries", "Milk"]
+            },
+            {
+                id: 2,
+                mealType: MealType.LUNCH,
+                mealName: "Grilled Chicken Salad",
+                calories: 500,
+                protein: 40,
+                carbs: 20,
+                fat: 25,
+                preparationTimeMinutes: 20,
+                instructions: "Grill chicken, chop vegetables, and mix with dressing.",
+                healthBenefits: "High in protein and healthy fats.",
+                createdAt: "2025-07-30T12:00:00Z",
+                ingredients: ["Chicken Breast", "Lettuce", "Olive Oil", "Tomatoes", "Cucumber"]
+            },
+            {
+                id: 3,
+                mealType: MealType.DINNER,
+                mealName: "Quinoa with Veggies",
+                calories: 450,
+                protein: 20,
+                carbs: 50,
+                fat: 15,
+                preparationTimeMinutes: 25,
+                instructions: "Cook quinoa, sauté vegetables, mix and serve.",
+                healthBenefits: "Rich in protein, fiber, and antioxidants.",
+                createdAt: "2025-07-30T19:00:00Z",
+                ingredients: ["Quinoa", "Bell Peppers", "Zucchini", "Spinach", "Olive Oil"]
+            }
+        ] as Meal[]
+});
