@@ -77,7 +77,7 @@ const Step2 = memo(() => {
     useEffect(() => {
         const timer = setTimeout(() => {
             setTargetWeightKg(targetWeight);
-        }, 100); // 100ms delay
+        }, 150);
 
         return () => clearTimeout(timer);
     }, [targetWeight]);
@@ -103,11 +103,7 @@ const Step2 = memo(() => {
                     weight={weightForBMI}
                 />
 
-                <View className="items-center mb-8">
-                    <Text className="text-sm text-gray-500 mb-4">
-                        Drag the scale below to adjust
-                    </Text>
-                </View>
+
 
                 <WeightRulerPicker
                     minWeight={weightRange.min}

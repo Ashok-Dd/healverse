@@ -15,58 +15,7 @@ interface WeightRange {
     step: number;
 }
 
-// // Optimized Weight Ruler Component
-// const WeightRuler = memo<{
-//     selectedUnit: "kg" | "lbs";
-//     selectedWeight: number;
-//     weightRange: WeightRange;
-//     onWeightChange: (value: string) => void;
-// }>(({ selectedUnit, selectedWeight, weightRange, onWeightChange }) => {
-//     const screenWidth = useMemo(() => Dimensions.get("window").width, []);
-//
-//     // Memoized text styles for better performance
-//     const valueTextStyle = useMemo((): TextStyle => ({
-//         color: "#3B82F6",
-//         fontSize: 56,
-//         fontWeight: "300",
-//     }), []);
-//
-//     const unitTextStyle = useMemo((): TextStyle => ({
-//         color: "#6B7280",
-//         fontSize: 28,
-//         fontWeight: "400",
-//     }), []);
-//
-//     return (
-//         <View className="flex-1 justify-center">
-//             <RulerPicker
-//                 width={screenWidth}
-//                 height={150}
-//                 min={weightRange.min}
-//                 max={weightRange.max}
-//                 step={weightRange.step}
-//                 fractionDigits={selectedUnit === "kg" ? 1 : 0}
-//                 initialValue={selectedWeight}
-//                 onValueChange={onWeightChange}
-//                 onValueChangeEnd={onWeightChange}
-//                 unit={selectedUnit}
-//                 indicatorColor="#3B82F6"
-//                 indicatorHeight={70}
-//                 shortStepHeight={20}
-//                 longStepHeight={35}
-//                 stepWidth={2}
-//                 gapBetweenSteps={10}
-//                 shortStepColor="#E5E7EB"
-//                 longStepColor="#9CA3AF"
-//                 valueTextStyle={valueTextStyle}
-//                 unitTextStyle={unitTextStyle}
-//                 decelerationRate="fast"
-//             />
-//         </View>
-//     );
-// });
 
-// Optimized Unit Toggle Component
 
 // Main optimized Step4 Component
 const Step4 = memo(() => {
@@ -76,7 +25,7 @@ const Step4 = memo(() => {
 
     const [selectedWeight , setSelectedWeight] = useState<number>(currentWeightKg);
 
-    // Optimized weight conversion function with memoization
+
     const convertWeight = useCallback(
         (weight: number, fromUnit: "kg" | "lbs", toUnit: "kg" | "lbs"): number => {
             if (fromUnit === toUnit) return weight;

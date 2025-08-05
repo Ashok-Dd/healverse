@@ -30,15 +30,15 @@ export type UserProfileState = UserProfileData & UserProfileActions;
 
 export const useUserProfileStore = create<UserProfileState>((set, get) => ({
     username : '',
-    gender: 'MALE' as const,
+    gender: 'MALE',
     age: 20,
     heightCm: 170,
     currentWeightKg: 50,
     targetWeightKg: 50,
-    activityLevel: 'SEDENTARY' as const,
-    goal: 'MAINTAIN_WEIGHT' as const,
-    weightLossSpeed: 'MODERATE' as const,
-    dietaryRestriction: 'NONE' as const,
+    activityLevel: "SEDENTARY",
+    goal: "LOSE_WEIGHT",
+    weightLossSpeed: "MODERATE",
+    dietaryRestriction: "VEGAN",
     healthCondition: 'NONE' as const,
     otherHealthConditionDescription: '',
 
@@ -75,5 +75,4 @@ export const useUserProfileStore = create<UserProfileState>((set, get) => ({
         otherHealthConditionDescription: '',
     }),
 
-    // Reset to default values (same as clear in this case)
 }));

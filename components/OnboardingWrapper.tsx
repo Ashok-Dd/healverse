@@ -2,7 +2,7 @@ import { images } from "@/constants";
 import useCurrentStep from "@/hooks/useCurrentStep";
 import { useRouter } from "expo-router";
 import React, { JSX } from "react";
-import { Image, ImageSourcePropType, Text, View } from "react-native";
+import {Image, ImageSourcePropType, KeyboardAvoidingView, Platform, Text, View} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import Button from "./Button";
 import StepProgressBar from "./StepProgressBar";
@@ -36,20 +36,20 @@ const OnboardingWrapper = ({ children }: { children: JSX.Element }) => {
       </View>
 
       {/* step */}
-      <View className="flex-1  overflow-y-auto flex">{children}</View>
+      <View  className="flex-1">{children}</View>
 
       {/* buttton */}
-      <Button
-          title={currentStep === totalSteps ? "Register" : "Continue"}
-        onPress={() => {
-          currentStep < totalSteps
-            ? router.push(`/(auth)/(onboarding)/step${currentStep + 1}` as any)
-            : router.push("/(auth)/register" as any);
-        }}
+        { currentStep !== 11 &&  (<Button
+            title={currentStep === totalSteps ? "Register" : "Continue"}
+            onPress={() => {
+                currentStep < totalSteps
+                    ? router.push(`/(auth)/(onboarding)/step${currentStep + 1}` as any)
+                    : router.push("/(auth)/register" as any);
+            }}
 
-          className="mb-10 bg-primary-500 rounded-lg w-full shadow-medium"
-          textClassName="text-white font-jakarta-semi-bold text-lg"
-      />
+            className="mb-10 bg-primary-500 mx-auto rounded-xl w-full shadow-medium max-w-[75%]"
+            textClassName="text-white font-jakarta-semi-bold text-lg"
+        />)}
     </SafeAreaView>
   );
 };

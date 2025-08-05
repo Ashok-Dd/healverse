@@ -1,6 +1,7 @@
 import React from 'react';
 import { TouchableOpacity, Text, ActivityIndicator, View } from 'react-native';
 import { ButtonProps } from '@/types/type';
+import {MaterialIcons} from "@expo/vector-icons";
 
 const Button: React.FC<ButtonProps> = ({
                                            title,
@@ -11,9 +12,10 @@ const Button: React.FC<ButtonProps> = ({
                                            className = '',
                                            textClassName = '',
                                            icon,
-                                       }) => {
+                                           iconsize = 20
+}) => {
     const getButtonStyles = () => {
-        const baseStyles = 'flex-row items-center justify-center rounded-full px-2 py-3';
+        const baseStyles = 'flex-row items-center justify-center rounded-2xl px-2 py-3';
 
         if (variant === 'primary') {
             return `${baseStyles} bg-primary-600 ${disabled ? 'opacity-50' : ''} ${className}`;
@@ -44,7 +46,7 @@ const Button: React.FC<ButtonProps> = ({
                 />
             ) : (
                 <>
-                    {icon && <View className="mr-2">{icon}</View>}
+                    {icon &&  <MaterialIcons name={icon} size={iconsize} color="gray" />}
                     <Text className={getTextStyles()}>{title}</Text>
                 </>
             )}

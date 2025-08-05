@@ -22,10 +22,8 @@ const Step3 = () => {
     const [selectedHeight, setSelectedHeight] = React.useState<number>(100);
 
 
-    // Use ref to track if we've initialized the height
     const hasInitializedHeight = useRef(false);
 
-    // Memoize the height change handler to prevent recreation on every render
     const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
     const handleHeightChange = useCallback(
@@ -65,7 +63,7 @@ const Step3 = () => {
         if (!hasInitializedHeight.current) {
             hasInitializedHeight.current = true;
             // If heightCm exists in store, use it; otherwise default to 170
-            const initialHeight = selectedHeight || 170;
+            const initialHeight = selectedHeight ;
 
             // If heightCm was null/undefined, initialize the store
             if (!heightCm) {
@@ -80,7 +78,7 @@ const Step3 = () => {
 
         // After initial setup, use the current store value or fallback
         return {
-            height: selectedHeight || 170,
+            height: selectedHeight,
             unit: 'cm' as const
         };
     }, []); // Empty dependency array - only calculate once!
@@ -101,7 +99,7 @@ const Step3 = () => {
                 <HeightSelector
                     onHeightChange={handleHeightChange}
                     initialHeight={initialValues.height}
-                    initialUnit={initialValues.unit}
+                    initialUnit={initialValues.unit as 'cm' | 'ft'}
                     gender={gender as Gender}
                     maleAvatarSource={avatarSources.male}
                     femaleAvatarSource={avatarSources.female}

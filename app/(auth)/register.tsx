@@ -40,7 +40,7 @@ const Register = () => {
                 }
             });
 
-            router.push("/(root)/(tabs)/(home)" as any);
+            router.push("/(root)/(tabs)/tracker" as any);
         }catch (e) {
             console.log(e)
         }
@@ -62,7 +62,7 @@ const Register = () => {
                 />
             </View>
 
-            <View className="px-4 py-6  rounded-xl space-y-2">
+            <View className="px-4 py-6 flex-1 rounded-xl space-y-2">
                 <InfoRow icon={<FontAwesome5 name="user" size={20} color="black" />} label="Gender" value={profile.gender === 'MALE' ? 'Male' : 'Female'} />
                 <InfoRow icon={<MaterialIcons name="height" size={20} color="black" />} label="Height" value={`${profile.heightCm} cm`} />
                 <InfoRow icon={<FontAwesome5 name="birthday-cake" size={20} color="black" />} label="Age" value={`${profile.age}`} />
@@ -84,7 +84,13 @@ const Register = () => {
                 <Text className=" text-center rounded-full p-1 my-3 text-white bg-red-200">{error}</Text>
             )}
 
-            <Button disabled={isLoading} title={isLoading ? "Signing Up.." : "SignUp"}  onPress={() => handleSignUp()}/>
+            <Button
+                className="mb-10 bg-primary-500 mx-auto rounded-xl w-full shadow-medium max-w-[75%]"
+                textClassName="text-white font-jakarta-semi-bold text-lg"
+                disabled={isLoading}
+                title={isLoading ? "Signing Up.." : "SignUp"}
+                onPress={() => handleSignUp()}
+            />
         </SafeAreaView>
     );
 };

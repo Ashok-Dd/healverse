@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
-import { View, Text, TouchableOpacity, Dimensions, Image } from 'react-native';
+import {View, Text, TouchableOpacity, Dimensions, Image, ViewStyle, TextStyle, ImageStyle} from 'react-native';
 import { RulerPicker } from 'react-native-ruler-picker';
 import { HeightSelectorProps } from '@/types/type';
 
@@ -28,18 +28,18 @@ function formatFtInches(value: number): string {
 
 const HeightSelector: React.FC<HeightSelectorProps> = ({
                                                            onHeightChange,
-                                                           initialHeight = 170,
+                                                           initialHeight,
                                                            initialUnit = 'cm',
                                                            gender = 'MALE',
                                                            maleAvatarSource,
                                                            femaleAvatarSource,
                                                        }) => {
-    const [selectedUnit, setSelectedUnit] = useState<'cm' | 'ft'>(initialUnit);
+    const [selectedUnit, setSelectedUnit] = useState<'cm' | 'ft'>(initialUnit === 'cm' ? 'cm' : 'ft');
 
     // Store height in cm internally for accuracy
     const [cmHeight, setCmHeight] = useState(() => {
-        const height = initialUnit === 'cm' ? initialHeight : feetToCm(initialHeight);
-        return height || 170; // Ensure we always have a valid height
+        const height = initialUnit === 'cm' ? initialHeight : feetToCm(initialHeight!);
+        return height || 100; // Ensure we always have a valid height
     });
 
     // Key to force RulerPicker re-initialization
@@ -102,11 +102,9 @@ const HeightSelector: React.FC<HeightSelectorProps> = ({
         onHeightChange?.(emitValue, selectedUnit);
     }, [selectedUnit, onHeightChange]);
 
-    // Handle external prop changes (like from store) - but only once
     useEffect(() => {
-        // Only update if this is a significant change from the initial value and we haven't initialized yet
         if (!hasInitialized.current && initialHeight !== initialHeightRef.current) {
-            const newCmHeight = initialUnit === 'cm' ? initialHeight : feetToCm(initialHeight);
+            const newCmHeight = initialUnit === 'cm' ? initialHeight : feetToCm(initialHeight!);
 
             if (newCmHeight && Math.abs(newCmHeight - cmHeight) > 1) {
                 isInternalUpdate.current = true;
@@ -145,14 +143,14 @@ const HeightSelector: React.FC<HeightSelectorProps> = ({
             backgroundColor: 'transparent',
             flexDirection: 'column',
             justifyContent: 'center'
-        }}>
+        } as ViewStyle }>
             {/* Unit Toggle */}
             <View style={{
                 flexDirection: 'row',
                 justifyContent: 'center',
                 marginBottom: 16,
                 marginTop: 8
-            }}>
+            } as ViewStyle}>
                 <TouchableOpacity
                     onPress={() => handleUnitChange('cm')}
                     style={{
@@ -167,7 +165,7 @@ const HeightSelector: React.FC<HeightSelectorProps> = ({
                     <Text style={{
                         color: selectedUnit === 'cm' ? 'white' : '#374151',
                         fontWeight: 'bold',
-                    }}>
+                    } as TextStyle}>
                         cm
                     </Text>
                 </TouchableOpacity>
@@ -185,26 +183,26 @@ const HeightSelector: React.FC<HeightSelectorProps> = ({
                     <Text style={{
                         color: selectedUnit === 'ft' ? 'white' : '#374151',
                         fontWeight: 'bold',
-                    }}>
+                    } as TextStyle}>
                         ft
                     </Text>
                 </TouchableOpacity>
             </View>
 
             {/* Central value display */}
-            <View style={{ alignItems: 'center', marginBottom: 16 }}>
+            <View style={{ alignItems: 'center', marginBottom: 16 } as ViewStyle}>
                 <Text style={{
                     fontSize: 42,
                     fontWeight: '700',
                     color: '#222F4A',
                     marginBottom: 6
-                }}>
+                } as TextStyle}>
                     {selectedUnit === 'cm'
                         ? `${Math.round(displayCm)} cm`
                         : formatFtInches(displayFt)
                     }
                 </Text>
-                <Text style={{ color: '#6B7280', fontSize: 16 }}>
+                <Text style={{ color: '#6B7280', fontSize: 16 } as TextStyle}>
                     {selectedUnit === 'cm' ? 'Centimeters' : 'Feet & Inches'}
                 </Text>
             </View>
@@ -216,17 +214,17 @@ const HeightSelector: React.FC<HeightSelectorProps> = ({
                 position: 'relative',
                 flex: 1,
                 alignItems: 'center'
-            }}>
+            } as ViewStyle}>
                 {/* Avatar on left */}
-                <View style={{ flex: 1, alignItems: 'center' }}>
+                <View style={{ flex: 1, alignItems: 'center' } as ViewStyle}>
                     {(maleAvatarSource || femaleAvatarSource) && (
                         <Image
                             source={gender === 'MALE' ? maleAvatarSource : femaleAvatarSource}
                             style={{
-                                width: 300,
-                                height: 300,
+                                width: 200,
+                                height: 200,
                                 resizeMode: 'contain',
-                            }}
+                            } as ImageStyle}
                         />
                     )}
                 </View>
@@ -236,13 +234,12 @@ const HeightSelector: React.FC<HeightSelectorProps> = ({
             <View
                 style={{
                     position: 'absolute',
-                    right: "-50%",
+                    right: "-65%",
                     alignItems: 'center',
                     justifyContent: 'center',
                     transform: [{ rotate: '-90deg' }],
                     zIndex: -1,
-
-                }}
+                } as ViewStyle}
             >
                 <RulerPicker
                     key={`ruler-${rulerKey}-${selectedUnit}`} // Force re-mount on changes
@@ -267,9 +264,8 @@ const HeightSelector: React.FC<HeightSelectorProps> = ({
                     shortStepHeight={40}
                     longStepHeight={120}
                     unitTextStyle={{
-                        // @ts-ignore
-                        opacity: 0
-                    }}
+                        opacity : 0
+                    } as TextStyle}
                 />
             </View>
         </View>

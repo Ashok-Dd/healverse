@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "R-N",
+    "name": "Heal Verse",
     "slug": "R-N",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -9,7 +9,11 @@
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "infoPlist": {
+        "NSMicrophoneUsageDescription": "This app needs access to microphone for voice recognition",
+        "NSSpeechRecognitionUsageDescription": "This app needs access to speech recognition for voice commands"
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -17,7 +21,13 @@
         "backgroundColor": "#ffffff"
       },
       "edgeToEdgeEnabled": true,
-      "package": "com.anonymous.RN"
+      "package": "com.anonymous.RN",
+      "permissions": [
+        "android.permission.RECORD_AUDIO",
+        "android.permission.INTERNET",
+        "android.permission.MODIFY_AUDIO_SETTINGS",
+        "android.permission.ACCESS_NETWORK_STATE"
+      ]
     },
     "web": {
       "bundler": "metro",
@@ -35,7 +45,21 @@
           "backgroundColor": "#ffffff"
         }
       ],
-      "expo-secure-store"
+      "expo-secure-store",
+      [
+        "expo-speech",
+        {
+          "microphonePermission": "Allow $(PRODUCT_NAME) to access your microphone for voice recognition.",
+          "speechRecognitionPermission": "Allow $(PRODUCT_NAME) to access speech recognition for voice commands."
+        }
+      ],
+      [
+        "@react-native-voice/voice",
+        {
+          "microphonePermission": "This app uses the microphone to record audio for voice recognition.",
+          "speechRecognitionPermission": "This app uses speech recognition to convert voice to text."
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true

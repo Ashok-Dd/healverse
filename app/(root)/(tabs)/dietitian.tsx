@@ -1,11 +1,24 @@
-import { Text, View } from "react-native";
+import {useRef} from "react";
+import {generateUUID} from "@/lib/utils";
+import ChatScreen from "@/components/ChatScreen";
+import {KeyboardAvoidingView, Platform, StyleSheet, View} from "react-native";
 
-const Profile = () => {
+const Dietitian = () => {
+    const conversationId = useRef<string>(generateUUID());
+
+
     return (
-        <View className="h-screen flex items-center justify-center ">
-            <Text className="text-blue-500 font-bold text-5xl">Ai here ...</Text>
-        </View>
+        <KeyboardAvoidingView   style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+            <ChatScreen conversationId={conversationId.current} isExistingConversation={false}/>
+        </KeyboardAvoidingView>
     )
 }
 
-export default Profile ;
+export default Dietitian ;
+
+const styles = StyleSheet.create({
+    container: {
+        flex: 1,
+        backgroundColor: '#ffffff',
+    },
+});

@@ -132,7 +132,7 @@ export const useAuthStore = create<AuthState>()(
                 }
 
                 const response = await fetchApi<AuthResponse>('/auth/check-auth', {
-                    method: 'POST',
+                    method: 'GET',
                     requiresAuth: true,
                 });
 

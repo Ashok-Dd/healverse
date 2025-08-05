@@ -56,7 +56,7 @@ const WeightRulerPicker = memo(({
     }), []);
 
     return (
-        <View className="items-center" style={{ height: 120 }}>
+        <View className="items-center justify-center  flex-1" style={{ height: 120 }}>
             <RulerPicker
                 width={screenWidth}
                 height={120}

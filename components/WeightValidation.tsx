@@ -25,14 +25,14 @@ const WeightValidation = memo(({
 
     if (validationData.isHealthy) {
         return (
-            <View className="bg-green-100 rounded-xl p-4 mb-6 flex-row items-start">
+            <View className="bg-green-100 rounded-xl p-2 mb-4 flex-row items-start">
                 <View className="mr-3 mt-1">
                     <View className="bg-green-500 rounded-full w-6 h-6 items-center justify-center">
                         <Text className="text-white text-xs font-bold">✓</Text>
                     </View>
                 </View>
                 <View className="flex-1">
-                    <Text className="text-green-700 font-semibold text-base mb-1">
+                    <Text className="text-green-700 font-semibold  mb-1">
                         Great target weight!
                     </Text>
                     <Text className="text-green-600 text-sm leading-5">

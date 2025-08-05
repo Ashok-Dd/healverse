@@ -2,7 +2,7 @@ import DaySelector from "@/components/DaySelector";
 import NutritionInfo from "@/components/NutritionInfo";
 import useHealthStore from "@/store/healthStore";
 import { Feather } from "@expo/vector-icons";
-import React, {useEffect} from "react";
+import React from "react";
 import {
     ActivityIndicator,
     ScrollView,
@@ -81,9 +81,9 @@ const DietLoggingApp: React.FC = () => {
         fetchDashboardData,
     } = useHealthStore();
 
-    useEffect(() => {
-        fetchDashboardData();
-    }, [selectedDate]);
+    // useEffect(() => {
+    //     fetchDashboardData();
+    // }, [selectedDate]);
 
     const handleDateChange = (date: string) => {
         setSelectedDate(date);

@@ -8,4 +8,4 @@ export default function Test() {
             <Text style={{ fontSize: 16 } as TextStyle}>Initializing...</Text>
         </View>
     );
-}
+};
