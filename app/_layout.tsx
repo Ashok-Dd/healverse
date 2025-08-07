@@ -1,71 +1,74 @@
-import { useAuthStore } from "@/store/authStore";
+import { Slot, SplashScreen, router } from "expo-router";
 import { useFonts } from "expo-font";
-import { Slot, SplashScreen } from "expo-router";
 import { useEffect, useState } from "react";
-import { Text, View } from "react-native";
 import {
   configureReanimatedLogger,
   ReanimatedLogLevel,
 } from "react-native-reanimated";
-import { SafeAreaProvider } from "react-native-safe-area-context";
+import { View } from "react-native";
+import { QueryClientProvider } from "@tanstack/react-query";
+import { getQueryClient } from "@/lib/react-query-client";
+import { useAuthStore } from "@/store/authStore";
+import "react-native-gesture-handler";
+// Optional: global styles for tailwind or other CSS-in-JS
 import "./globals.css";
 
+// Configure Reanimated logs (optional)
 configureReanimatedLogger({
   level: ReanimatedLogLevel.warn,
   strict: false,
 });
 
 export default function RootLayout() {
-  const [loaded, error] = useFonts({
+  const [fontsLoaded, fontError] = useFonts({
     "Jakarta-Bold": require("../assets/fonts/PlusJakartaSans-Bold.ttf"),
     "Jakarta-ExtraBold": require("../assets/fonts/PlusJakartaSans-ExtraBold.ttf"),
     "Jakarta-ExtraLight": require("../assets/fonts/PlusJakartaSans-ExtraLight.ttf"),
     "Jakarta-Light": require("../assets/fonts/PlusJakartaSans-Light.ttf"),
     "Jakarta-Medium": require("../assets/fonts/PlusJakartaSans-Medium.ttf"),
-    Jakarta: require("../assets/fonts/PlusJakartaSans-Regular.ttf"),
+    "Jakarta-Regular": require("../assets/fonts/PlusJakartaSans-Regular.ttf"),
     "Jakarta-SemiBold": require("../assets/fonts/PlusJakartaSans-SemiBold.ttf"),
   });
 
-  // const router = useRouter();
-  const { checkAuth, isLoading } = useAuthStore();
+  const { checkAuth } = useAuthStore();
   const [appReady, setAppReady] = useState(false);
+  const [isBootstrapping, setIsBootstrapping] = useState(true);
 
   useEffect(() => {
-    if (error) throw error;
-    if (loaded) SplashScreen.hideAsync();
-  }, [loaded, error]);
+    if (fontError) throw fontError;
+    if (fontsLoaded) SplashScreen.hideAsync();
+  }, [fontsLoaded, fontError]);
 
   useEffect(() => {
     const bootstrap = async () => {
       await checkAuth();
-      setAppReady(true); // Ensure layout has rendered before navigating
+      setAppReady(true);
+      setIsBootstrapping(false); // ✅ Only end bootstrapping here
     };
     bootstrap();
   }, []);
 
-  // useEffect(() => {
-  //   if (appReady && !isLoading) {
-  //     const { isAuthenticated } = useAuthStore.getState();
-  //     console.log("isAuthenticated", isAuthenticated);
-  //     if (isAuthenticated) {
-  //       router.replace("/(root)/(tabs)/tracker");
-  //     } else {
-  //       router.replace("/(auth)/welcome");
-  //     }
-  //   }
-  // }, [appReady, isLoading]);
+  useEffect(() => {
+    if (appReady) {
+      const { isAuthenticated } = useAuthStore.getState();
+      if (isAuthenticated) {
+        router.replace("/(root)/(tabs)/tracker");
+      } else {
+        router.replace("/(auth)/welcome");
+      }
+    }
+  }, [appReady]);
 
-  if (!loaded || isLoading) {
-    return (
-      <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
-        <Text style={{ fontSize: 16 }}>Loading...</Text>
-      </View>
-    );
+  // ✅ Only show loading during first-time bootstrap
+  if (!fontsLoaded || isBootstrapping) {
+    return null;
   }
 
   return (
-    <SafeAreaProvider>
-      <Slot screenOptions={{ headerShown: false }} />
-    </SafeAreaProvider>
+    <QueryClientProvider client={getQueryClient()}>
+      <View className={"flex-1 bg-white"}>
+        <Slot />
+      </View>
+    </QueryClientProvider>
   );
 }

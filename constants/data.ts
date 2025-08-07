@@ -2,13 +2,12 @@
 import {
     ActivityLevel,
     DailySummary,
-    DietaryRestriction,
-    ExerciseIntensity,
+    DietaryRestriction, DietPlan,
     Goal,
     HealthCondition,
-    HealthData, Meal,
+    HealthData, HealthQuery, Meal,
     OptionsCardProps, User
-} from "@/types/type.d";
+} from "@/types/type";
 
 export const BOY_OPTIONS : {label: string, image: any, value: ActivityLevel, icon: string}[] = [
     {
@@ -35,6 +34,12 @@ export const BOY_OPTIONS : {label: string, image: any, value: ActivityLevel, ico
         value: "VERY_ACTIVE",
         icon: "🔥"
     },
+    {
+        label : "Extremely Active",
+        image : require("@/assets/images/boy-moderate-active.png"),
+        value: "EXTREMELY_ACTIVE",
+        icon: "🔥"
+    }
 ];
 
 export const GIRL_OPTIONS : {label: string, image: any, value: ActivityLevel, icon: string}[] = [
@@ -62,61 +67,77 @@ export const GIRL_OPTIONS : {label: string, image: any, value: ActivityLevel, ic
         value: "VERY_ACTIVE",
         icon: "🔥"
     },
-];
-
-export const DIET_BOY_OPTIONS : {label: string, image: any, value: Goal, icon: string}[] = [
     {
-        label: "Weight loss",
-        image: require("@/assets/images/weightLoss-boy.png"),
-        value: "WEIGHT_LOSS",
-        icon: "⚖️"
-    },
-    {
-        label: "Muscle Gain",
-        image: require("@/assets/images/ImprovedHealth-boy.png"),
-        value: "MUSCLE_GAIN",
-        icon: "🌿"
-    },
-    {
-        label: "Weight gain",
-        image: require("@/assets/images/weightGain-boy.png"),
-        value: "WEIGHT_GAIN",
-        icon: "💪"
-    },
-    {
-        label: "Maintain health",
-        image: require("@/assets/images/MentalHealth-boy.png"),
-        value: "MAINTAIN_WEIGHT",
-        icon: "🧠"
+        label : "Extremely Active",
+        image : require("@/assets/images/girl-very-active.png"),
+        value: "EXTREMELY_ACTIVE",
+        icon: "🔥"
     }
 ];
 
-export const DIET_GIRL_OPTIONS : {label: string, image: any, value: Goal, icon: string}[] = [
+
+export const DIET_BOY_OPTIONS: { label: string; image: any; value: Goal; icon: string }[] = [
     {
-        label: "Weight loss",
-        image: require("@/assets/images/weightLoss-girl.png"),
-        value: "WEIGHT_LOSS",
-        icon: "⚖️"
+        label: "Lose weight",
+        image: require("@/assets/images/weightLoss-boy.png"),
+        value: "LOSE_WEIGHT",
+        icon: "⚖️",
     },
     {
-        label: "Maintan health",
+        label: "Build muscle",
+        image: require("@/assets/images/ImprovedHealth-boy.png"), // Consider renaming if needed
+        value: "BUILD_MUSCLE",
+        icon: "💪",
+    },
+    {
+        label: "Gain weight",
+        image: require("@/assets/images/weightGain-boy.png"),
+        value: "GAIN_WEIGHT",
+        icon: "🍽️",
+    },
+    {
+        label: "Maintain weight",
+        image: require("@/assets/images/MentalHealth-boy.png"), // Consider renaming if needed
+        value: "MAINTAIN_WEIGHT",
+        icon: "🌿",
+    },
+];
+
+
+
+export const DIET_GIRL_OPTIONS: { label: string; image: any; value: Goal; icon: string }[] = [
+    {
+        label: "Lose weight",
+        image: require("@/assets/images/weightLoss-girl.png"),
+        value: "LOSE_WEIGHT",
+        icon: "⚖️",
+    },
+    {
+        label: "Maintain weight",
         image: require("@/assets/images/ImprovedHealth-girl.png"),
         value: "MAINTAIN_WEIGHT",
-        icon: "🌿"
+        icon: "🌿",
     },
     {
-        label: "Weight gain",
+        label: "Gain weight",
         image: require("@/assets/images/weightGain.png"),
-        value: "WEIGHT_GAIN",
-        icon: "💪"
+        value: "GAIN_WEIGHT",
+        icon: "🍽️",
     },
     {
-        label: "Muscle gain",
-        image: require("@/assets/images/MentalHealth-Girl.png"),
-        value: "MUSCLE_GAIN",
-        icon: "🧠"
-    }
+        label: "Build muscle",
+        image: require("@/assets/images/ImprovedHealth-girl.png"), // Suggest replacing image name
+        value: "BUILD_MUSCLE",
+        icon: "💪",
+    },
+    {
+        label: "Improve fitness",
+        image: require("@/assets/images/weightGain.png"), // Suggest replacing image name
+        value: "IMPROVE_FITNESS",
+        icon: "🏃‍♀️",
+    },
 ];
+
 
 export const THANKS_BOY_OPTIONS = [
     {
@@ -149,26 +170,88 @@ export const THANKS_GIRL_OPTIONS = [
 ];
 
 
-export const dietaryLimitations: OptionsCardProps<DietaryRestriction>[] = [{
-    id : 1 ,
-    name : "None" ,
-    icon : '🚫' ,
-    info : null,
-    value : "NONE"
-} , {
-    id : 2 ,
-    name : "Vegiterian" ,
-    icon : '🥦' ,
-    info : '/info/vegiterian',
-    value : "VEGETARIAN"
-} , {
-    id : 3 ,
-    name : "Vegan" ,
-    icon : '🌱' ,
-    info : '/info/vegan',
-    value : "VEGAN"
-},
+
+export const dietaryLimitations: OptionsCardProps<DietaryRestriction>[] = [
+    {
+        id: 1,
+        name: "Vegetarian",
+        icon: "🥦",
+        info: "/info/vegetarian",
+        value: "VEGETARIAN",
+    },
+    {
+        id: 2,
+        name: "Vegan",
+        icon: "🌱",
+        info: "/info/vegan",
+        value: "VEGAN",
+    },
+    {
+        id: 3,
+        name: "Non-Vegetarian",
+        icon: "🍗",
+        info: "/info/non-vegetarian",
+        value: "NON_VEGETARIAN",
+    },
+    {
+        id: 4,
+        name: "Pescatarian",
+        icon: "🐟",
+        info: "/info/pescatarian",
+        value: "PESCATARIAN",
+    },
+    {
+        id: 5,
+        name: "Ketogenic",
+        icon: "🥩",
+        info: "/info/keto",
+        value: "KETO",
+    },
+    {
+        id: 6,
+        name: "Paleo",
+        icon: "🍖",
+        info: "/info/paleo",
+        value: "PALEO",
+    },
+    {
+        id: 7,
+        name: "Mediterranean",
+        icon: "🍅",
+        info: "/info/mediterranean",
+        value: "MEDITERRANEAN",
+    },
+    {
+        id: 8,
+        name: "Gluten-Free",
+        icon: "🚫🌾",
+        info: "/info/gluten-free",
+        value: "GLUTEN_FREE",
+    },
+    {
+        id: 9,
+        name: "Dairy-Free",
+        icon: "🥛❌",
+        info: "/info/dairy-free",
+        value: "DAIRY_FREE",
+    },
+    {
+        id: 10,
+        name: "Low Carb",
+        icon: "⬇️🍞",
+        info: "/info/low-carb",
+        value: "LOW_CARB",
+    },
+    {
+        id: 11,
+        name: "Low Fat",
+        icon: "⬇️🥓",
+        info: "/info/low-fat",
+        value: "LOW_FAT",
+    },
 ];
+
+
 
 export const healthConditions: OptionsCardProps<HealthCondition>[] = [
     {
@@ -186,20 +269,63 @@ export const healthConditions: OptionsCardProps<HealthCondition>[] = [
         value: "DIABETES",
     },
     {
-        id: 11,
+        id: 3,
         name: "High Blood Pressure",
         info: "/info/high-blood-pressure",
         icon: "🎗️",
-        value:"HIGH_BLOOD_PRESSURE",
+        value: "HYPERTENSION",
     },
     {
-        id: 12,
-        name: "High Cholesterol",
-        info: "/info/high-cholesterol",
-        icon: "🍳",
-        value: "HIGH_CHOLESTEROL",
+        id: 4,
+        name: "Heart Disease",
+        info: "/info/heart-disease",
+        icon: "❤️",
+        value: "HEART_DISEASE",
+    },
+    {
+        id: 5,
+        name: "Thyroid Issues",
+        info: "/info/thyroid",
+        icon: "🧠",
+        value: "THYROID",
+    },
+    {
+        id: 6,
+        name: "PCOS",
+        info: "/info/pcos",
+        icon: "👩‍⚕️",
+        value: "PCOS",
+    },
+    {
+        id: 7,
+        name: "Arthritis",
+        info: "/info/arthritis",
+        icon: "🦴",
+        value: "ARTHRITIS",
+    },
+    {
+        id: 8,
+        name: "Digestive Issues",
+        info: "/info/digestive-issues",
+        icon: "🍽️",
+        value: "DIGESTIVE_ISSUES",
+    },
+    {
+        id: 9,
+        name: "Food Allergies",
+        info: "/info/allergies",
+        icon: "🌰",
+        value: "ALLERGIES",
+    },
+    {
+        id: 10,
+        name: "Other",
+        info: "/info/other-health",
+        icon: "❓",
+        value: "OTHER",
     },
 ];
+
 
 
 export const createDefaultSummary = (date: string): DailySummary => ({
@@ -225,94 +351,16 @@ export const createDefaultSummary = (date: string): DailySummary => ({
 
 export const createDefaultHealthData = (date: string): HealthData => ({
     summary: createDefaultSummary(date),
-    foodLogs: [{
-            id: 1,
-            user : null ,
-            mealType: "BREAKFAST", // or MealType.BREAKFAST if you're using enums
-            foodName: "Oats with Milk",
-            quantity: 1,
-            unit: "bowl",
-            calories: 250,
-            protein: 8,
-            carbs: 40,
-            fat: 6,
-            loggedAt: new Date().toISOString(),
-            isFromCamera: false,
-            imageDescription: "A bowl of oats with sliced bananas",
-            createdAt: new Date().toISOString(),
-            } , {
-            id: 1,
-            user : null ,
-            mealType: "LUNCH", // or MealType.BREAKFAST if you're using enums
-            foodName: "Oats with Milk",
-            quantity: 1,
-            unit: "bowl",
-            calories: 250,
-            protein: 8,
-            carbs: 40,
-            fat: 6,
-            loggedAt: new Date().toISOString(),
-            isFromCamera: false,
-            imageDescription: "A bowl of oats with sliced bananas",
-            createdAt: new Date().toISOString(),
-            } ],
-    exerciseLogs: [{
-        id: 1,
-        user: null,
-        exerciseName: "Jogging",
-        durationMinutes: 30,
-        intensity: ExerciseIntensity.MODERATE , // or ExerciseIntensity.MODERATE if you're using an enum
-        caloriesBurned: 220,
-        loggedAt: new Date().toISOString(),
-        createdAt: new Date().toISOString(),
-    } , {
-        id: 2,
-        user: null,
-        exerciseName: "Running",
-        durationMinutes: 60,
-        intensity: ExerciseIntensity.MODERATE , // or ExerciseIntensity.MODERATE if you're using an enum
-        caloriesBurned: 220,
-        loggedAt: new Date().toISOString(),
-        createdAt: new Date().toISOString(),
-    }],
-    waterLogs: [{
-        id: 1,
-        user: null,
-        amountMl: 500,
-        loggedAt: new Date().toISOString(),
-        createdAt: new Date().toISOString(),
-    } , {
-        id: 1,
-        user: null,
-        amountMl: 500,
-        loggedAt: new Date().toISOString(),
-        createdAt: new Date().toISOString(),
-    }],
+    foodLogs: [],
+    exerciseLogs: [],
+    waterLogs: [],
 });
 
 export const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
 
-enum MealType {
-    BREAKFAST = 'BREAKFAST',
-    LUNCH = 'LUNCH',
-    DINNER = 'DINNER',
-    SNACK = 'SNACK'
-}
 
 
-interface DietPlan {
-    id: number;
-    user?: User;
-    planDate: string; // ISO date format, e.g. '2025-07-30'
-    totalCalories: number;
-    totalProtein: number;
-    totalCarbs: number;
-    totalFat: number;
-    isGenerated: boolean;
-    createdAt: string; // ISO datetime format, e.g. '2025-07-30T12:34:56'
-    meals: Meal[];
-}
 
 
 
@@ -328,7 +376,7 @@ export const getDummyDietPlan = (): DietPlan => ({
         meals: [
             {
                 id: 1,
-                mealType: MealType.BREAKFAST,
+                mealType: "BREAKFAST",
                 mealName: "Oatmeal with Fruits",
                 calories: 350,
                 protein: 15,
@@ -342,7 +390,7 @@ export const getDummyDietPlan = (): DietPlan => ({
             },
             {
                 id: 2,
-                mealType: MealType.LUNCH,
+                mealType: "LUNCH",
                 mealName: "Grilled Chicken Salad",
                 calories: 500,
                 protein: 40,
@@ -356,7 +404,7 @@ export const getDummyDietPlan = (): DietPlan => ({
             },
             {
                 id: 3,
-                mealType: MealType.DINNER,
+                mealType: "DINNER",
                 mealName: "Quinoa with Veggies",
                 calories: 450,
                 protein: 20,
@@ -370,3 +418,73 @@ export const getDummyDietPlan = (): DietPlan => ({
             }
         ] as Meal[]
 });
+
+
+
+export const healthQueries: HealthQuery[] = [
+  {
+    id: "1",
+    icon: "airplane",
+    title: "Mental Health Check",
+    description:
+      "How can I improve my mental wellbeing and manage stress effectively?",
+    category: "Mental Health",
+    color: "#3B82F6",
+  },
+  {
+    id: "2",
+    icon: "heart-outline",
+    title: "Heart Health",
+    description: "What are the signs of a healthy cardiovascular system?",
+    category: "Cardiology",
+    color: "#EF4444",
+  },
+  {
+    id: "3",
+    icon: "fitness-outline",
+    title: "Exercise & Fitness",
+    description: "What's the best workout routine for my fitness goals?",
+    category: "Fitness",
+    color: "#10B981",
+  },
+  {
+    id: "4",
+    icon: "medical-outline",
+    title: "Medication Guide",
+    description: "How should I properly manage my daily medications?",
+    category: "Pharmacy",
+    color: "#8B5CF6",
+  },
+  {
+    id: "5",
+    icon: "pulse-outline",
+    title: "Symptom Checker",
+    description: "What could these symptoms indicate about my health?",
+    category: "Diagnosis",
+    color: "#6366F1",
+  },
+  {
+    id: "6",
+    icon: "shield-checkmark-outline",
+    title: "Preventive Care",
+    description: "What screenings and checkups do I need for my age?",
+    category: "Prevention",
+    color: "#F59E0B",
+  },
+  {
+    id: "7",
+    icon: "moon-outline",
+    title: "Sleep Health",
+    description: "How can I improve my sleep quality and duration?",
+    category: "Sleep",
+    color: "#64748B",
+  },
+  {
+    id: "8",
+    icon: "nutrition-outline",
+    title: "Nutrition Advice",
+    description: "What diet plan would work best for my health goals?",
+    category: "Nutrition",
+    color: "#059669",
+  },
+];

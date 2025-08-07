@@ -1,212 +1,268 @@
-import React, { useState } from "react";
-import { View, Text, Modal, TouchableOpacity, TextInput } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import React, { useState } from "react";
+import {
+  Alert,
+  Modal,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from "react-native";
 
 interface WaterLogModalProps {
   visible: boolean;
   onClose: () => void;
-  onLogWater: (amount: number) => void;
+  onSave: (amount: number) => void;
+  currentIntake?: number; // Current daily intake
+  dailyGoal?: number; // Daily goal in mL
 }
 
 const WaterLogModal: React.FC<WaterLogModalProps> = ({
   visible,
   onClose,
-  onLogWater,
+  onSave,
+  currentIntake = 0,
+  dailyGoal = 3700,
 }) => {
   const [waterAmount, setWaterAmount] = useState<string>("");
+  const [selectedPreset, setSelectedPreset] = useState<number | null>(null);
 
-  const handleLogWater = () => {
-    const amount = parseInt(waterAmount) || 0;
-    if (amount > 0) {
-      onLogWater(amount);
-      setWaterAmount("");
-      onClose();
+  // Common water amounts in mL
+  const presetAmounts = [
+    { label: "Glass", amount: 250, icon: "🥛" },
+    { label: "Bottle", amount: 500, icon: "🍼" },
+    { label: "Large Bottle", amount: 750, icon: "🫗" },
+    { label: "Liter", amount: 1000, icon: "💧" },
+  ];
+
+  const handlePresetSelect = (amount: number) => {
+    setSelectedPreset(amount);
+    setWaterAmount(amount.toString());
+  };
+
+  const handleSave = () => {
+    const amount = parseInt(waterAmount);
+
+    if (isNaN(amount) || amount <= 0) {
+      Alert.alert("Invalid Amount", "Please enter a valid water amount.");
+      return;
     }
+
+    if (amount > 5000) {
+      Alert.alert("Large Amount", "That's a lot of water! Are you sure?", [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Yes",
+          onPress: () => {
+            onSave(amount);
+            handleClose();
+          },
+        },
+      ]);
+      return;
+    }
+
+    onSave(amount);
+    handleClose();
   };
 
   const handleClose = () => {
     setWaterAmount("");
+    setSelectedPreset(null);
     onClose();
   };
 
+  const progressPercentage = Math.min((currentIntake / dailyGoal) * 100, 100);
+  const remainingAmount = Math.max(dailyGoal - currentIntake, 0);
+
   return (
     <Modal
-      visible={visible}
+      animationType="slide"
       transparent={true}
-      animationType="fade"
+      visible={visible}
       onRequestClose={handleClose}
     >
-      {/* Background Overlay */}
-      <TouchableOpacity
-        className="flex-1 bg-black/50 justify-center items-center px-6"
-        activeOpacity={1}
-        onPress={handleClose}
-      >
-        {/* Modal Content */}
-        <TouchableOpacity
-          activeOpacity={1}
-          onPress={(e) => e.stopPropagation()}
-          className="bg-white rounded-3xl w-full max-w-sm"
-        >
+      <View className="flex-1 justify-center items-center bg-black/50">
+        <View className="w-11/12 max-w-md bg-white rounded-2xl shadow-xl">
           {/* Header */}
-          <View className="flex-row items-center justify-between p-6 pb-4">
-            {/* Menu dots */}
-            <View className="flex-row space-x-1">
-              <View className="w-2 h-2 bg-green-500 rounded-full" />
-              <View className="w-2 h-2 bg-green-500 rounded-full" />
-              <View className="w-2 h-2 bg-green-500 rounded-full" />
-              <View className="w-2 h-2 bg-green-500 rounded-full" />
-              <View className="w-2 h-2 bg-green-500 rounded-full" />
-              <View className="w-2 h-2 bg-green-500 rounded-full" />
-              <View className="w-2 h-2 bg-green-500 rounded-full" />
-              <View className="w-2 h-2 bg-green-500 rounded-full" />
-              <View className="w-2 h-2 bg-green-500 rounded-full" />
+          <View className="items-center p-6 border-b border-gray-100">
+            <View className="w-12 h-12 bg-blue-50 rounded-full items-center justify-center mb-3">
+              <Text className="text-2xl">💧</Text>
             </View>
-
-            {/* Toggle Switch */}
-            <View className="bg-green-500 rounded-full w-12 h-6 justify-center items-end pr-1">
-              <View className="w-5 h-5 bg-white rounded-full" />
-            </View>
-
-            {/* Dropdown Arrow */}
-            <Ionicons name="chevron-up" size={20} color="#10b981" />
+            <Text className="text-xl font-bold text-gray-800 mb-2">
+              Log Water Intake
+            </Text>
+            <Text className="text-sm text-gray-600 text-center">
+              Stay hydrated for better health and energy
+            </Text>
           </View>
 
-          {/* Water Icon and Title */}
-          <View className="items-center px-6 pb-4">
-            <View className="flex-row items-center mb-4">
-              <Ionicons name="water" size={24} color="#6b7280" />
-              <Text className="text-2xl font-semibold text-gray-800 ml-3">
-                Water
-              </Text>
-            </View>
+          {/* Content */}
+          <View className="p-6">
+            {/* Current Progress */}
+            <View className="mb-6">
+              <View className="flex-row justify-between items-center mb-2">
+                <Text className="text-sm font-medium text-gray-700">
+                  Daily Progress
+                </Text>
+                <Text className="text-sm text-blue-600 font-semibold">
+                  {currentIntake}mL / {dailyGoal}mL
+                </Text>
+              </View>
 
-            {/* Description */}
-            <View className="flex-row items-start mb-6">
-              <Ionicons
-                name="water"
-                size={16}
-                color="#3b82f6"
-                style={{ marginTop: 2, marginRight: 8 }}
-              />
-              <Text className="text-gray-600 text-center leading-6 flex-1">
-                Log the water you drink to keep track of your hydration. 1 glass
-                is 250mL! Fill up, stay refreshed, and crush your hydration
-                goals! 💧
-              </Text>
-            </View>
-
-            {/* Water Amount Input */}
-            <View className="w-full items-center mb-6">
-              <View className="flex-row items-center justify-center mb-2">
-                <TextInput
-                  value={waterAmount}
-                  onChangeText={setWaterAmount}
-                  placeholder="0"
-                  keyboardType="numeric"
-                  className="text-4xl font-light text-gray-800 text-center min-w-[60px] border-b-2 border-gray-300 pb-1"
-                  style={{ minWidth: 60 }}
+              {/* Progress Bar */}
+              <View className="w-full bg-gray-200 rounded-full h-2 mb-2">
+                <View
+                  className="bg-blue-500 h-2 rounded-full transition-all duration-300"
+                  style={{ width: `${progressPercentage}%` }}
                 />
-                <Text className="text-xl text-gray-500 ml-4">mL</Text>
+              </View>
+
+              <Text className="text-xs text-gray-500 text-center">
+                {remainingAmount > 0
+                  ? `${remainingAmount}mL remaining to reach your goal`
+                  : "🎉 Daily goal achieved!"}
+              </Text>
+            </View>
+
+            {/* Quick Presets */}
+            <View className="mb-6">
+              <Text className="text-sm font-medium text-gray-700 mb-3">
+                Quick Add
+              </Text>
+              <View className="flex-row flex-wrap gap-2">
+                {presetAmounts.map((preset) => (
+                  <TouchableOpacity
+                    key={preset.amount}
+                    className={`flex-1 min-w-0 p-3 rounded-xl border ${
+                      selectedPreset === preset.amount
+                        ? "bg-blue-50 border-blue-500"
+                        : "bg-gray-50 border-gray-200"
+                    }`}
+                    onPress={() => handlePresetSelect(preset.amount)}
+                  >
+                    <Text className="text-center text-lg mb-1">
+                      {preset.icon}
+                    </Text>
+                    <Text className="text-xs font-medium text-gray-800 text-center">
+                      {preset.label}
+                    </Text>
+                    <Text className="text-xs text-gray-600 text-center">
+                      {preset.amount}mL
+                    </Text>
+                  </TouchableOpacity>
+                ))}
               </View>
             </View>
 
-            {/* Log Water Button */}
-            <TouchableOpacity
-              onPress={handleLogWater}
-              className="bg-green-500 rounded-2xl w-full py-4 flex-row items-center justify-center"
-              activeOpacity={0.8}
-            >
-              <View className="w-6 h-6 bg-white rounded-full items-center justify-center mr-3">
-                <Ionicons name="add" size={16} color="#10b981" />
+            {/* Custom Amount Input */}
+            <View className="mb-6">
+              <Text className="text-sm font-medium text-gray-700 mb-3">
+                Custom Amount
+              </Text>
+              <View className="flex-row items-center">
+                <TextInput
+                  className="flex-1 border border-gray-300 rounded-xl px-4 py-3 text-lg text-center"
+                  placeholder="Enter amount"
+                  value={waterAmount}
+                  onChangeText={(text) => {
+                    setWaterAmount(text);
+                    setSelectedPreset(null);
+                  }}
+                  keyboardType="numeric"
+                  maxLength={4}
+                />
+                <Text className="ml-3 text-gray-600 font-medium">mL</Text>
               </View>
-              <Text className="text-white font-semibold text-lg">
-                Log Water
+            </View>
+
+            {/* Hydration Tips */}
+            <View className="mb-4 p-3 bg-blue-50 rounded-xl">
+              <View className="flex-row items-center mb-2">
+                <Ionicons name="bulb" size={16} color="#3b82f6" />
+                <Text className="text-sm font-medium text-blue-800 ml-2">
+                  Hydration Tip
+                </Text>
+              </View>
+              <Text className="text-xs text-blue-700">
+                Drink water consistently throughout the day rather than large
+                amounts at once for better absorption.
+              </Text>
+            </View>
+          </View>
+
+          {/* Footer */}
+          <View className="flex-row p-6 border-t border-gray-100 gap-3">
+            <TouchableOpacity
+              className="flex-1 bg-gray-200 py-4 rounded-xl items-center"
+              onPress={handleClose}
+            >
+              <Text className="text-gray-700 font-semibold text-lg">
+                Cancel
               </Text>
             </TouchableOpacity>
+
+            <TouchableOpacity
+              className={`flex-1 py-4 rounded-xl items-center ${
+                waterAmount ? "bg-blue-500" : "bg-gray-300"
+              }`}
+              onPress={handleSave}
+              disabled={!waterAmount}
+            >
+              <View className="flex-row items-center">
+                <Ionicons
+                  name="add"
+                  size={20}
+                  color="white"
+                  style={{ marginRight: 8 }}
+                />
+                <Text className="text-white font-semibold text-lg">
+                  Log Water
+                </Text>
+              </View>
+            </TouchableOpacity>
           </View>
-        </TouchableOpacity>
-      </TouchableOpacity>
+        </View>
+      </View>
     </Modal>
   );
 };
 
-// Water Log Holder Component for LogCard
-export const WaterLogHolder: React.FC = () => {
+// Example usage component that demonstrates how to integrate with your LogCard
+const WaterLogModalLink: React.FC = () => {
   const [modalVisible, setModalVisible] = useState(false);
+  const [currentIntake, setCurrentIntake] = useState(1250); // Example current intake
+  const [dailyGoal] = useState(3700); // Daily goal
 
-  const openModal = () => {
-    setModalVisible(true);
-  };
+  const handleSaveWaterLog = (amount: number) => {
+    // Add the new amount to current intake
+    setCurrentIntake((prev) => prev + amount);
 
-  const closeModal = () => {
-    setModalVisible(false);
-  };
-
-  const handleLogWater = (amount: number) => {
+    // Here you would typically save to your backend/database
     console.log(`Logged ${amount}mL of water`);
-    // Here you would typically update your health data state
-    // Example: updateHealthData({ waterLogs: [...existingLogs, { amount, timestamp: new Date() }] });
+
+    // You could also show a success message
+    // Alert.alert("Success", `Added ${amount}mL to your daily intake!`);
   };
 
   return (
-    <View>
+    <>
+      <TouchableOpacity
+        className="bg-blue-500 px-4 py-2 rounded-lg"
+        onPress={() => setModalVisible(true)}
+      >
+        <Text className="text-white font-medium">+ Log Water</Text>
+      </TouchableOpacity>
+
       <WaterLogModal
         visible={modalVisible}
-        onClose={closeModal}
-        onLogWater={handleLogWater}
+        onClose={() => setModalVisible(false)}
+        onSave={handleSaveWaterLog}
+        currentIntake={currentIntake}
+        dailyGoal={dailyGoal}
       />
-    </View>
+    </>
   );
 };
 
-// Modified LogCard Link Component
-export const WaterLogModalLink: React.FC = () => {
-  const [modalVisible, setModalVisible] = useState(false);
-
-  const openModal = () => {
-    setModalVisible(true);
-  };
-
-  const closeModal = () => {
-    setModalVisible(false);
-  };
-
-  const handleLogWater = (amount: number) => {
-    console.log(`Logged ${amount}mL of water`);
-    // Update your health data here
-    // updateHealthData with new water log entry
-  };
-
-  // This component will be triggered when LogCard button is pressed
-  React.useEffect(() => {
-    // Auto-open modal when this component is rendered
-    openModal();
-  }, []);
-
-  return (
-    <WaterLogModal
-      visible={modalVisible}
-      onClose={closeModal}
-      onLogWater={handleLogWater}
-    />
-  );
-};
-
-export default WaterLogModal;
-
-// Usage with LogCard - Update your LogCard usage like this:
-/*
-<LogCard
-  icon="💧"
-  title="Water"
-  description="Recommended: 3700mL"
-  buttonText="+ Log Water"
-  Link={WaterLogModalLink}  // Use the Link component that auto-opens modal
-  showArrow={true}
-  emojiIcon="🥛"
-  backgroundStyle="bg-blue-50"
-  items={healthData?.waterLogs as WaterLog[]}
-  component={WaterLogHolder}
-/>
-*/
+export { WaterLogModal, WaterLogModalLink };

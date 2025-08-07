@@ -1,213 +1,435 @@
-import {
-    DietPlan,
-    Meal,
-    MealType,
-    DietPlanStore,
-} from "@/types/type";
-import {create} from "zustand";
-import { devtools, persist } from 'zustand/middleware';
-import { immer } from 'zustand/middleware/immer';
+import { getDummyDietPlan } from "@/constants/data";
 import { fetchApi } from '@/lib/fetchApi';
-import {useAuthStore} from "@/store/authStore";
-import {getDummyDietPlan} from "@/constants/data";
+import { useAuthStore } from "@/store/authStore";
+import { DietPlan, Meal, MealType } from "@/types/type";
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useCallback, useMemo, useState } from 'react';
 
+// ==================== QUERY KEYS ====================
+export const dietPlanKeys = {
+  all: ['dietPlans'] as const,
+  byDate: (date: string) => [...dietPlanKeys.all, 'byDate', date] as const,
+  today: () => [...dietPlanKeys.all, 'today'] as const,
+} as const;
 
-const useDietPlanStore = create<DietPlanStore>()(
-    devtools(
-        // persist(
-            immer((set, get) => ({
-                // Initial State
-                currentDate: new Date().toISOString().split('T')[0],
-                selectedDate: new Date().toISOString().split('T')[0],
-                dietPlan: null,
-                isLoading: false,
-                error: null,
+// ==================== API FUNCTIONS ====================
+const dietPlanApi = {
+  fetchByDate: async (date: string): Promise<DietPlan> => {
+    try {
+      return await fetchApi<DietPlan>(`/api/diet-plans/${date}`, {
+        method: 'GET',
+        requiresAuth: true,
+      });
+    } catch (error: any) {
+      // If not found, return dummy data or generate new plan
+      if (error.status === 404) {
+        // In development, return dummy data
+        return getDummyDietPlan();
+        // In production, you might want to generate a new plan:
+        // return await dietPlanApi.generate(date);
+      }
+      throw error;
+    }
+  },
 
-                // Basic Actions
-                setCurrentDate: (date: string) => {
-                    set((state) => {
-                        state.currentDate = date;
-                    });
-                },
+  fetchToday: async (): Promise<DietPlan> => {
+    try {
+      return await fetchApi<DietPlan>('/api/diet-plans/today', {
+        method: 'GET',
+        requiresAuth: true,
+      });
+    } catch (error: any) {
+      // Fallback to dummy data for development
+      if (error.status === 404) {
+        return getDummyDietPlan();
+      }
+      throw error;
+    }
+  },
 
-                setSelectedDate: (date: string) => {
-                    set((state) => {
-                        state.selectedDate = date;
-                        void get().fetchDietPlan(date);
-                    });
-                },
+  generate: async (planDate?: string): Promise<DietPlan> => {
+    try {
+      return await fetchApi<DietPlan>('/api/diet-plans/generate', {
+        method: 'POST',
+        requiresAuth: true,
+        body: planDate ? { planDate } : {},
+      });
+    } catch (error) {
+      // Fallback to dummy data for development
+      console.warn('API not available, using dummy data');
+      return getDummyDietPlan();
+    }
+  },
+};
 
-                setDietPlan: (dietPlan: DietPlan | null) => {
-                    set((state) => {
-                        state.dietPlan = dietPlan;
-                    });
-                },
+// ==================== UTILITY FUNCTIONS ====================
+const getCurrentDate = (): string => {
+  try {
+    return new Date().toISOString().split('T')[0];
+  } catch (error) {
+    console.error('Error getting current date:', error);
+    return new Date().toLocaleDateString('en-CA'); // Fallback format YYYY-MM-DD
+  }
+};
 
-                setLoading: (loading: boolean) => {
-                    set((state) => {
-                        state.isLoading = loading;
-                    });
-                },
+const isValidDateForData = (date: string | undefined | null): boolean => {
+  console.log('🔍 Validating date:', date);
+  
+  if (!date || typeof date !== 'string') {
+    console.log('❌ Date validation failed: Invalid date format', { date, type: typeof date });
+    return false;
+  }
+  
+  const { user: currentUser } = useAuthStore.getState();
+  console.log('👤 Current user:', currentUser ? 'exists' : 'null');
 
-                setError: (error: string | null) => {
-                    set((state) => {
-                        state.error = error;
-                    });
-                },
+  if (!currentUser) {
+    console.log('❌ Date validation failed: No current user');
+    return false;
+  }
 
-                isValidDateForData: (date: string) => {
-                    const { currentDate } = get();
-                    const { user: currentUser } = useAuthStore.getState();
+  try {
+    const selectedDateObj = new Date(date);
+    const currentDateObj = new Date(getCurrentDate());
+    
+    console.log('📅 Dates parsed:', {
+      selectedDate: date,
+      selectedDateObj: selectedDateObj.toISOString(),
+      currentDate: getCurrentDate(),
+      currentDateObj: currentDateObj.toISOString(),
+    });
+    
+    // Handle createdAt safely
+    const createdAtDate = currentUser.createdAt;
+    console.log('🎂 User createdAt:', createdAtDate, typeof createdAtDate);
+    
+    if (!createdAtDate) {
+      console.log('❌ Date validation failed: No user creation date');
+      return false;
+    }
+    
+    const userCreatedDateStr = typeof createdAtDate === 'string' 
+      ? createdAtDate.split('T')[0] 
+      : createdAtDate.toISOString().split('T')[0];
+    
+    const userCreatedDateObj = new Date(userCreatedDateStr);
+    
+    console.log('🎂 User creation date processed:', {
+      original: createdAtDate,
+      processed: userCreatedDateStr,
+      dateObj: userCreatedDateObj.toISOString(),
+    });
 
-                    // If no user, return false
-                    if (!currentUser) return false;
+    // Check for invalid dates
+    if (isNaN(selectedDateObj.getTime()) || 
+        isNaN(currentDateObj.getTime()) || 
+        isNaN(userCreatedDateObj.getTime())) {
+      console.log('❌ Date validation failed: Invalid date objects', {
+        selectedValid: !isNaN(selectedDateObj.getTime()),
+        currentValid: !isNaN(currentDateObj.getTime()),
+        userCreatedValid: !isNaN(userCreatedDateObj.getTime()),
+      });
+      return false;
+    }
 
-                    const selectedDateObj = new Date(date);
-                    const currentDateObj = new Date(currentDate);
-                    const userCreatedDateObj = new Date(currentUser.createdAt.split('T')[0]);
+    // Date should not be in the future
+    if (selectedDateObj > currentDateObj) {
+      console.log('❌ Date validation failed: Date is in the future', {
+        selected: selectedDateObj.toISOString(),
+        current: currentDateObj.toISOString(),
+      });
+      return false;
+    }
 
-                    // Date should not be in the future
-                    if (selectedDateObj > currentDateObj) return false;
+    // Date should not be before user creation date
+    if (selectedDateObj < userCreatedDateObj) {
+      console.log('❌ Date validation failed: Date is before user creation', {
+        selected: selectedDateObj.toISOString(),
+        userCreated: userCreatedDateObj.toISOString(),
+      });
+      return false;
+    }
 
-                    // Date should not be before user creation date
-                    if (selectedDateObj < userCreatedDateObj) return false;
+    console.log('✅ Date validation passed!');
+    return true;
+  } catch (error) {
+    console.error('❌ Error validating date:', error, { date, currentUser });
+    return false;
+  }
+};
 
-                    return true;
-                },
+// ==================== HOOK 1: DIET PLAN QUERY ====================
+interface UseDietPlanOptions {
+  enabled?: boolean;
+  staleTime?: number;
+  gcTime?: number;
+}
 
-                // Diet Plan Actions
-                generateDietPlan: async (planDate?: string) => {
-                    const targetDate = planDate || get().selectedDate;
+export const useDietPlan = (date?: string | null, options: UseDietPlanOptions = {}) => {
+  const targetDate = date || getCurrentDate();
+  const isValidDate = isValidDateForData(targetDate);
 
-                    set((state) => {
-                        state.isLoading = true;
-                        state.error = null;
-                    });
+  const query = useQuery({
+    queryKey: dietPlanKeys.byDate(targetDate),
+    queryFn: () => dietPlanApi.fetchByDate(targetDate),
+    enabled: isValidDate && (options.enabled !== false),
+    staleTime: options.staleTime ?? 5 * 60 * 1000, // 5 minutes
+    gcTime: options.gcTime ?? 10 * 60 * 1000, // 10 minutes
+    retry: (failureCount, error: any) => {
+      if (error?.status === 404) return false;
+      return failureCount < 3;
+    },
+  });
 
-                    try {
-                        // const response = await fetchApi<DietPlan>('/api/diet-plans/generate', {
-                        //     method: 'POST',
-                        //     requiresAuth: true,
-                        //     body: planDate ? { planDate } : {},
-                        // });
+  // Utility functions for working with meals
+  const getMealsByType = useCallback((mealType: MealType): Meal[] => {
+    if (!query.data?.meals) return [];
+    return (query.data.meals as Meal[]).filter(meal => meal.mealType === mealType);
+  }, [query.data]);
 
-                        set((state) => {
-                            state.dietPlan = getDummyDietPlan();
-                            state.isLoading = false;
-                        });
+  const getMealById = useCallback((id: number): Meal | undefined => {
+    if (!query.data?.meals) return undefined;
+    return (query.data.meals as Meal[]).find(meal => meal.id === id);
+  }, [query.data]);
 
-                        return getDummyDietPlan();
-                    } catch (error) {
-                        console.error('Failed to generate diet plan:', error);
-                        set((state) => {
-                            state.error = error instanceof Error ? error.message : 'Failed to generate diet plan';
-                            state.isLoading = false;
-                        });
-                        throw error;
-                    }
-                },
+  const totalNutrition = useMemo(() => {
+    if (!query.data?.meals) return { calories: 0, protein: 0, carbs: 0, fat: 0 };
+    
+    const meals = query.data.meals as Meal[];
+    return meals.reduce(
+      (total, meal) => ({
+        calories: total.calories + (meal.calories || 0),
+        protein: total.protein + (meal.protein || 0),
+        carbs: total.carbs + (meal.carbs || 0),
+        fat: total.fat + (meal.fat || 0),
+      }),
+      { calories: 0, protein: 0, carbs: 0, fat: 0 }
+    );
+  }, [query.data]);
 
-                fetchDietPlan: async (date?: string) => {
-                    const targetDate = date || get().selectedDate;
+  return {
+    // Query state
+    dietPlan: query.data ?? null,
+    isLoading: query.isLoading,
+    isFetching: query.isFetching,
+    isRefetching: query.isRefetching,
+    error: query.error,
+    isError: query.isError,
+    isSuccess: query.isSuccess,
+    
+    // Query actions
+    refetch: query.refetch,
+    
+    // Utility functions
+    getMealsByType,
+    getMealById,
+    totalNutrition,
+    isValidDate,
+    targetDate,
+  };
+};
 
-                    set((state) => {
-                        state.isLoading = true;
-                        state.error = null;
-                    });
+// ==================== HOOK 2: DATE MANAGEMENT ====================
+interface UseDateSelectorOptions {
+  initialDate?: string;
+  autoFetch?: boolean;
+}
 
-                    try {
-                        // First try to get existing diet plan
-                        let response: DietPlan;
-                        try {
-                            // response = await fetchApi<DietPlan>(`/api/diet-plans/${targetDate}`, {
-                            //     method: 'GET',
-                            //     requiresAuth: true,
-                            // });
-                        } catch (error: any) {
-                            // If not found (404), generate new one
-                            // if (error.status === 404) {
-                            //     response = await get().generateDietPlan(targetDate);
-                            // } else {
-                            //     throw error;
-                            // }
-                        }
+export const useDateSelector = (options: UseDateSelectorOptions = {}) => {
+  const queryClient = useQueryClient();
+  const currentDate = getCurrentDate();
+  const [selectedDate, setSelectedDate] = useState(
+    options.initialDate || currentDate
+  );
 
-                        set((state) => {
-                            state.dietPlan = getDummyDietPlan();
-                            state.isLoading = false;
-                        });
+  const selectDate = useCallback((date: string | null | undefined) => {
+    // Safely handle date input
+    const safeDate = date && typeof date === 'string' ? date : currentDate;
+    setSelectedDate(safeDate);
+    
+    // Prefetch data for the selected date if valid and autoFetch is enabled
+    if (options.autoFetch !== false && isValidDateForData(safeDate)) {
+      queryClient.prefetchQuery({
+        queryKey: dietPlanKeys.byDate(safeDate),
+        queryFn: () => dietPlanApi.fetchByDate(safeDate),
+        staleTime: 5 * 60 * 1000,
+      });
+    }
+  }, [queryClient, options.autoFetch, currentDate]);
 
-                        return getDummyDietPlan();
-                    } catch (error) {
-                        console.error('Failed to fetch diet plan:', error);
-                        set((state) => {
-                            state.dietPlan = null;
-                            state.error = error instanceof Error ? error.message : 'Failed to fetch diet plan';
-                            state.isLoading = false;
-                        });
-                        throw error;
-                    }
-                },
+  const selectToday = useCallback(() => {
+    selectDate(currentDate);
+  }, [currentDate, selectDate]);
 
-                fetchTodaysDietPlan: async () => {
-                    set((state) => {
-                        state.isLoading = true;
-                        state.error = null;
-                    });
+  const selectPreviousDay = useCallback(() => {
+    const prevDate = new Date(selectedDate);
+    prevDate.setDate(prevDate.getDate() - 1);
+    selectDate(prevDate.toISOString().split('T')[0]);
+  }, [selectedDate, selectDate]);
 
-                    try {
-                        const response = await fetchApi<DietPlan>('/api/diet-plans/today', {
-                            method: 'GET',
-                            requiresAuth: true,
-                        });
+  const selectNextDay = useCallback(() => {
+    const nextDate = new Date(selectedDate);
+    nextDate.setDate(nextDate.getDate() + 1);
+    selectDate(nextDate.toISOString().split('T')[0]);
+  }, [selectedDate, selectDate]);
 
-                        set((state) => {
-                            state.dietPlan = response;
-                            state.isLoading = false;
-                        });
+  const isToday = selectedDate === currentDate;
+  const isValidDate = isValidDateForData(selectedDate);
 
-                        return response;
-                    } catch (error) {
-                        console.error('Failed to fetch today\'s diet plan:', error);
-                        set((state) => {
-                            state.error = error instanceof Error ? error.message : 'Failed to fetch today\'s diet plan';
-                            state.isLoading = false;
-                        });
-                        throw error;
-                    }
-                },
+  return {
+    // State
+    selectedDate,
+    currentDate,
+    isToday,
+    isValidDate,
+    
+    // Actions
+    setSelectedDate: selectDate,
+    selectToday,
+    selectPreviousDay,
+    selectNextDay,
+    
+    // Utilities
+    isValidDateForData,
+  };
+};
 
-                getMealsByType: (mealType: MealType) => {
-                    const { dietPlan } = get();
-                    return (dietPlan?.meals as Meal[]).filter(meal => meal.mealType === mealType) || [];
-                },
+// ==================== HOOK 3: DIET PLAN MUTATIONS ====================
+export const useDietPlanMutations = () => {
+  const queryClient = useQueryClient();
 
-                getMealById: (id: number) => {
-                    const { dietPlan } = get();
-                    return (dietPlan?.meals as Meal[]).find(meal => meal.id === id);
-                },
+  const generatePlan = useMutation({
+    mutationFn: dietPlanApi.generate,
+    onSuccess: (data, variables) => {
+      const targetDate = variables || getCurrentDate();
+      
+      // Update the cache for the specific date
+      queryClient.setQueryData(dietPlanKeys.byDate(targetDate), data);
+      
+      // If generating for today, also update today's query
+      if (targetDate === getCurrentDate()) {
+        queryClient.setQueryData(dietPlanKeys.today(), data);
+      }
+      
+      // Invalidate related queries to ensure consistency
+      queryClient.invalidateQueries({ 
+        queryKey: dietPlanKeys.all,
+        refetchType: 'none' // Don't refetch immediately since we just updated
+      });
+    },
+    onError: (error) => {
+      console.error('Failed to generate diet plan:', error);
+    },
+  });
 
-                // Utility Actions
-                clearData: () => {
-                    set((state) => {
-                        state.dietPlan = null;
-                        state.error = null;
-                    });
-                },
-            })),
-        //     {
-        //         name: 'diet-plan-store',
-        //         partialize: (state) => ({
-        //             currentDate: state.currentDate,
-        //             selectedDate: state.selectedDate,
-        //             dietPlan: state.dietPlan,
-        //         }),
-        //     }
-        // ),
-        {
-            name: 'diet-plan-store',
-        }
-    )
-);
+  const refreshPlan = useMutation({
+    mutationFn: async (date: string) => {
+      // Invalidate and refetch the specific date
+      await queryClient.invalidateQueries({ 
+        queryKey: dietPlanKeys.byDate(date) 
+      });
+      return queryClient.fetchQuery({
+        queryKey: dietPlanKeys.byDate(date),
+        queryFn: () => dietPlanApi.fetchByDate(date),
+      });
+    },
+    onSuccess: (data, date) => {
+      // Ensure the cache is updated
+      queryClient.setQueryData(dietPlanKeys.byDate(date), data);
+    },
+  });
 
-export default useDietPlanStore;
+  const clearCache = useCallback((date?: string) => {
+    if (date) {
+      queryClient.removeQueries({ queryKey: dietPlanKeys.byDate(date) });
+    } else {
+      queryClient.removeQueries({ queryKey: dietPlanKeys.all });
+    }
+  }, [queryClient]);
+
+  const prefetchDate = useCallback((date: string) => {
+    if (!isValidDateForData(date)) return;
+    
+    return queryClient.prefetchQuery({
+      queryKey: dietPlanKeys.byDate(date),
+      queryFn: () => dietPlanApi.fetchByDate(date),
+      staleTime: 5 * 60 * 1000,
+    });
+  }, [queryClient]);
+
+  const getCachedPlan = useCallback((date: string): DietPlan | undefined => {
+    return queryClient.getQueryData(dietPlanKeys.byDate(date));
+  }, [queryClient]);
+
+  return {
+    // Mutations
+    generatePlan,
+    refreshPlan,
+    
+    // Mutation states
+    isGenerating: generatePlan.isPending,
+    isRefreshing: refreshPlan.isPending,
+    generateError: generatePlan.error,
+    refreshError: refreshPlan.error,
+    
+    // Actions
+    generate: generatePlan.mutateAsync,
+    refresh: refreshPlan.mutateAsync,
+    
+    // Sync actions
+    generateSync: generatePlan.mutate,
+    refreshSync: refreshPlan.mutate,
+    
+    // Cache utilities
+    clearCache,
+    prefetchDate,
+    getCachedPlan,
+  };
+};
+
+// ==================== BONUS: COMPOSITE HOOK ====================
+// This combines all three hooks for easy usage in components
+export const useDietPlanManager = (initialDate?: string) => {
+  const dateSelector = useDateSelector({ initialDate });
+  const dietPlan = useDietPlan(dateSelector.selectedDate);
+  const mutations = useDietPlanMutations();
+
+  const handleDateChange = useCallback((date: string) => {
+    dateSelector.setSelectedDate(date);
+  }, [dateSelector]);
+
+  const handleGenerate = useCallback(async () => {
+    try {
+      await mutations.generate(dateSelector.selectedDate);
+    } catch (error) {
+      console.error('Failed to generate diet plan:', error);
+      throw error;
+    }
+  }, [mutations, dateSelector.selectedDate]);
+
+  const handleRefresh = useCallback(async () => {
+    try {
+      await mutations.refresh(dateSelector.selectedDate);
+    } catch (error) {
+      console.error('Failed to refresh diet plan:', error);
+      throw error;
+    }
+  }, [mutations, dateSelector.selectedDate]);
+
+  return {
+    // Date management
+    ...dateSelector,
+    handleDateChange,
+    
+    // Diet plan data
+    ...dietPlan,
+    
+    // Mutations
+    ...mutations,
+    handleGenerate,
+    handleRefresh,
+    
+    // Combined loading states
+    isLoading: dietPlan.isLoading || mutations.isGenerating || mutations.isRefreshing,
+  };
+};

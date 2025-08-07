@@ -3,18 +3,20 @@ import { generateWeekDates } from "@/lib/utils";
 import React, { memo, useRef, useState } from "react";
 import { ScrollView, Text, TouchableOpacity, View } from "react-native";
 
+interface DaySelectorProps {
+  selectedDate: string | null | undefined;
+  handleDateChange: (date: string) => void;
+  showDate?: boolean;
+  showButton?: boolean;
+}
+
 const DaySelector = memo(
   ({
     selectedDate,
     handleDateChange,
     showDate = true,
     showButton = true,
-  }: {
-    selectedDate: string;
-    handleDateChange: (date: string) => void;
-    showDate?: boolean;
-    showButton?: boolean;
-  }) => {
+  }: DaySelectorProps) => {
     const [currentWeekStart, setCurrentWeekStart] = useState<Date>(() => {
       const today = new Date();
       const startOfWeek = new Date(today);
@@ -41,19 +43,44 @@ const DaySelector = memo(
     };
 
     const isToday = (date: Date): boolean => {
-      const today = new Date();
-      return date.toDateString() === today.toDateString();
+      try {
+        const today = new Date();
+        return date.toDateString() === today.toDateString();
+      } catch (error) {
+        console.error("Error checking if date is today:", error);
+        return false;
+      }
     };
 
     const isSelected = (date: Date): boolean => {
-      return date.toISOString().split("T")[0] === selectedDate;
+      try {
+        if (!selectedDate || typeof selectedDate !== "string") return false;
+
+        const dateStr = date.toISOString().split("T")[0];
+        return dateStr === selectedDate;
+      } catch (error) {
+        console.error("Error checking if date is selected:", error, {
+          date,
+          selectedDate,
+        });
+        return false;
+      }
+    };
+
+    const handleDatePress = (date: Date): void => {
+      try {
+        const dateString = date.toISOString().split("T")[0];
+        handleDateChange(dateString);
+      } catch (error) {
+        console.error("Error handling date press:", error, { date });
+      }
     };
 
     return (
       <View className="flex-row bg-gray-100 rounded-sm py-1 items-center justify-between">
         {showButton && (
           <TouchableOpacity className="p-1" onPress={goToPreviousWeek}>
-            <Text className="text-2xl text-gray-400">‹</Text>
+            <Text className="text-2xl text-gray-400 ml-2">‹</Text>
           </TouchableOpacity>
         )}
         <ScrollView
@@ -70,9 +97,7 @@ const DaySelector = memo(
               return (
                 <TouchableOpacity
                   key={`${date.getTime()}-${index}`}
-                  onPress={() =>
-                    handleDateChange(date.toISOString().split("T")[0])
-                  }
+                  onPress={() => handleDatePress(date)}
                   className={`flex items-center px-1 py-1 rounded-lg min-w-[47px] ${
                     isSelectedDay ? "bg-blue-200" : "bg-transparent"
                   }`}
@@ -82,7 +107,7 @@ const DaySelector = memo(
                       isSelectedDay ? "text-blue-500" : "text-gray-600"
                     }`}
                   >
-                    {dayNames[date.getDay()]}
+                    {dayNames[date.getDay()] || "N/A"}
                   </Text>
                   {showDate && (
                     <Text
@@ -93,6 +118,10 @@ const DaySelector = memo(
                       {date.getDate()}
                     </Text>
                   )}
+                  {/* Optional: Show today indicator */}
+                  {isCurrentDay && (
+                    <View className="w-1 h-1 bg-green-500 rounded-full mt-0.5" />
+                  )}
                 </TouchableOpacity>
               );
             })}
@@ -100,7 +129,7 @@ const DaySelector = memo(
         </ScrollView>
         {showButton && (
           <TouchableOpacity className="p-1" onPress={goToNextWeek}>
-            <Text className="text-2xl text-gray-400">›</Text>
+            <Text className="text-2xl text-gray-400 pr-2">›</Text>
           </TouchableOpacity>
         )}
       </View>

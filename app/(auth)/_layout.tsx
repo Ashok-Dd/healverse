@@ -1,21 +1,15 @@
-import {router, Stack} from "expo-router";
-import {useEffect} from "react";
-import {useAuthStore} from "@/store/authStore";
+import { useAuthStore } from "@/store/authStore";
+import { router, Stack } from "expo-router";
+import { useEffect } from "react";
 
 const Layout = () => {
-
-
   useEffect(() => {
-    const {isAuthenticated} = useAuthStore.getState();
+    const { isAuthenticated } = useAuthStore.getState();
 
     if (isAuthenticated) {
       console.log("isAthenticated");
-      router.replace("/(root)/(tabs)/home");
+      router.replace("/(root)/(tabs)/tracker");
     }
-
-    return () => {
-
-    };
   }, []);
 
   return <Stack screenOptions={{ headerShown: false }} />;

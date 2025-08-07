@@ -7,12 +7,12 @@ import {
   WaterLogHolder,
 } from "@/components/LogHolders";
 import NutritionInfo from "@/components/NutritionInfo";
-import { WaterLogModalLink } from "@/components/WaterLogModel";
+import { WaterLogModal } from "@/components/WaterLogModel";
 import useHealthStore from "@/store/healthStore";
 import { ExerciseLog, FoodLog, WaterLog } from "@/types/type";
 import { Feather } from "@expo/vector-icons";
 import { router } from "expo-router";
-import React, { useEffect } from "react";
+import React, { useState } from "react";
 import {
   ActivityIndicator,
   ScrollView,
@@ -23,6 +23,8 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 
 const DietLoggingApp: React.FC = () => {
+  const [openWaterModel, setOpenWaterModel] = useState(false);
+
   const {
     selectedDate,
     setSelectedDate,
@@ -32,9 +34,9 @@ const DietLoggingApp: React.FC = () => {
     getFoodLogsByMealType,
   } = useHealthStore();
 
-  useEffect(() => {
-    fetchDashboardData();
-  }, [selectedDate]);
+  // useEffect(() => {
+  //   fetchDashboardData();
+  // }, [selectedDate]);
 
   const handleDateChange = (date: string) => {
     setSelectedDate(date);
@@ -109,6 +111,9 @@ const DietLoggingApp: React.FC = () => {
           backgroundStyle="bg-green-50"
           items={healthData?.exerciseLogs as ExerciseLog[]}
           component={ExerciseLogHolder}
+          moveTo={() => {
+            router.push("/(root)/AllLogs");
+          }}
         />
 
         {/* Water Log */}
@@ -117,12 +122,15 @@ const DietLoggingApp: React.FC = () => {
           title="Water"
           description="Recommended: 3700mL"
           buttonText="+ Log Water"
-          Link={WaterLogModalLink} // Use the Link component that auto-opens modal
           showArrow={true}
           emojiIcon="🥛"
           backgroundStyle="bg-blue-50"
           items={healthData?.waterLogs as WaterLog[]}
           component={WaterLogHolder}
+          Link={() => setOpenWaterModel(true)}
+          moveTo={() => {
+            router.push("/(root)/AllWaterLogs");
+          }}
         />
 
         <LogCard
@@ -185,6 +193,14 @@ const DietLoggingApp: React.FC = () => {
           component={FoodLogHolder}
         />
       </ScrollView>
+
+      <WaterLogModal
+        visible={openWaterModel}
+        onClose={() => setOpenWaterModel(false)}
+        onSave={() => {}}
+        currentIntake={healthData?.summary.waterConsumedMl!}
+        dailyGoal={healthData?.summary.targetWaterMl!}
+      />
     </SafeAreaView>
   );
 };

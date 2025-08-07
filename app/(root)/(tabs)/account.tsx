@@ -1,11 +1,23 @@
-import { Text, View } from "react-native";
+import { useAuthStore } from "@/store/authStore";
+import { router } from "expo-router";
+import { Text, TouchableOpacity, View } from "react-native";
 
 const Profile = () => {
-    return (
-        <View className="h-screen flex items-center justify-center ">
-            <Text className="text-blue-500 font-bold text-5xl">Account here ...</Text>
-        </View>
-    )
-}
+  const { logout } = useAuthStore();
+  const handleLogout = () => {
+    logout();
 
-export default Profile ;
+    router.replace("/(auth)/welcome");
+  };
+  return (
+    <View className="h-screen flex items-center justify-center ">
+      <Text className="text-blue-500 font-bold text-5xl">Account here ...</Text>
+
+      <TouchableOpacity onPress={() => handleLogout()}>
+        <Text>logout</Text>
+      </TouchableOpacity>
+    </View>
+  );
+};
+
+export default Profile;

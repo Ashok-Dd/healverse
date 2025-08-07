@@ -1,6 +1,7 @@
 // components/LogCard.tsx
 import { ExerciseLog, FoodLog, WaterLog } from "@/types/type";
 import { Feather } from "@expo/vector-icons";
+import { ExternalPathString, RelativePathString, router } from "expo-router";
 import React from "react";
 import { Text, TouchableOpacity, View } from "react-native";
 
@@ -9,12 +10,14 @@ interface LogCardProps<T> {
   title: string;
   description: string;
   buttonText: string;
-  Link: any;
+  Link?: any;
   showArrow?: boolean;
   emojiIcon?: string;
   backgroundStyle?: string;
   items: T[];
   component: (item: T) => React.JSX.Element;
+  onPress?: () => void;
+  moveTo?: any;
 }
 
 function LogCard<T extends FoodLog | ExerciseLog | WaterLog>({
@@ -28,6 +31,8 @@ function LogCard<T extends FoodLog | ExerciseLog | WaterLog>({
   backgroundStyle = "bg-orange-50",
   items,
   component,
+  onPress,
+  moveTo,
 }: LogCardProps<T>) {
   const hasItems = items && items.length > 0;
 
@@ -40,7 +45,7 @@ function LogCard<T extends FoodLog | ExerciseLog | WaterLog>({
           <Text className="text-xl font-semibold text-gray-800">{title}</Text>
         </View>
         {showArrow && (
-          <Text className="text-blue-500 text-2xl">
+          <Text className="text-blue-500 text-2xl" onPress={moveTo}>
             <Feather name="arrow-right-circle" color={"skyblue"} size={20} />
           </Text>
         )}
@@ -75,7 +80,7 @@ function LogCard<T extends FoodLog | ExerciseLog | WaterLog>({
           </View>
           <TouchableOpacity
             className="bg-blue-200 px-3 py-1 rounded-full"
-            onPress={Link}
+            onPress={Link || onPress}
           >
             <Text className="text-blue-500 text-xs font-semibold">
               {buttonText}

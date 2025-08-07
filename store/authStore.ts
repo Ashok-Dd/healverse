@@ -1,15 +1,15 @@
-import { create } from 'zustand';
-import { subscribeWithSelector } from 'zustand/middleware';
-import * as SecureStore from 'expo-secure-store';
+import { appTokenCache } from "@/lib/auth";
 import { fetchApi } from '@/lib/fetchApi';
 import type {
-    User,
+    ApiError,
+    AuthResponse,
     LoginCredentials,
     RegisterCredentials,
-    AuthResponse,
-    ApiError
+    User
 } from '@/types/type';
-import { appTokenCache } from "@/lib/auth";
+import * as SecureStore from 'expo-secure-store';
+import { create } from 'zustand';
+import { subscribeWithSelector } from 'zustand/middleware';
 
 interface AuthState {
     // State
@@ -132,7 +132,7 @@ export const useAuthStore = create<AuthState>()(
                 }
 
                 const response = await fetchApi<AuthResponse>('/auth/check-auth', {
-                    method: 'POST',
+                    method: 'GET',
                     requiresAuth: true,
                 });
 

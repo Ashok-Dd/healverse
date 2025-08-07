@@ -11,20 +11,47 @@ export type ActivityLevel =
     | 'VERY_ACTIVE'
     | 'EXTREMELY_ACTIVE';
 
-export type DietaryRestriction = 'VEGETARIAN' | 'NON_VEGETARIAN' | 'VEGAN' | 'EGGETARIAN' | 'NONE';
+export type DietaryRestriction =
+    | "NON_VEGETARIAN"
+    | "VEGETARIAN"
+    | "VEGAN"
+    | "PESCATARIAN"
+    | "KETO"
+    | "PALEO"
+    | "MEDITERRANEAN"
+    | "GLUTEN_FREE"
+    | "DAIRY_FREE"
+    | "LOW_CARB"
+    | "LOW_FAT";
 
-export type Goal = 'WEIGHT_LOSS' | 'WEIGHT_GAIN' | 'MAINTAIN_WEIGHT' | 'MUSCLE_GAIN';
+
+export type Goal =
+    | "LOSE_WEIGHT"
+    | "MAINTAIN_WEIGHT"
+    | "GAIN_WEIGHT"
+    | "BUILD_MUSCLE"
+    | "IMPROVE_FITNESS";
+
 
 export type HealthCondition =
-    | 'NONE'
-    | 'HIGH_BLOOD_PRESSURE'
-    | 'DIABETES'
-    | 'HIGH_CHOLESTEROL'
-    | 'OTHER';
+    | "NONE"
+    | "DIABETES"
+    | "HYPERTENSION"
+    | "HEART_DISEASE"
+    | "THYROID"
+    | "PCOS"
+    | "ARTHRITIS"
+    | "DIGESTIVE_ISSUES"
+    | "ALLERGIES"
+    | "OTHER";
 
-export type WeightLossSpeed = 'SLOW' | 'MODERATE' | 'FAST';
 
-export type  MealType = "BREAKFAST" | "LUNCH" | "DINNER" | "SNACK"
+export type WeightLossSpeed = 'SLOW' | 'MODERATE' | 'FAST' | 'VERY_FAST';
+
+export type MealType = 'BREAKFAST'
+    | 'LUNCH'
+    | 'DINNER'
+    | 'SNACK';
 
 export enum ExerciseIntensity {
     LOW = 'LOW',
@@ -35,7 +62,6 @@ export enum ExerciseIntensity {
 
 
 // Interfaces
-
 export interface User {
     id: number;
     username: string;
@@ -93,7 +119,7 @@ export interface DietPlan {
 
 export interface Meal {
     id: number;
-    dietPlan?: DietPlan; // or full `DietPlan` object if needed or null
+    dietPlan?: DietPlan; // or full DietPlan object if needed or null
     mealType: MealType;
     mealName: string;
     calories: number;
@@ -110,7 +136,7 @@ export interface Meal {
 
 export interface FoodLog {
     id: number;
-    user: User | null;
+    user: User;
     dietPlan?: DietPlan;
     mealType: MealType;
     foodName: string;
@@ -128,7 +154,7 @@ export interface FoodLog {
 
 export interface ExerciseLog {
     id: number;
-    user: User | null;
+    user: User;
     exerciseName: string;
     durationMinutes: number;
     intensity: ExerciseIntensity;
@@ -139,7 +165,7 @@ export interface ExerciseLog {
 
 export interface WaterLog {
     id: number;
-    user: User | null;
+    user: User;
     amountMl: number;
     loggedAt: string; // ISO string format
     createdAt: string; // ISO string format
@@ -182,9 +208,29 @@ export type UpdateExerciseLogData = Partial<Omit<ExerciseLog, 'id' | 'user' | 'c
 
 export type CreateWaterLogData = Omit<WaterLog, 'id' | 'createdAt'>;
 export type UpdateWaterLogData = Partial<Omit<WaterLog, 'id' | 'user' | 'createdAt'>>;
+/=------------------------------CHAT TYPES-----------------------------/
 
 
-/*=------------------------------STORE TYPES-----------------------------*/
+export interface Conversation {
+    id: string;
+    userId: number;
+    title?: string;
+    createdAt: string;
+    updatedAt: string;
+    messages?: Message[];
+}
+
+export type Role = 'USER' | 'BOT';
+
+export interface Message {
+    id: number;
+    conversationId: Conversation["id"];
+    content: string;
+    sender: Role;
+    createdAt: string;
+}
+
+/=------------------------------STORE TYPES-----------------------------/
 
 export interface HealthStore {
     // State
@@ -295,7 +341,7 @@ export interface DietPlanStore {
 }
 
 
-/*=-------------------------FETCH API TYPES-------------------------------------*/
+/=--------------------------------------------------------------------------/
 
 export interface AuthTokens {
     token: string;
@@ -327,7 +373,7 @@ export interface ApiError {
 }
 
 
-/*=---------------------------------PROPS-----------------------------------------*/
+/=--------------------------------------------------------------------------/
 
 export interface NutritionInfoProps {
     calories : number;
@@ -336,13 +382,6 @@ export interface NutritionInfoProps {
     carbs : number;
 }
 
-
-export interface NutritionInfoProps {
-    calories : number;
-    protein : number;
-    fat : number;
-    carbs : number;
-}
 
 export interface ButtonProps {
     title: string;
@@ -421,4 +460,14 @@ export interface OptionsCardProps<T> {
     value: T;
     isSelected?: boolean;
     onPress?: () => void;
+}
+
+
+interface HealthQuery {
+  id: string;
+  icon: keyof typeof Ionicons.glyphMap;
+  title: string;
+  description: string;
+  category: string;
+  color: string;
 }
