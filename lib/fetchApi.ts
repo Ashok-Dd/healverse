@@ -1,6 +1,6 @@
 import { appTokenCache } from './auth';
 
-const API_BASE_URL = "http://192.168.68.114:8080";
+const API_BASE_URL = "http://10.215.117.220:8080";
 
 if(!API_BASE_URL){
     throw new Error(

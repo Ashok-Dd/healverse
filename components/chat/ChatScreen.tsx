@@ -6,6 +6,7 @@ import { MessageInput } from "@/components/chat/MessageInput";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { router } from "expo-router";
 import { useState } from "react";
+import VoiceModel from "@/components/models/VoiceModel";
 
 interface ChatScreenProps {
   conversationId: string;
@@ -90,7 +91,7 @@ const ChatScreen = ({
         visible={isModalVisible}
         onRequestClose={closeModal} // Android back button
       >
-        {/*<VoiceChat/>*/}
+        <VoiceModel/>
       </Modal>
     </SafeAreaView>
   );

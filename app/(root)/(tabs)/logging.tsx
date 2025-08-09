@@ -190,18 +190,17 @@ const DietLoggingApp: React.FC = () => {
                 handleDateChange={handleDateChange}
             />
 
-            {isLoading && <LoggingSkeleton/>}
-            {error && renderErrorCard()}
-            {
-                !healthData && (
-                    <PlaceHolder message="You are not on this day.!" />
-
-                )
-            }
-            {!isValidDate && (
+            {isLoading ? (
+                <LoggingSkeleton />
+            ) : error ? (
+                renderErrorCard()
+            ) : !isValidDate ? (
                 <PlaceHolder message="You're on invalid date ...!" />
+            ) : !healthData ? (
+                <PlaceHolder message="You are not on this day.!" />
+            ) : (
+                renderContent()
             )}
-            {!isLoading && !error&& isValidDate && healthData && renderContent()}
 
             {/* Water Log Modal */}
             <WaterLogModal
