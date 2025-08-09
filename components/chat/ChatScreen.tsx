@@ -27,11 +27,12 @@ const ChatScreen = ({
     errorLoadingMessages,
     sendMessage,
     isSendingMessage,
-    sendMessageError,
+    // sendMessageError,
     refetchMessages,
     isRefetching,
-    retryFailedMessage,
-    clearError,
+    // retryFailedMessage,
+    // clearError,
+      flatListRef
   } = useChat(conversationId, { isExistingConversation });
 
   const handleSendMessage = (message: string) => {
@@ -70,6 +71,7 @@ const ChatScreen = ({
           isRefreshing={isRefetching}
           onRefresh={refetchMessages}
           error={errorLoadingMessages?.message}
+          flatListRef={flatListRef}
         />
       </View>
 

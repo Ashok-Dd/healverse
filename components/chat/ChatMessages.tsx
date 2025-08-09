@@ -12,6 +12,7 @@ interface ChatMessagesProps {
   isRefreshing?: boolean;
   onRefresh?: () => void;
   error?: string | null;
+  flatListRef: React.RefObject<FlatList<Message> | null>;
 }
 
 export const ChatMessages: React.FC<ChatMessagesProps> = ({
@@ -20,6 +21,7 @@ export const ChatMessages: React.FC<ChatMessagesProps> = ({
   isRefreshing = false,
   onRefresh,
   error,
+    flatListRef
 }) => {
   const formatTimestamp = (timestamp: string) => {
     const date = new Date(timestamp);
@@ -39,9 +41,12 @@ export const ChatMessages: React.FC<ChatMessagesProps> = ({
 
   if (isLoading) {
     return (
-      <View className="flex-1 ">
+      <View className="flex-1 py-5 gap-3">
         <View
-          className={"mx-auto w-full h-32 rounded-2xl animate-pulse max-w-xs"}
+          className={"mx-auto bg-gray-300 w-full h-7 rounded-xl animate-pulse max-w-xs"}
+        />
+        <View
+          className={"mx-auto bg-gray-300 w-full h-7 rounded-xl animate-pulse max-w-[80%]"}
         />
       </View>
     );
@@ -59,6 +64,7 @@ export const ChatMessages: React.FC<ChatMessagesProps> = ({
 
   return (
     <FlatList
+      ref={flatListRef}
       className="flex-1 px-4 "
       contentContainerStyle={{ paddingTop: 16, paddingBottom: 16 }}
       data={messages}

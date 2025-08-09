@@ -1,6 +1,6 @@
 import { appTokenCache } from './auth';
 
-const API_BASE_URL = "http://172.20.137.40:8080";
+const API_BASE_URL = "http://192.168.68.114:8080";
 
 if(!API_BASE_URL){
     throw new Error(
@@ -33,11 +33,11 @@ export const fetchApi = async <T = any>(
     options: FetchApiOptions = {}
 ): Promise<T> => {
     const {
-        method = 'GET',
+        method = "GET",
         body,
         headers = {},
         requiresAuth = false,
-        isRefreshRequest = false
+        isRefreshRequest = false,
     } = options;
 
     const url = `${API_BASE_URL}${endpoint}`;
@@ -47,14 +47,13 @@ export const fetchApi = async <T = any>(
     const config: RequestInit = {
         method,
         headers: {
-            'Content-Type': 'application/json',
+            "Content-Type": "application/json",
             ...headers,
         },
     };
 
-    // Add authentication header if required
-    if (requiresAuth && !isRefreshRequest) {
-        const token = await appTokenCache?.getToken('token');
+    if (requiresAuth || isRefreshRequest) {
+        const token = await appTokenCache?.getToken("token");
         if (token) {
             config.headers = {
                 ...config.headers,
@@ -63,19 +62,14 @@ export const fetchApi = async <T = any>(
         }
     }
 
-    // Add token for refresh requests
-    if (isRefreshRequest) {
-        const token = await appTokenCache?.getToken('token');
-        if (token) {
-            config.headers = {
-                ...config.headers,
-                Authorization: `Bearer ${token}`,
-            };
+    if (body && method !== "GET") {
+        if (body instanceof FormData) {
+            // Remove Content-Type so fetch sets it automatically
+            delete (config.headers as any)["Content-Type"];
+            config.body = body;
+        } else {
+            config.body = JSON.stringify(body);
         }
-    }
-
-    if (body && method !== 'GET') {
-        config.body = JSON.stringify(body);
     }
 
     try {
@@ -96,6 +90,6 @@ export const fetchApi = async <T = any>(
         if (error instanceof ApiError) {
             throw error;
         }
-        throw new ApiError('Network error occurred', 0);
+        throw new ApiError("Network error occurred", 0);
     }
 };

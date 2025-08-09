@@ -1,4 +1,5 @@
 import React from "react";
+import {Ionicons} from "@expo/vector-icons";
 
 // Enums
 
@@ -53,12 +54,7 @@ export type MealType = 'BREAKFAST'
     | 'DINNER'
     | 'SNACK';
 
-export enum ExerciseIntensity {
-    LOW = 'LOW',
-    MODERATE = 'MODERATE',
-    HIGH = 'HIGH',
-    VERY_HIGH = 'VERY_HIGH'
-}
+export type ExerciseIntensity  = "LOW" | "MODERATE" | "HIGH"
 
 
 // Interfaces
@@ -136,25 +132,29 @@ export interface Meal {
 
 export interface FoodLog {
     id: number;
-    user: User;
-    dietPlan?: DietPlan;
     mealType: MealType;
-    foodName: string;
-    quantity: number;
-    unit: string;
+    mealName: string;
+    loggedAt: string;
+    isFromCamera?: boolean;
+    imageDescription?: string;
+    createdAt: string;
+    imageUrl?: string;
+    items : FoodItem[];
+}
+
+export interface FoodItem {
+    id : number;
+    name : string;
+    quantity : number;
+    unit : string;
     calories: number;
     protein: number;
     carbs: number;
-    fat: number;
-    loggedAt: string; // ISO string format
-    isFromCamera?: boolean;
-    imageDescription?: string;
-    createdAt: string; // ISO string format
+    fats: number;
 }
 
 export interface ExerciseLog {
     id: number;
-    user: User;
     exerciseName: string;
     durationMinutes: number;
     intensity: ExerciseIntensity;
@@ -165,7 +165,6 @@ export interface ExerciseLog {
 
 export interface WaterLog {
     id: number;
-    user: User;
     amountMl: number;
     loggedAt: string; // ISO string format
     createdAt: string; // ISO string format
@@ -200,7 +199,13 @@ export interface HealthData {
 }
 
 
-export type CreateFoodLogData = Omit<FoodLog, 'id' | 'createdAt'>;
+export type CreateFoodLogData =  {
+    image: File | Blob;
+    mealType: string;
+    loggedAt: string;
+}
+
+
 export type UpdateFoodLogData = Partial<Omit<FoodLog, 'id' | 'user' | 'createdAt'>>;
 
 export type CreateExerciseLogData = Omit<ExerciseLog, 'id' | 'createdAt'>;
@@ -208,6 +213,7 @@ export type UpdateExerciseLogData = Partial<Omit<ExerciseLog, 'id' | 'user' | 'c
 
 export type CreateWaterLogData = Omit<WaterLog, 'id' | 'createdAt'>;
 export type UpdateWaterLogData = Partial<Omit<WaterLog, 'id' | 'user' | 'createdAt'>>;
+
 /=------------------------------CHAT TYPES-----------------------------/
 
 
@@ -470,4 +476,25 @@ interface HealthQuery {
   description: string;
   category: string;
   color: string;
+}
+
+interface ApiResponse<T> {
+    message : string;
+    data : T;
+    error : string;
+
+}
+
+export interface METValues {
+    [exerciseName: string]: {
+        HIGH: number;
+        MODERATE: number;
+        LOW: number;
+    };
+}
+
+export interface IntensityLevel {
+    level: string;
+    color: string;
+    label: string;
 }

@@ -9,26 +9,28 @@ import { useCallback, useMemo, useState } from 'react';
 export const dietPlanKeys = {
   all: ['dietPlans'] as const,
   byDate: (date: string) => [...dietPlanKeys.all, 'byDate', date] as const,
-  today: () => [...dietPlanKeys.all, 'today'] as const,
+  today: () => [...dietPlanKeys.all, 'today'] as const
 } as const;
 
 // ==================== API FUNCTIONS ====================
 const dietPlanApi = {
-  fetchByDate: async (date: string): Promise<DietPlan> => {
+  fetchByDate: async (date: string): Promise<DietPlan | null> => {
     try {
-      return await fetchApi<DietPlan>(`/api/diet-plans/${date}`, {
-        method: 'GET',
+      return await fetchApi<DietPlan>(`/api/diet-plans/generate/${date}`, {
+        method: 'POST',
         requiresAuth: true,
       });
+
     } catch (error: any) {
-      // If not found, return dummy data or generate new plan
-      if (error.status === 404) {
-        // In development, return dummy data
-        return getDummyDietPlan();
-        // In production, you might want to generate a new plan:
-        // return await dietPlanApi.generate(date);
-      }
-      throw error;
+      // // If not found, return dummy data or generate new plan
+      // if (error.status === 404) {
+      //   // In development, return dummy data
+      //   return getDummyDietPlan();
+      //   // In production, you might want to generate a new plan:
+      //   // return await dietPlanApi.generate(date);
+      // }
+
+      return null;
     }
   },
 
@@ -63,7 +65,7 @@ const dietPlanApi = {
 };
 
 // ==================== UTILITY FUNCTIONS ====================
-const getCurrentDate = (): string => {
+export const getCurrentDate = (): string => {
   try {
     return new Date().toISOString().split('T')[0];
   } catch (error) {
@@ -72,8 +74,8 @@ const getCurrentDate = (): string => {
   }
 };
 
-const isValidDateForData = (date: string | undefined | null): boolean => {
-  console.log('🔍 Validating date:', date);
+export const isValidDateForData = (date: string | undefined | null): boolean => {
+  // console.log('🔍 Validating date:', date);
   
   if (!date || typeof date !== 'string') {
     console.log('❌ Date validation failed: Invalid date format', { date, type: typeof date });
@@ -81,7 +83,7 @@ const isValidDateForData = (date: string | undefined | null): boolean => {
   }
   
   const { user: currentUser } = useAuthStore.getState();
-  console.log('👤 Current user:', currentUser ? 'exists' : 'null');
+  // console.log('👤 Current user:', currentUser ? 'exists' : 'null');
 
   if (!currentUser) {
     console.log('❌ Date validation failed: No current user');
@@ -92,16 +94,16 @@ const isValidDateForData = (date: string | undefined | null): boolean => {
     const selectedDateObj = new Date(date);
     const currentDateObj = new Date(getCurrentDate());
     
-    console.log('📅 Dates parsed:', {
-      selectedDate: date,
-      selectedDateObj: selectedDateObj.toISOString(),
-      currentDate: getCurrentDate(),
-      currentDateObj: currentDateObj.toISOString(),
-    });
+    // console.log('📅 Dates parsed:', {
+    //   selectedDate: date,
+    //   selectedDateObj: selectedDateObj.toISOString(),
+    //   currentDate: getCurrentDate(),
+    //   currentDateObj: currentDateObj.toISOString(),
+    // });
     
     // Handle createdAt safely
     const createdAtDate = currentUser.createdAt;
-    console.log('🎂 User createdAt:', createdAtDate, typeof createdAtDate);
+    // console.log('🎂 User createdAt:', createdAtDate, typeof createdAtDate);
     
     if (!createdAtDate) {
       console.log('❌ Date validation failed: No user creation date');
@@ -110,47 +112,47 @@ const isValidDateForData = (date: string | undefined | null): boolean => {
     
     const userCreatedDateStr = typeof createdAtDate === 'string' 
       ? createdAtDate.split('T')[0] 
-      : createdAtDate.toISOString().split('T')[0];
+      : (createdAtDate as Date).toISOString().split('T')[0];
     
     const userCreatedDateObj = new Date(userCreatedDateStr);
     
-    console.log('🎂 User creation date processed:', {
-      original: createdAtDate,
-      processed: userCreatedDateStr,
-      dateObj: userCreatedDateObj.toISOString(),
-    });
+    // console.log('🎂 User creation date processed:', {
+    //   original: createdAtDate,
+    //   processed: userCreatedDateStr,
+    //   dateObj: userCreatedDateObj.toISOString(),
+    // });
 
     // Check for invalid dates
     if (isNaN(selectedDateObj.getTime()) || 
         isNaN(currentDateObj.getTime()) || 
         isNaN(userCreatedDateObj.getTime())) {
-      console.log('❌ Date validation failed: Invalid date objects', {
-        selectedValid: !isNaN(selectedDateObj.getTime()),
-        currentValid: !isNaN(currentDateObj.getTime()),
-        userCreatedValid: !isNaN(userCreatedDateObj.getTime()),
-      });
+      // console.log('❌ Date validation failed: Invalid date objects', {
+      //   selectedValid: !isNaN(selectedDateObj.getTime()),
+      //   currentValid: !isNaN(currentDateObj.getTime()),
+      //   userCreatedValid: !isNaN(userCreatedDateObj.getTime()),
+      // });
       return false;
     }
 
     // Date should not be in the future
     if (selectedDateObj > currentDateObj) {
-      console.log('❌ Date validation failed: Date is in the future', {
-        selected: selectedDateObj.toISOString(),
-        current: currentDateObj.toISOString(),
-      });
+      // console.log('❌ Date validation failed: Date is in the future', {
+      //   selected: selectedDateObj.toISOString(),
+      //   current: currentDateObj.toISOString(),
+      // });
       return false;
     }
 
     // Date should not be before user creation date
     if (selectedDateObj < userCreatedDateObj) {
-      console.log('❌ Date validation failed: Date is before user creation', {
-        selected: selectedDateObj.toISOString(),
-        userCreated: userCreatedDateObj.toISOString(),
-      });
+      // console.log('❌ Date validation failed: Date is before user creation', {
+      //   selected: selectedDateObj.toISOString(),
+      //   userCreated: userCreatedDateObj.toISOString(),
+      // });
       return false;
     }
 
-    console.log('✅ Date validation passed!');
+    // console.log('✅ Date validation passed!');
     return true;
   } catch (error) {
     console.error('❌ Error validating date:', error, { date, currentUser });
@@ -235,7 +237,7 @@ interface UseDateSelectorOptions {
   autoFetch?: boolean;
 }
 
-export const useDateSelector = (options: UseDateSelectorOptions = {}) => {
+export const useDateSelectorForDietplan = (options: UseDateSelectorOptions = {}) => {
   const queryClient = useQueryClient();
   const currentDate = getCurrentDate();
   const [selectedDate, setSelectedDate] = useState(
@@ -389,9 +391,11 @@ export const useDietPlanMutations = () => {
 
 // ==================== BONUS: COMPOSITE HOOK ====================
 // This combines all three hooks for easy usage in components
+
 export const useDietPlanManager = (initialDate?: string) => {
-  const dateSelector = useDateSelector({ initialDate });
+  const dateSelector = useDateSelectorForDietplan({ initialDate });
   const dietPlan = useDietPlan(dateSelector.selectedDate);
+
   const mutations = useDietPlanMutations();
 
   const handleDateChange = useCallback((date: string) => {
@@ -415,6 +419,8 @@ export const useDietPlanManager = (initialDate?: string) => {
       throw error;
     }
   }, [mutations, dateSelector.selectedDate]);
+
+
 
   return {
     // Date management

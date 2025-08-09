@@ -1,740 +1,900 @@
-import { createDefaultHealthData } from "@/constants/data";
+import { useMutation, useQuery, useQueryClient} from "@tanstack/react-query";
+import type {QueryClient} from "@tanstack/react-query";
 import { fetchApi } from "@/lib/fetchApi";
-import { useAuthStore } from "@/store/authStore";
 import {
-  CreateExerciseLogData,
-  CreateFoodLogData,
-  CreateWaterLogData,
-  DailySummary,
-  ExerciseIntensity,
-  ExerciseLog,
-  FoodLog,
-  HealthData,
-  HealthStore,
-  MealType,
-  UpdateExerciseLogData,
-  UpdateFoodLogData,
-  UpdateWaterLogData,
-  WaterLog,
+    CreateExerciseLogData,
+    CreateWaterLogData,
+    DailySummary,
+    ExerciseLog, FoodItem,
+    FoodLog,
+    HealthData,
+    MealType,
+    UpdateExerciseLogData,
+    UpdateFoodLogData,
+    WaterLog,
 } from "@/types/type";
-import { create } from "zustand";
-import { devtools, persist } from "zustand/middleware";
-import { immer } from "zustand/middleware/immer";
+import { getCurrentDate, isValidDateForData} from "./dietPlan";
+import {useCallback, useState} from "react";
 
-const useHealthStore = create<HealthStore>()(
-  devtools(
-    persist(
-      immer((set, get) => ({
-        // Initial State
-        currentDate: new Date().toISOString().split("T")[0],
-        selectedDate: new Date().toISOString().split("T")[0],
-        healthData: null,
-        isLoading: false,
-        error: null,
+const healthBaseKey = ["health"] as const;
 
-        // Basic Actions
-        setCurrentDate: (date: string) => {
-          set((state) => {
-            state.currentDate = date;
-          });
-        },
+export const healthQueryKeys = {
+  all: healthBaseKey,
+  dashboard: (date: string) => [...healthBaseKey, "dashboard", date] as const,
+  foodLogs: {
+    all: [...healthBaseKey, "food-logs"] as const,
+    today: () => [...healthBaseKey, "food-logs", "today"] as const,
+    byMealType: (mealType: MealType) =>
+      [...healthBaseKey, "food-logs", "meal-type", mealType] as const,
+    byDate: (date: string) =>
+      [...healthBaseKey, "food-logs", "date", date] as const,
+  },
+  exerciseLogs: {
+    all: [...healthBaseKey, "exercise-logs"] as const,
+    today: () => [...healthBaseKey, "exercise-logs", "today"] as const,
+    byDate: (date: string) =>
+      [...healthBaseKey, "exercise-logs", "date", date] as const,
+    types: () => [...healthBaseKey, "exercise-logs", "types"] as const,
+  },
+  waterLogs: {
+    all: [...healthBaseKey, "water-logs"] as const,
+    today: () => [...healthBaseKey, "water-logs", "today"] as const,
+    todayTotal: () => [...healthBaseKey, "water-logs", "today-total"] as const,
+    byDate: (date: string) =>
+      [...healthBaseKey, "water-logs", "date", date] as const,
+  },
+  weekly: () => [...healthBaseKey, "weekly"] as const,
+} as const;
 
-        setSelectedDate: (date: string) => {
-          set((state) => {
-            state.selectedDate = date;
-            void get().fetchDashboardData(date);
-          });
-        },
+const healthAPIs = {
+  fetchDashboardDataByDate: async (date: string): Promise<HealthData | null> => {
+    try {
+      // Uncomment when API is ready
+      return await fetchApi<HealthData | null>(`/api/dashboard/${date}`, {
+        method: "GET",
+        requiresAuth: true,
+      });
+    } catch (error) {
+      console.error("Failed to fetch dashboard data:", error);
+      return null;
+    }
+  },
+  fetchTodayFoodLogs: async (): Promise<FoodLog[]> => {
+    const response = await fetchApi<FoodLog[]>("/api/food-logs/today", {
+      method: "GET",
+      requiresAuth: true,
+    });
+    return response;
+  },
+  fetchTodayFoodLogsByMealType: async (
+    mealType: MealType
+  ): Promise<FoodLog[]> => {
+    const response = await fetchApi<FoodLog[]>(
+      `/api/food-logs/today/${mealType}`,
+      {
+        method: "GET",
+        requiresAuth: true,
+      }
+    );
+    return response;
+  },
+};
 
-        setHealthData: (data: HealthData) => {
-          set((state) => {
-            state.healthData = data;
-            state.error = null;
-          });
-        },
+interface UseDateSelectorOptions {
+    initialDate?: string;
+    autoFetch?: boolean;
+}
 
-        setLoading: (loading: boolean) => {
-          set((state) => {
-            state.isLoading = loading;
-          });
-        },
+export const useDateSelectorForHealthStore = (options: UseDateSelectorOptions = {}) => {
+    const queryClient = useQueryClient();
+    const currentDate = getCurrentDate();
+    const [selectedDate, setSelectedDate] = useState(
+        options.initialDate || currentDate
+    );
 
-        setError: (error: string | null) => {
-          set((state) => {
-            state.error = error;
-          });
-        },
+    const selectDate = useCallback((date: string | null | undefined) => {
+        // Safely handle date input
+        const safeDate = date && typeof date === 'string' ? date : currentDate;
+        setSelectedDate(safeDate);
 
-        // Data fetching
-        fetchDashboardData: async (date?: string) => {
-          const targetDate = date || get().selectedDate;
+        // Prefetch data for the selected date if valid and autoFetch is enabled
+        if (options.autoFetch !== false && isValidDateForData(safeDate)) {
+            queryClient.prefetchQuery({
+                queryKey: healthQueryKeys.dashboard(safeDate),
+                queryFn: () => healthAPIs.fetchDashboardDataByDate(safeDate),
+                staleTime: 5 * 60 * 1000,
+            });
+        }
+    }, [queryClient, options.autoFetch, currentDate]);
 
-          set((state) => {
-            state.isLoading = true;
-            state.error = null;
-          });
+    const selectToday = useCallback(() => {
+        selectDate(currentDate);
+    }, [currentDate, selectDate]);
 
-          try {
-            // Check if date is valid for fetching data
-            if (!get().isValidDateForData(targetDate)) {
-              // Set default empty data for invalid dates (future dates or before user creation)
-              set((state) => {
-                state.healthData = createDefaultHealthData(targetDate);
-                state.isLoading = false;
-              });
-              return;
+    const selectPreviousDay = useCallback(() => {
+        const prevDate = new Date(selectedDate);
+        prevDate.setDate(prevDate.getDate() - 1);
+        selectDate(prevDate.toISOString().split('T')[0]);
+    }, [selectedDate, selectDate]);
+
+    const selectNextDay = useCallback(() => {
+        const nextDate = new Date(selectedDate);
+        nextDate.setDate(nextDate.getDate() + 1);
+        selectDate(nextDate.toISOString().split('T')[0]);
+    }, [selectedDate, selectDate]);
+
+    const isToday = selectedDate === currentDate;
+    const isValidDate = isValidDateForData(selectedDate);
+
+    return {
+        // State
+        selectedDate,
+        currentDate,
+        isToday,
+        isValidDate,
+
+        // Actions
+        setSelectedDate: selectDate,
+        selectToday,
+        selectPreviousDay,
+        selectNextDay,
+
+        // Utilities
+        isValidDateForData,
+    };
+};
+
+
+export const useDashboardData = (date: string) => {
+    const query = useQuery<HealthData>({
+        queryKey: healthQueryKeys.dashboard(date),
+        queryFn: () => healthAPIs.fetchDashboardDataByDate(date),
+        staleTime: 5 * 60 * 1000,
+        gcTime: 30 * 60 * 1000,
+        enabled: isValidDateForData(date),
+    });
+
+    // Helper getters (avoid repeating filter logic in components)
+    const getExerciseLogs = (): ExerciseLog[] =>
+        (query.data as HealthData)?.exerciseLogs || [];
+
+    const getWaterLogs = (): WaterLog[] =>
+        (query.data as HealthData)?.waterLogs || [];
+
+    const getFoodLogsByMealType = (
+        mealType: "BREAKFAST" | "LUNCH" | "DINNER" | "SNACK"
+    ): FoodLog[] =>
+        (query.data as HealthData)?.foodLogs?.filter((f) => f.mealType === mealType) || [];
+
+    const getAllFoodLogs = (): FoodLog[] =>
+        (query.data as HealthData)?.foodLogs || [];
+
+    return {
+        ...query,
+        getExerciseLogs,
+        getWaterLogs,
+        getFoodLogsByMealType,
+        getAllFoodLogs,
+    };
+};
+
+export const useFoodLogs = {
+  Today: () => {
+    return useQuery({
+      queryKey: healthQueryKeys.foodLogs.today(),
+      queryFn: () => healthAPIs.fetchTodayFoodLogs(),
+      staleTime: 2 * 60 * 1000, // 2 minutes
+    });
+  },
+
+  ByMealType: (mealType: MealType) => {
+    return useQuery({
+      queryKey: healthQueryKeys.foodLogs.byMealType(mealType),
+      queryFn: () => healthAPIs.fetchTodayFoodLogsByMealType(mealType),
+      staleTime: 2 * 60 * 1000,
+    });
+  },
+};
+
+export const useFoodLogMutations = () => {
+    const queryClient: QueryClient = useQueryClient();
+
+    const calculateTotalNutrition = (items: FoodItem[]) => {
+        return items.reduce(
+            (total, item) => ({
+                calories: total.calories + item.calories,
+                protein: total.protein + item.protein,
+                carbs: total.carbs + item.carbs,
+                fat: total.fat + (item.fats || 0)
+            }),
+            { calories: 0, protein: 0, carbs: 0, fat: 0 }
+        );
+    };
+
+
+    const addFoodLog = useMutation({
+            mutationKey: ["addFoodLog"],
+            mutationFn: async (formData: FormData): Promise<FoodLog> => {
+                // Change endpoint to match your backend
+                return await fetchApi<FoodLog>("/api/food-logs/log/image", {
+                    method: "POST",
+                    requiresAuth: true,
+                    body: formData,
+                    headers: {
+                        // Don't set Content-Type header for FormData, let the browser set it
+                    },
+                });
+            },
+            onSuccess: (newLog) => {
+                // Calculate nutrition totals from items
+                const nutrition = calculateTotalNutrition(newLog.items);
+
+                // Update today's food logs
+                queryClient.setQueryData<FoodLog[]>(
+                    ["foodLogs", "today"],
+                    (old = []) => [...old, newLog]
+                );
+
+                // Update meal type specific logs
+                queryClient.setQueryData<FoodLog[]>(
+                    ["foodLogs", "mealType", newLog.mealType],
+                    (old = []) => [...old, newLog]
+                );
+
+                // Update dashboard data
+                const today = new Date().toISOString().split("T")[0];
+                queryClient.setQueryData<HealthData>(
+                    ["dashboard", today],
+                    (old) => {
+                        if (!old) return old;
+                        return {
+                            ...old,
+                            foodLogs: [...old.foodLogs, newLog],
+                            summary: {
+                                ...old.summary,
+                                consumedCalories: old.summary.consumedCalories + nutrition.calories,
+                                consumedProtein: old.summary.consumedProtein + nutrition.protein,
+                                consumedCarbs: old.summary.consumedCarbs + nutrition.carbs,
+                                consumedFat: old.summary.consumedFat + nutrition.fat,
+                            },
+                        };
+                    }
+                );
+
+                // Invalidate related queries
+                queryClient.invalidateQueries({ queryKey: ["foodLogs"] });
+            },
+            onError: (error) => {
+                console.error("Food log mutation error:", error);
             }
+        });
 
-            // Fetch data from API
-            // const response = await fetchApi<HealthData>(/api/dashboard/${targetDate}, {
-            //     method: 'GET',
-            //     requiresAuth: true,
-            // });
-
-            set((state) => {
-              state.healthData = createDefaultHealthData(targetDate);
-              state.isLoading = false;
-            });
-          } catch (error) {
-            console.error("Failed to fetch dashboard data:", error);
-
-            // Set default empty data on error
-            set((state) => {
-              state.healthData = createDefaultHealthData(targetDate);
-              state.error =
-                error instanceof Error ? error.message : "Failed to fetch data";
-              state.isLoading = false;
-            });
-          }
-        },
-
-        isValidDateForData: (date: string) => {
-          const { currentDate } = get();
-          const { user: currentUser } = useAuthStore.getState();
-
-          // If no user, return false
-          if (!currentUser) return false;
-
-          const selectedDateObj = new Date(date);
-          const currentDateObj = new Date(currentDate);
-          const userCreatedDateObj = new Date(
-            currentUser.createdAt.split("T")[0]
-          );
-
-          // Date should not be in the future
-          if (selectedDateObj > currentDateObj) return false;
-
-          // Date should not be before user creation date
-          if (selectedDateObj < userCreatedDateObj) return false;
-
-          return true;
-        },
-
-        // Food Log Actions (updated to work with API)
-        addFoodLog: async (foodLogData: CreateFoodLogData) => {
-          try {
-            const response = await fetchApi<FoodLog>("/api/food-logs/log", {
-              method: "POST",
-              requiresAuth: true,
-              body: foodLogData,
-            });
-
-            set((state) => {
-              if (!state.healthData) return;
-              state.healthData.foodLogs.push(response);
-
-              // Update summary
-              state.healthData.summary.consumedCalories += response.calories;
-              state.healthData.summary.consumedProtein += response.protein;
-              state.healthData.summary.consumedCarbs += response.carbs;
-              state.healthData.summary.consumedFat += response.fat;
-            });
-
-            get().recalculateProgress();
-            return response;
-          } catch (error) {
-            console.error("Failed to add food log:", error);
-            throw error;
-          }
-        },
-
-        updateFoodLog: async (id: number, updates: UpdateFoodLogData) => {
-          try {
+    const updateFoodLog = useMutation({
+        mutationFn: async ({
+                               id,
+                               updates,
+                           }: {
+            id: number;
+            updates: UpdateFoodLogData;
+        }): Promise<FoodLog> => {
             const response = await fetchApi<FoodLog>(`/api/food-logs/${id}`, {
-              method: "PUT",
-              requiresAuth: true,
-              body: updates,
-            });
-
-            set((state) => {
-              if (!state.healthData) return;
-
-              const index = (state.healthData.foodLogs as FoodLog[]).findIndex(
-                (log) => log.id === id
-              );
-              if (index !== -1) {
-                const oldLog = state.healthData.foodLogs[index];
-
-                // Update summary by removing old values and adding new ones
-                state.healthData.summary.consumedCalories +=
-                  response.calories - oldLog.calories;
-                state.healthData.summary.consumedProtein +=
-                  response.protein - oldLog.protein;
-                state.healthData.summary.consumedCarbs +=
-                  response.carbs - oldLog.carbs;
-                state.healthData.summary.consumedFat +=
-                  response.fat - oldLog.fat;
-
-                state.healthData.foodLogs[index] = response;
-              }
-            });
-
-            get().recalculateProgress();
-            return response;
-          } catch (error) {
-            console.error("Failed to update food log:", error);
-            throw error;
-          }
-        },
-
-        deleteFoodLog: async (id: number) => {
-          try {
-            await fetchApi(`/api/food-logs/${id}`, {
-              method: "DELETE",
-              requiresAuth: true,
-            });
-
-            set((state) => {
-              if (!state.healthData) return;
-
-              const logToDelete = (state.healthData.foodLogs as FoodLog[]).find(
-                (log) => log.id === id
-              );
-              if (logToDelete) {
-                // Update summary by removing the deleted log's values
-                state.healthData.summary.consumedCalories -=
-                  logToDelete.calories;
-                state.healthData.summary.consumedProtein -= logToDelete.protein;
-                state.healthData.summary.consumedCarbs -= logToDelete.carbs;
-                state.healthData.summary.consumedFat -= logToDelete.fat;
-
-                state.healthData.foodLogs = (
-                  state.healthData.foodLogs as FoodLog[]
-                ).filter((log) => log.id !== id);
-              }
-            });
-
-            get().recalculateProgress();
-          } catch (error) {
-            console.error("Failed to delete food log:", error);
-            throw error;
-          }
-        },
-
-        getFoodLogById: (id: number) => {
-          const { healthData } = get();
-          return (healthData?.foodLogs as FoodLog[]).find(
-            (log) => log.id === id
-          );
-        },
-
-        getFoodLogsByMealType: (mealType: MealType) => {
-          const { healthData } = get();
-          return (
-            healthData?.foodLogs?.filter((log) => log.mealType === mealType) ??
-            []
-          );
-        },
-
-        getFoodLogsByDate: (date: string) => {
-          const { healthData } = get();
-          return (
-            (healthData?.foodLogs as FoodLog[]).filter((log) =>
-              log.loggedAt.startsWith(date)
-            ) || []
-          );
-        },
-
-        fetchTodaysFoodLogs: async () => {
-          try {
-            const response = await fetchApi<FoodLog[]>("/api/food-logs/today", {
-              method: "GET",
-              requiresAuth: true,
-            });
-            return response;
-          } catch (error) {
-            console.error("Failed to fetch today's food logs:", error);
-            throw error;
-          }
-        },
-
-        fetchFoodLogsByMealType: async (mealType: MealType) => {
-          try {
-            const response = await fetchApi<FoodLog[]>(
-              `/api/food-logs/today/${mealType}`,
-              {
-                method: "GET",
-                requiresAuth: true,
-              }
-            );
-            return response;
-          } catch (error) {
-            console.error(`Failed to fetch ${mealType} food logs:`, error);
-            throw error;
-          }
-        },
-
-        // Exercise Log Actions (updated to work with API)
-        addExerciseLog: async (exerciseLogData: CreateExerciseLogData) => {
-          try {
-            const response = await fetchApi<ExerciseLog>(
-              "/api/exercise-logs/log",
-              {
-                method: "POST",
-                requiresAuth: true,
-                body: exerciseLogData,
-              }
-            );
-
-            set((state) => {
-              if (!state.healthData) return;
-              state.healthData.exerciseLogs.push(response);
-              state.healthData.summary.caloriesBurned +=
-                response.caloriesBurned;
-            });
-
-            get().recalculateProgress();
-            return response;
-          } catch (error) {
-            console.error("Failed to add exercise log:", error);
-            throw error;
-          }
-        },
-
-        updateExerciseLog: async (
-          id: number,
-          updates: UpdateExerciseLogData
-        ) => {
-          try {
-            const response = await fetchApi<ExerciseLog>(
-              `/api/exercise-logs/${id}`,
-              {
                 method: "PUT",
                 requiresAuth: true,
                 body: updates,
-              }
+            });
+            return response;
+        },
+        onSuccess: (updatedLog, variables) => {
+            // Get the old log to calculate nutrition difference
+            const oldLog = (queryClient
+                .getQueryData<FoodLog[]>(healthQueryKeys.foodLogs.today()) as FoodLog[])
+                ?.find((log) => log.id === updatedLog.id);
+
+            // Update all relevant queries
+            queryClient.setQueryData<FoodLog[]>(
+                healthQueryKeys.foodLogs.today(),
+                (old = []) =>
+                    old.map((log) => (log.id === updatedLog.id ? updatedLog : log))
             );
 
-            set((state) => {
-              if (!state.healthData) return;
-
-              const index = (
-                state.healthData.exerciseLogs as ExerciseLog[]
-              ).findIndex((log) => log.id === id);
-              if (index !== -1) {
-                const oldLog = state.healthData.exerciseLogs[index];
-                state.healthData.summary.caloriesBurned +=
-                  response.caloriesBurned - oldLog.caloriesBurned;
-                state.healthData.exerciseLogs[index] = response;
-              }
-            });
-
-            get().recalculateProgress();
-            return response;
-          } catch (error) {
-            console.error("Failed to update exercise log:", error);
-            throw error;
-          }
-        },
-
-        deleteExerciseLog: async (id: number) => {
-          try {
-            await fetchApi(`/api/exercise-logs/${id}`, {
-              method: "DELETE",
-              requiresAuth: true,
-            });
-
-            set((state) => {
-              if (!state.healthData) return;
-
-              const logToDelete = (
-                state.healthData.exerciseLogs as ExerciseLog[]
-              ).find((log) => log.id === id);
-              if (logToDelete) {
-                state.healthData.summary.caloriesBurned -=
-                  logToDelete.caloriesBurned;
-                state.healthData.exerciseLogs = (
-                  state.healthData.exerciseLogs as ExerciseLog[]
-                ).filter((log) => log.id !== id);
-              }
-            });
-
-            get().recalculateProgress();
-          } catch (error) {
-            console.error("Failed to delete exercise log:", error);
-            throw error;
-          }
-        },
-
-        getExerciseLogById: (id: number) => {
-          const { healthData } = get();
-          return (healthData?.exerciseLogs as ExerciseLog[]).find(
-            (log) => log.id === id
-          );
-        },
-
-        getExerciseLogsByDate: (date: string) => {
-          const { healthData } = get();
-          return (
-            (healthData?.exerciseLogs as ExerciseLog[]).filter((log) =>
-              log.loggedAt.startsWith(date)
-            ) || []
-          );
-        },
-
-        getExerciseLogsByIntensity: (intensity: ExerciseIntensity) => {
-          const { healthData } = get();
-          return (
-            (healthData?.exerciseLogs as ExerciseLog[]).filter(
-              (log) => log.intensity === intensity
-            ) || []
-          );
-        },
-
-        fetchTodaysExerciseLogs: async () => {
-          try {
-            const response = await fetchApi<ExerciseLog[]>(
-              "/api/exercise-logs/today",
-              {
-                method: "GET",
-                requiresAuth: true,
-              }
+            queryClient.setQueryData<FoodLog[]>(
+                healthQueryKeys.foodLogs.byMealType(updatedLog.mealType),
+                (old = []) =>
+                    old.map((log) => (log.id === updatedLog.id ? updatedLog : log))
             );
-            return response;
-          } catch (error) {
-            console.error("Failed to fetch today's exercise logs:", error);
-            throw error;
-          }
-        },
 
-        fetchExerciseTypes: async () => {
-          try {
-            const response = await fetchApi<
-              { name: string; metValue: number; category: string }[]
-            >("/api/exercise-logs/types", {
-              method: "GET",
-              requiresAuth: true,
-            });
-            return response;
-          } catch (error) {
-            console.error("Failed to fetch exercise types:", error);
-            throw error;
-          }
-        },
+            // Update dashboard data with nutrition differences
+            if (oldLog) {
+                const oldNutrition = calculateTotalNutrition(oldLog.items);
+                const newNutrition = calculateTotalNutrition(updatedLog.items);
 
-        // Water Log Actions (updated to work with API)
-        addWaterLog: async (waterLogData: CreateWaterLogData) => {
-          try {
-            const response = await fetchApi<WaterLog>("/api/water-logs/log", {
-              method: "POST",
-              requiresAuth: true,
-              body: waterLogData,
-            });
+                const nutritionDiff = {
+                    calories: newNutrition.calories - oldNutrition.calories,
+                    protein: newNutrition.protein - oldNutrition.protein,
+                    carbs: newNutrition.carbs - oldNutrition.carbs,
+                    fat: newNutrition.fat - oldNutrition.fat,
+                };
 
-            set((state) => {
-              if (!state.healthData) return;
-              state.healthData.waterLogs.push(response);
-              state.healthData.summary.waterConsumedMl += response.amountMl;
-            });
-
-            get().recalculateProgress();
-            return response;
-          } catch (error) {
-            console.error("Failed to add water log:", error);
-            throw error;
-          }
-        },
-
-        addQuickWaterLog: async (presetType: "GLASS" | "BOTTLE" | "LARGE") => {
-          try {
-            const response = await fetchApi<WaterLog>("/api/water-logs/quick", {
-              method: "POST",
-              requiresAuth: true,
-              body: { presetType },
-            });
-
-            set((state) => {
-              if (!state.healthData) return;
-              state.healthData.waterLogs.push(response);
-              state.healthData.summary.waterConsumedMl += response.amountMl;
-            });
-
-            get().recalculateProgress();
-            return response;
-          } catch (error) {
-            console.error("Failed to add quick water log:", error);
-            throw error;
-          }
-        },
-
-        updateWaterLog: (id: number, updates: UpdateWaterLogData) => {
-          set((state) => {
-            if (!state.healthData) return;
-
-            const index = (state.healthData.waterLogs as WaterLog[]).findIndex(
-              (log) => log.id === id
-            );
-            if (index !== -1) {
-              const oldLog = state.healthData.waterLogs[index];
-              const updatedLog = { ...oldLog, ...updates } as WaterLog;
-
-              state.healthData.summary.waterConsumedMl +=
-                updatedLog.amountMl - oldLog.amountMl;
-              state.healthData.waterLogs[index] = updatedLog;
+                const today = new Date().toISOString().split("T")[0];
+                queryClient.setQueryData<HealthData>(
+                    healthQueryKeys.dashboard(today),
+                    (old) => {
+                        if (!old) return old;
+                        return {
+                            ...old,
+                            foodLogs: old.foodLogs.map((log) =>
+                                log.id === updatedLog.id ? updatedLog : log
+                            ),
+                            summary: {
+                                ...old.summary,
+                                consumedCalories: old.summary.consumedCalories + nutritionDiff.calories,
+                                consumedProtein: old.summary.consumedProtein + nutritionDiff.protein,
+                                consumedCarbs: old.summary.consumedCarbs + nutritionDiff.carbs,
+                                consumedFat: old.summary.consumedFat + nutritionDiff.fat,
+                            },
+                        };
+                    }
+                );
+            } else {
+                // If we can't find the old log, just invalidate dashboard
+                queryClient.invalidateQueries({
+                    queryKey: healthQueryKeys.dashboard(
+                        new Date().toISOString().split("T")[0]
+                    ),
+                });
             }
-          });
-          get().recalculateProgress();
         },
+    });
 
-        deleteWaterLog: async (id: number) => {
-          try {
-            await fetchApi(`/api/water-logs/${id}`, {
-              method: "DELETE",
-              requiresAuth: true,
-            });
-
-            set((state) => {
-              if (!state.healthData) return;
-
-              const logToDelete = (
-                state.healthData.waterLogs as WaterLog[]
-              ).find((log) => log.id === id);
-              if (logToDelete) {
-                state.healthData.summary.waterConsumedMl -=
-                  logToDelete.amountMl;
-                state.healthData.waterLogs = (
-                  state.healthData.waterLogs as WaterLog[]
-                ).filter((log) => log.id !== id);
-              }
-            });
-
-            get().recalculateProgress();
-          } catch (error) {
-            console.error("Failed to delete water log:", error);
-            throw error;
-          }
-        },
-
-        getWaterLogById: (id: number) => {
-          const { healthData } = get();
-          return (healthData?.waterLogs as WaterLog[]).find(
-            (log) => log.id === id
-          );
-        },
-
-        getWaterLogsByDate: (date: string) => {
-          const { healthData } = get();
-          return (
-            (healthData?.waterLogs as WaterLog[]).filter((log) =>
-              log.loggedAt.startsWith(date)
-            ) || []
-          );
-        },
-
-        fetchTodaysWaterLogs: async () => {
-          try {
-            const response = await fetchApi<WaterLog[]>(
-              "/api/water-logs/today",
-              {
-                method: "GET",
+    const deleteFoodLog = useMutation({
+        mutationFn: async (id: number): Promise<void> => {
+            await fetchApi(`/api/food-logs/${id}`, {
+                method: "DELETE",
                 requiresAuth: true,
-              }
-            );
-            return response;
-          } catch (error) {
-            console.error("Failed to fetch today's water logs:", error);
-            throw error;
-          }
+            });
         },
+        onSuccess: (_, deletedId) => {
+            // Get the deleted log to calculate nutrition to subtract
+            const deletedLog = (queryClient
+                .getQueryData<FoodLog[]>(healthQueryKeys.foodLogs.today()) as FoodLog[])
+                ?.find((log) => log.id === deletedId);
 
-        fetchTodaysWaterTotal: async () => {
-          try {
-            const response = await fetchApi<{ totalMl: number }>(
-              "/api/water-logs/today/total",
-              {
-                method: "GET",
+            // Remove from all relevant queries
+            queryClient.setQueryData<FoodLog[]>(
+                healthQueryKeys.foodLogs.today(),
+                (old = []) => old.filter((log) => log.id !== deletedId)
+            );
+
+            // Remove from meal type specific logs
+            if (deletedLog) {
+                queryClient.setQueryData<FoodLog[]>(
+                    healthQueryKeys.foodLogs.byMealType(deletedLog.mealType),
+                    (old = []) => old.filter((log) => log.id !== deletedId)
+                );
+
+                // Update dashboard data by subtracting deleted log's nutrition
+                const deletedNutrition = calculateTotalNutrition(deletedLog.items);
+
+                const today = new Date().toISOString().split("T")[0];
+                queryClient.setQueryData<HealthData>(
+                    healthQueryKeys.dashboard(today),
+                    (old) => {
+                        if (!old) return old;
+                        return {
+                            ...old,
+                            foodLogs: old.foodLogs.filter((log) => log.id !== deletedId),
+                            summary: {
+                                ...old.summary,
+                                consumedCalories: Math.max(0, old.summary.consumedCalories - deletedNutrition.calories),
+                                consumedProtein: Math.max(0, old.summary.consumedProtein - deletedNutrition.protein),
+                                consumedCarbs: Math.max(0, old.summary.consumedCarbs - deletedNutrition.carbs),
+                                consumedFat: Math.max(0, old.summary.consumedFat - deletedNutrition.fat),
+                            },
+                        };
+                    }
+                );
+            } else {
+                // If we can't find the deleted log, invalidate dashboard
+                queryClient.invalidateQueries({
+                    queryKey: healthQueryKeys.dashboard(
+                        new Date().toISOString().split("T")[0]
+                    ),
+                });
+            }
+
+            queryClient.invalidateQueries({ queryKey: healthQueryKeys.foodLogs.all });
+        },
+    });
+
+    // Additional mutation for updating individual food items within a log
+    const updateFoodItem = useMutation({
+        mutationFn: async ({
+                               logId,
+                               itemId,
+                               updates,
+                           }: {
+            logId: number;
+            itemId: number;
+            updates: Partial<Pick<FoodItem, 'quantity' | 'unit' | 'calories' | 'protein' | 'carbs' | 'facts'>>;
+        }): Promise<FoodLog> => {
+            const response = await fetchApi<FoodLog>(`/api/food-logs/${logId}/items/${itemId}`, {
+                method: "PUT",
                 requiresAuth: true,
-              }
-            );
-            return response.totalMl;
-          } catch (error) {
-            console.error("Failed to fetch today's water total:", error);
-            throw error;
-          }
-        },
-
-        // Summary Actions
-        updateSummary: (summaryUpdates: Partial<DailySummary>) => {
-          set((state) => {
-            if (!state.healthData) return;
-            state.healthData.summary = {
-              ...state.healthData.summary,
-              ...summaryUpdates,
-            };
-          });
-          get().recalculateProgress();
-        },
-
-        recalculateProgress: () => {
-          set((state) => {
-            if (!state.healthData) return;
-
-            const { summary } = state.healthData;
-
-            // Calculate remaining calories
-            summary.remainingCalories =
-              summary.targetCalories -
-              summary.consumedCalories +
-              summary.caloriesBurned;
-
-            // Calculate progress percentages
-            summary.caloriesProgress =
-              (summary.consumedCalories / summary.targetCalories) * 100;
-            summary.proteinProgress =
-              (summary.consumedProtein / summary.targetProtein) * 100;
-            summary.carbsProgress =
-              (summary.consumedCarbs / summary.targetCarbs) * 100;
-            summary.fatProgress =
-              (summary.consumedFat / summary.targetFat) * 100;
-            summary.waterProgress =
-              (summary.waterConsumedMl / summary.targetWaterMl) * 100;
-          });
-        },
-
-        // Weekly Dashboard
-        fetchWeeklyDashboard: async () => {
-          try {
-            const response = await fetchApi<{
-              weeklySummaries: DailySummary[];
-              weeklyStats: {
-                avgCaloriesConsumed: number;
-                avgCaloriesBurned: number;
-                avgWaterIntake: number;
-                daysOnTrack: number;
-                totalDays: number;
-              };
-            }>("/api/dashboard/weekly", {
-              method: "GET",
-              requiresAuth: true,
+                body: updates,
             });
             return response;
-          } catch (error) {
-            console.error("Failed to fetch weekly dashboard:", error);
-            throw error;
-          }
         },
+        onSuccess: (updatedLog) => {
+            // Update all relevant queries with the updated log
+            queryClient.setQueryData<FoodLog[]>(
+                healthQueryKeys.foodLogs.today(),
+                (old = []) =>
+                    old.map((log) => (log.id === updatedLog.id ? updatedLog : log))
+            );
 
-        // Nutrition Sync
-        syncTodaysNutrition: async () => {
-          try {
-            const response = await fetchApi<DailySummary>(
-              "/api/nutrition-sync/sync/today",
-              {
+            queryClient.setQueryData<FoodLog[]>(
+                healthQueryKeys.foodLogs.byMealType(updatedLog.mealType),
+                (old = []) =>
+                    old.map((log) => (log.id === updatedLog.id ? updatedLog : log))
+            );
+
+            // Invalidate dashboard to recalculate totals
+            queryClient.invalidateQueries({
+                queryKey: healthQueryKeys.dashboard(
+                    new Date().toISOString().split("T")[0]
+                ),
+            });
+        },
+    });
+
+    // Mutation for adding a food item to an existing log
+    const addFoodItem = useMutation({
+        mutationFn: async ({
+                               logId,
+                               item,
+                           }: {
+            logId: number;
+            item: Omit<FoodItem, 'id'>;
+        }): Promise<FoodLog> => {
+            const response = await fetchApi<FoodLog>(`/api/food-logs/${logId}/items`, {
                 method: "POST",
                 requiresAuth: true,
-              }
-            );
-
-            set((state) => {
-              if (state.healthData) {
-                state.healthData.summary = response;
-              }
+                body: item,
             });
-
             return response;
-          } catch (error) {
-            console.error("Failed to sync today's nutrition:", error);
-            throw error;
-          }
         },
-
-        syncNutritionByDate: async (date: string) => {
-          try {
-            const response = await fetchApi<DailySummary>(
-              `/api/nutrition-sync/sync/${date}`,
-              {
-                method: "POST",
-                requiresAuth: true,
-              }
+        onSuccess: (updatedLog) => {
+            // Update all relevant queries
+            queryClient.setQueryData<FoodLog[]>(
+                healthQueryKeys.foodLogs.today(),
+                (old = []) =>
+                    old.map((log) => (log.id === updatedLog.id ? updatedLog : log))
             );
+
+            queryClient.setQueryData<FoodLog[]>(
+                healthQueryKeys.foodLogs.byMealType(updatedLog.mealType),
+                (old = []) =>
+                    old.map((log) => (log.id === updatedLog.id ? updatedLog : log))
+            );
+
+            // Invalidate dashboard to recalculate totals
+            queryClient.invalidateQueries({
+                queryKey: healthQueryKeys.dashboard(
+                    new Date().toISOString().split("T")[0]
+                ),
+            });
+        },
+    });
+
+    // Mutation for removing a food item from a log
+    const removeFoodItem = useMutation({
+        mutationFn: async ({
+                               logId,
+                               itemId,
+                           }: {
+            logId: number;
+            itemId: number;
+        }): Promise<FoodLog> => {
+            const response = await fetchApi<FoodLog>(`/api/food-logs/${logId}/items/${itemId}`, {
+                method: "DELETE",
+                requiresAuth: true,
+            });
             return response;
-          } catch (error) {
-            console.error("Failed to sync nutrition for date:", error);
-            throw error;
+        },
+        onSuccess: (updatedLog) => {
+            // Update all relevant queries
+            queryClient.setQueryData<FoodLog[]>(
+                healthQueryKeys.foodLogs.today(),
+                (old = []) =>
+                    old.map((log) => (log.id === updatedLog.id ? updatedLog : log))
+            );
+
+            queryClient.setQueryData<FoodLog[]>(
+                healthQueryKeys.foodLogs.byMealType(updatedLog.mealType),
+                (old = []) =>
+                    old.map((log) => (log.id === updatedLog.id ? updatedLog : log))
+            );
+
+            // Invalidate dashboard to recalculate totals
+            queryClient.invalidateQueries({
+                queryKey: healthQueryKeys.dashboard(
+                    new Date().toISOString().split("T")[0]
+                ),
+            });
+        },
+    });
+
+    return {
+        addFoodLog,
+        updateFoodLog,
+        deleteFoodLog,
+        updateFoodItem,
+        addFoodItem,
+        removeFoodItem,
+    };
+};
+
+export const useExerciseLogs = {
+  Today: () => {
+    return useQuery({
+      queryKey: healthQueryKeys.exerciseLogs.today(),
+      queryFn: async (): Promise<ExerciseLog[]> => {
+        const response = await fetchApi<ExerciseLog[]>(
+          "/api/exercise-logs/today",
+          {
+            method: "GET",
+            requiresAuth: true,
           }
-        },
+        );
+        return response;
+      },
+      staleTime: 2 * 60 * 1000,
+    });
+  },
 
-        // Utility Actions
-        clearAllData: () => {
-          set((state) => {
-            state.healthData = null;
-            state.error = null;
-          });
-        },
+  Types: () => {
+    return useQuery({
+      queryKey: healthQueryKeys.exerciseLogs.types(),
+      queryFn: async (): Promise<
+        { name: string; metValue: number; category: string }[]
+      > => {
+        const response = await fetchApi<
+          { name: string; metValue: number; category: string }[]
+        >("/api/exercise-logs/types", {
+          method: "GET",
+          requiresAuth: true,
+        });
+        return response;
+      },
+      staleTime: 60 * 60 * 1000, // 1 hour - exercise types don't change often
+    });
+  },
+};
 
-        syncData: (data: HealthData) => {
-          set((state) => {
-            state.healthData = data;
-            state.error = null;
-            state.isLoading = false;
-          });
-        },
+export const useExerciseLogMutations = () => {
+  const queryClient = useQueryClient();
 
-        // Initialize with default data
-        initializeDefaultData: () => {
-          const { selectedDate } = get();
-          set((state) => {
-            state.healthData = createDefaultHealthData(selectedDate);
-          });
-        },
+  const addExerciseLog = useMutation({
+    mutationFn: async (data: CreateExerciseLogData): Promise<ExerciseLog> => {
+      return await fetchApi<ExerciseLog>("/api/exercise-logs/log", {
+        method: "POST",
+        requiresAuth: true,
+        body: data,
+      });
+    },
+    onSuccess: (newLog) => {
+      queryClient.setQueryData<ExerciseLog[]>(
+        healthQueryKeys.exerciseLogs.today(),
+        (old = []) => [...old, newLog]
+      );
 
-        getTotalCaloriesConsumed: () => {
-          const { healthData } = get();
-          return healthData?.summary.consumedCalories || 0;
-        },
-
-        getTotalCaloriesBurned: () => {
-          const { healthData } = get();
-          return healthData?.summary.caloriesBurned || 0;
-        },
-
-        getTotalWaterConsumed: () => {
-          const { healthData } = get();
-          return healthData?.summary.waterConsumedMl || 0;
-        },
-
-        getTotalNutrients: () => {
-          const { healthData } = get();
+      const today = new Date().toISOString().split("T")[0];
+      queryClient.setQueryData<HealthData>(
+        healthQueryKeys.dashboard(today),
+        (old) => {
+          if (!old) return old;
           return {
-            protein: healthData?.summary.consumedProtein || 0,
-            carbs: healthData?.summary.consumedCarbs || 0,
-            fat: healthData?.summary.consumedFat || 0,
-          };
-        },
-      })),
-      {
-        name: "health-store",
-        partialize: (state) => ({
-          currentDate: state.currentDate,
-          selectedDate: state.selectedDate,
-          healthData: state.healthData,
-        }),
-      }
-    ),
-    {
-      name: "health-store",
-    }
-  )
-);
+            ...old,
+            exerciseLogs: [...old.exerciseLogs, newLog],
+            summary: {
+              ...old.summary,
+              caloriesBurned:
+                old.summary.caloriesBurned + newLog.caloriesBurned,
+             remainingCalories : old.remainingCalories + newLog.caloriesBurned,
 
-export default useHealthStore;
+            },
+          };
+        }
+      );
+    },
+  });
+
+  const updateExerciseLog = useMutation({
+    mutationFn: async ({
+      id,
+      updates,
+    }: {
+      id: number;
+      updates: UpdateExerciseLogData;
+    }): Promise<ExerciseLog> => {
+      const response = await fetchApi<ExerciseLog>(`/api/exercise-logs/${id}`, {
+        method: "PUT",
+        requiresAuth: true,
+        body: updates,
+      });
+      return response;
+    },
+    onSuccess: (updatedLog) => {
+      queryClient.setQueryData<ExerciseLog[]>(
+        healthQueryKeys.exerciseLogs.today(),
+        (old = []) =>
+          old.map((log) => (log.id === updatedLog.id ? updatedLog : log))
+      );
+
+      queryClient.invalidateQueries({
+        queryKey: healthQueryKeys.dashboard(
+          new Date().toISOString().split("T")[0]
+        ),
+      });
+    },
+  });
+
+  const deleteExerciseLog = useMutation({
+    mutationFn: async (id: number): Promise<void> => {
+      await fetchApi(`/api/exercise-logs/${id}`, {
+        method: "DELETE",
+        requiresAuth: true,
+      });
+    },
+    onSuccess: (_, deletedId) => {
+      queryClient.setQueryData<ExerciseLog[]>(
+        healthQueryKeys.exerciseLogs.today(),
+        (old = []) => old.filter((log) => log.id !== deletedId)
+      );
+
+      queryClient.invalidateQueries({
+        queryKey: healthQueryKeys.dashboard(
+          new Date().toISOString().split("T")[0]
+        ),
+      });
+    },
+  });
+
+  return {
+    addExerciseLog,
+    updateExerciseLog,
+    deleteExerciseLog,
+  };
+};
+
+export const useWaterLogs = {
+  today: () => {
+    return useQuery({
+      queryKey: healthQueryKeys.waterLogs.today(),
+      queryFn: async (): Promise<WaterLog[]> => {
+        const response = await fetchApi<WaterLog[]>("/api/water-logs/today", {
+          method: "GET",
+          requiresAuth: true,
+        });
+        return response;
+      },
+      staleTime: 1 * 60 * 1000, // 1 minute
+    });
+  },
+
+  todayTotal: () => {
+    return useQuery({
+      queryKey: healthQueryKeys.waterLogs.todayTotal(),
+      queryFn: async (): Promise<number> => {
+        const response = await fetchApi<{ totalMl: number }>(
+          "/api/water-logs/today/total",
+          {
+            method: "GET",
+            requiresAuth: true,
+          }
+        );
+        return response.totalMl;
+      },
+      staleTime: 1 * 60 * 1000,
+    });
+  },
+};
+
+export const useWaterLogMutations = () => {
+  const queryClient = useQueryClient();
+
+  const addWaterLog = useMutation({
+    mutationFn: async (data: CreateWaterLogData): Promise<WaterLog> => {
+      const response = await fetchApi<WaterLog>("/api/water-logs/log", {
+        method: "POST",
+        requiresAuth: true,
+        body: data,
+      });
+      return response;
+    },
+    onSuccess: (newLog) => {
+      queryClient.setQueryData<WaterLog[]>(
+        healthQueryKeys.waterLogs.today(),
+        (old = []) => [...old, newLog]
+      );
+
+      queryClient.setQueryData<number>(
+        healthQueryKeys.waterLogs.todayTotal(),
+        (old = 0) => old + newLog.amountMl
+      );
+
+      const today = new Date().toISOString().split("T")[0];
+      queryClient.setQueryData<HealthData>(
+        healthQueryKeys.dashboard(today),
+        (old) => {
+          if (!old) return old;
+          return {
+            ...old,
+            waterLogs: [...old.waterLogs, newLog],
+            summary: {
+              ...old.summary,
+              waterConsumedMl: old.summary.waterConsumedMl + newLog.amountMl,
+            },
+          };
+        }
+      );
+    },
+  });
+
+  const addQuickWaterLog = useMutation({
+    mutationFn: async (
+      presetType: "GLASS" | "BOTTLE" | "LARGE"
+    ): Promise<WaterLog> => {
+      const response = await fetchApi<WaterLog>("/api/water-logs/quick", {
+        method: "POST",
+        requiresAuth: true,
+        body: { presetType },
+      });
+      return response;
+    },
+    onSuccess: (newLog) => {
+      queryClient.setQueryData<WaterLog[]>(
+        healthQueryKeys.waterLogs.today(),
+        (old = []) => [...old, newLog]
+      );
+
+      queryClient.setQueryData<number>(
+        healthQueryKeys.waterLogs.todayTotal(),
+        (old = 0) => old + newLog.amountMl
+      );
+
+      const today = new Date().toISOString().split("T")[0];
+      queryClient.setQueryData<HealthData>(
+        healthQueryKeys.dashboard(today),
+        (old) => {
+          if (!old) return old;
+          return {
+            ...old,
+            waterLogs: [...old.waterLogs, newLog],
+            summary: {
+              ...old.summary,
+              waterConsumedMl: old.summary.waterConsumedMl + newLog.amountMl,
+            },
+          };
+        }
+      );
+    },
+  });
+
+  const deleteWaterLog = useMutation({
+    mutationFn: async (id: number): Promise<void> => {
+      await fetchApi(`/api/water-logs/${id}`, {
+        method: "DELETE",
+        requiresAuth: true,
+      });
+    },
+    onSuccess: (_, deletedId) => {
+      queryClient.setQueryData<WaterLog[]>(
+        healthQueryKeys.waterLogs.today(),
+        (old = []) => old.filter((log) => log.id !== deletedId)
+      );
+
+      queryClient.invalidateQueries({
+        queryKey: healthQueryKeys.waterLogs.todayTotal(),
+      });
+      queryClient.invalidateQueries({
+        queryKey: healthQueryKeys.dashboard(
+          new Date().toISOString().split("T")[0]
+        ),
+      });
+    },
+  });
+
+  return {
+    addWaterLog,
+    addQuickWaterLog,
+    deleteWaterLog,
+  };
+};
+
+// Nutrition Sync Hooks
+export const useNutritionSync = () => {
+  const queryClient = useQueryClient();
+
+  const syncTodaysNutrition = useMutation({
+    mutationFn: async (): Promise<DailySummary> => {
+      const response = await fetchApi<DailySummary>(
+        "/api/nutrition-sync/sync/today",
+        {
+          method: "POST",
+          requiresAuth: true,
+        }
+      );
+      return response;
+    },
+    onSuccess: (summary) => {
+      const today = new Date().toISOString().split("T")[0];
+      queryClient.setQueryData<HealthData>(
+        healthQueryKeys.dashboard(today),
+        (old) => {
+          if (!old) return old;
+          return {
+            ...old,
+            summary,
+          };
+        }
+      );
+    },
+  });
+
+  const syncNutritionByDate = useMutation({
+    mutationFn: async (date: string): Promise<DailySummary> => {
+      const response = await fetchApi<DailySummary>(
+        `/api/nutrition-sync/sync/${date}`,
+        {
+          method: "POST",
+          requiresAuth: true,
+        }
+      );
+      return response;
+    },
+    onSuccess: (summary, date) => {
+      queryClient.setQueryData<HealthData>(
+        healthQueryKeys.dashboard(date),
+        (old) => {
+          if (!old) return old;
+          return {
+            ...old,
+            summary,
+          };
+        }
+      );
+    },
+  });
+
+  return {
+    syncTodaysNutrition,
+    syncNutritionByDate,
+  };
+};
+
+// export const useHealthStats = (date: string) => {
+//   const { data: healthData } = useDashboardData(date);
+//
+//   return {
+//     totalCaloriesConsumed: healthData?.summary.consumedCalories || 0,
+//     totalCaloriesBurned: healthData?.summary.caloriesBurned || 0,
+//     totalWaterConsumed: healthData?.summary.waterConsumedMl || 0,
+//     totalNutrients: {
+//       protein: healthData?.summary.consumedProtein || 0,
+//       carbs: healthData?.summary.consumedCarbs || 0,
+//       fat: healthData?.summary.consumedFat || 0,
+//     },
+//     progress: {
+//       calories: healthData?.summary.caloriesProgress || 0,
+//       protein: healthData?.summary.proteinProgress || 0,
+//       carbs: healthData?.summary.carbsProgress || 0,
+//       fat: healthData?.summary.fatProgress || 0,
+//       water: healthData?.summary.waterProgress || 0,
+//     },
+//     remainingCalories: healthData?.summary.remainingCalories || 0,
+//   };
+// };
+
+
+

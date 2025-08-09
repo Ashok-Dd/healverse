@@ -1,18 +1,20 @@
 import { Ionicons } from "@expo/vector-icons";
 import React, { useState } from "react";
 import {
-  Alert,
-  Modal,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
+    ActivityIndicator,
+    Alert,
+    Modal,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View, ViewStyle,
 } from "react-native";
+import {useWaterLogMutations, useWaterLogs} from "@/store/healthStore";
+import {CreateWaterLogData} from "@/types/type";
 
 interface WaterLogModalProps {
   visible: boolean;
   onClose: () => void;
-  onSave: (amount: number) => void;
   currentIntake?: number; // Current daily intake
   dailyGoal?: number; // Daily goal in mL
 }
@@ -20,10 +22,13 @@ interface WaterLogModalProps {
 const WaterLogModal: React.FC<WaterLogModalProps> = ({
   visible,
   onClose,
-  onSave,
   currentIntake = 0,
   dailyGoal = 3700,
 }) => {
+    const {
+        addWaterLog
+    } = useWaterLogMutations();
+
   const [waterAmount, setWaterAmount] = useState<string>("");
   const [selectedPreset, setSelectedPreset] = useState<number | null>(null);
 
@@ -54,7 +59,12 @@ const WaterLogModal: React.FC<WaterLogModalProps> = ({
         {
           text: "Yes",
           onPress: () => {
-            onSave(amount);
+
+            addWaterLog.mutate({
+                amountMl : amount,
+                loggedAt : new Date().toISOString()
+            } as CreateWaterLogData)
+
             handleClose();
           },
         },
@@ -62,7 +72,11 @@ const WaterLogModal: React.FC<WaterLogModalProps> = ({
       return;
     }
 
-    onSave(amount);
+      addWaterLog.mutate({
+          amountMl : amount,
+          loggedAt : new Date().toISOString()
+      } as CreateWaterLogData);
+
     handleClose();
   };
 
@@ -114,7 +128,7 @@ const WaterLogModal: React.FC<WaterLogModalProps> = ({
               <View className="w-full bg-gray-200 rounded-full h-2 mb-2">
                 <View
                   className="bg-blue-500 h-2 rounded-full transition-all duration-300"
-                  style={{ width: `${progressPercentage}%` }}
+                  style={{ width: `${progressPercentage}%` } as ViewStyle}
                 />
               </View>
 
@@ -201,26 +215,32 @@ const WaterLogModal: React.FC<WaterLogModalProps> = ({
                 Cancel
               </Text>
             </TouchableOpacity>
+              <TouchableOpacity
+                  className={`flex-1 py-4 rounded-xl items-center ${
+                      waterAmount && !addWaterLog.isPending ? "bg-blue-500" : "bg-gray-300"
+                  }`}
+                  onPress={handleSave}
+                  disabled={!waterAmount || addWaterLog.isPending}
+              >
+                  <View className="flex-row items-center">
+                      {addWaterLog.isPending ? (
+                          <ActivityIndicator size="small" color="white" />
+                      ) : (
+                          <>
+                              <Ionicons
+                                  name="add"
+                                  size={20}
+                                  color="white"
+                                  style={{ marginRight: 8 } as any}
+                              />
+                              <Text className="text-white font-semibold text-lg">
+                                  Log Water
+                              </Text>
+                          </>
+                      )}
+                  </View>
+              </TouchableOpacity>
 
-            <TouchableOpacity
-              className={`flex-1 py-4 rounded-xl items-center ${
-                waterAmount ? "bg-blue-500" : "bg-gray-300"
-              }`}
-              onPress={handleSave}
-              disabled={!waterAmount}
-            >
-              <View className="flex-row items-center">
-                <Ionicons
-                  name="add"
-                  size={20}
-                  color="white"
-                  style={{ marginRight: 8 }}
-                />
-                <Text className="text-white font-semibold text-lg">
-                  Log Water
-                </Text>
-              </View>
-            </TouchableOpacity>
           </View>
         </View>
       </View>
