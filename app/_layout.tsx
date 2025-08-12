@@ -12,12 +12,24 @@ import {
 } from "react-native-reanimated";
 // Optional: global styles for tailwind or other CSS-in-JS
 import "./globals.css";
-
+import { NotificationProvider } from "@/context/NotificationContext";
+import * as Notifications from "expo-notifications";
 // Configure Reanimated logs (optional)
 configureReanimatedLogger({
   level: ReanimatedLogLevel.warn,
   strict: false,
 });
+
+
+Notifications.setNotificationHandler({
+  handleNotification: async () => ({
+    shouldPlaySound: true,
+    shouldSetBadge: true,
+    shouldShowBanner: true,
+    shouldShowList: true,
+  }),
+});
+
 
 export default function RootLayout() {
   const [fontsLoaded, fontError] = useFonts({
@@ -66,9 +78,11 @@ export default function RootLayout() {
 
   return (
     <QueryClientProvider client={getQueryClient()}>
-      <View className={"flex-1 bg-white"}>
-        <Slot />
-      </View>
+      <NotificationProvider>
+        <View className={"flex-1 bg-white"}>
+          <Slot />
+        </View>
+      </NotificationProvider>
     </QueryClientProvider>
   );
 }
