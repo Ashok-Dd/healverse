@@ -1,15 +1,15 @@
-import { Slot, SplashScreen, router } from "expo-router";
+import { getQueryClient } from "@/lib/react-query-client";
+import { useAuthStore } from "@/store/authStore";
+import { QueryClientProvider } from "@tanstack/react-query";
 import { useFonts } from "expo-font";
+import { router, Slot, SplashScreen } from "expo-router";
 import { useEffect, useState } from "react";
+import { View } from "react-native";
+import "react-native-gesture-handler";
 import {
   configureReanimatedLogger,
   ReanimatedLogLevel,
 } from "react-native-reanimated";
-import { View } from "react-native";
-import { QueryClientProvider } from "@tanstack/react-query";
-import { getQueryClient } from "@/lib/react-query-client";
-import { useAuthStore } from "@/store/authStore";
-import "react-native-gesture-handler";
 // Optional: global styles for tailwind or other CSS-in-JS
 import "./globals.css";
 
@@ -52,7 +52,7 @@ export default function RootLayout() {
     if (appReady) {
       const { isAuthenticated } = useAuthStore.getState();
       if (isAuthenticated) {
-        router.replace("/(root)/(tabs)/tracker");
+        router.replace("/(root)/" as any);
       } else {
         router.replace("/(auth)/welcome");
       }

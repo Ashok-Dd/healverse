@@ -1,6 +1,6 @@
+import { Feather } from "@expo/vector-icons";
 import React from "react";
 import { ScrollView, View } from "react-native";
-import { Feather } from "@expo/vector-icons";
 import Skeleton from "./Skeleton"; // your Skeleton component
 
 const DashboardSkeleton = () => {
@@ -27,22 +27,11 @@ const DashboardSkeleton = () => {
                 </View>
                 <Skeleton height={64} radius={8} />
             </View>
-
-            {/* Exercise Log */}
-            <SkeletonLogCard />
-
-            {/* Water Log */}
-            <SkeletonLogCard />
-
-            {/* Food Logs */}
-            {[...Array(4)].map((_, i) => (
-                <SkeletonLogCard key={i} />
-            ))}
         </ScrollView>
     );
 };
 
-const SkeletonLogCard = () => {
+export const SkeletonLogCard = () => {
     return (
         <View className="bg-gray-100 rounded-xl p-4 m-4 shadow-sm">
             {/* Header */}

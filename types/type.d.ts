@@ -1,5 +1,5 @@
+import { Ionicons } from "@expo/vector-icons";
 import React from "react";
-import {Ionicons} from "@expo/vector-icons";
 
 // Enums
 
@@ -479,10 +479,10 @@ interface HealthQuery {
 }
 
 interface ApiResponse<T> {
-    message : string;
-    data : T;
-    error : string;
-
+    success: boolean;
+    message?: string;
+    data: T;
+    error?: string;
 }
 
 export interface METValues {

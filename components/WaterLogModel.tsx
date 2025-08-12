@@ -17,6 +17,7 @@ interface WaterLogModalProps {
   onClose: () => void;
   currentIntake?: number; // Current daily intake
   dailyGoal?: number; // Daily goal in mL
+  date: string;
 }
 
 const WaterLogModal: React.FC<WaterLogModalProps> = ({
@@ -24,10 +25,11 @@ const WaterLogModal: React.FC<WaterLogModalProps> = ({
   onClose,
   currentIntake = 0,
   dailyGoal = 3700,
+  date
 }) => {
     const {
         addWaterLog
-    } = useWaterLogMutations();
+    } = useWaterLogMutations(date);
 
   const [waterAmount, setWaterAmount] = useState<string>("");
   const [selectedPreset, setSelectedPreset] = useState<number | null>(null);
@@ -75,9 +77,11 @@ const WaterLogModal: React.FC<WaterLogModalProps> = ({
       addWaterLog.mutate({
           amountMl : amount,
           loggedAt : new Date().toISOString()
-      } as CreateWaterLogData);
-
-    handleClose();
+      } as CreateWaterLogData , {
+        onSettled: () => {
+          handleClose();
+        }
+      });
   };
 
   const handleClose = () => {
@@ -248,41 +252,6 @@ const WaterLogModal: React.FC<WaterLogModalProps> = ({
   );
 };
 
-// Example usage component that demonstrates how to integrate with your LogCard
-const WaterLogModalLink: React.FC = () => {
-  const [modalVisible, setModalVisible] = useState(false);
-  const [currentIntake, setCurrentIntake] = useState(1250); // Example current intake
-  const [dailyGoal] = useState(3700); // Daily goal
 
-  const handleSaveWaterLog = (amount: number) => {
-    // Add the new amount to current intake
-    setCurrentIntake((prev) => prev + amount);
 
-    // Here you would typically save to your backend/database
-    console.log(`Logged ${amount}mL of water`);
-
-    // You could also show a success message
-    // Alert.alert("Success", `Added ${amount}mL to your daily intake!`);
-  };
-
-  return (
-    <>
-      <TouchableOpacity
-        className="bg-blue-500 px-4 py-2 rounded-lg"
-        onPress={() => setModalVisible(true)}
-      >
-        <Text className="text-white font-medium">+ Log Water</Text>
-      </TouchableOpacity>
-
-      <WaterLogModal
-        visible={modalVisible}
-        onClose={() => setModalVisible(false)}
-        onSave={handleSaveWaterLog}
-        currentIntake={currentIntake}
-        dailyGoal={dailyGoal}
-      />
-    </>
-  );
-};
-
-export { WaterLogModal, WaterLogModalLink };
+export { WaterLogModal };

@@ -1,9 +1,7 @@
 // components/LogCard.tsx
-import {ExerciseLog, FoodLog, WaterLog} from "@/types/type";
-import {Feather} from "@expo/vector-icons";
-import {ExternalPathString, RelativePathString, router} from "expo-router";
+import { Feather } from "@expo/vector-icons";
 import React from "react";
-import {Text, TouchableOpacity, View} from "react-native";
+import { Text, TouchableOpacity, View } from "react-native";
 
 interface LogCardProps<T> {
     icon: string;
@@ -42,8 +40,8 @@ function LogCard<T>({
             {/* Header */}
             <View className="flex flex-row justify-between mb-2">
                 <View className="flex-row items-center">
-                    <Text className="text-xl mr-3">{icon}</Text>
-                    <Text className="text-xl font-semibold text-gray-800">{title}</Text>
+                    <Text className="text-lg mr-3">{icon}</Text>
+                    <Text className="text-lg font-semibold text-gray-800">{title}</Text>
                 </View>
                 {showArrow && (
                     <Text className="text-blue-500 text-2xl" onPress={moveTo}>

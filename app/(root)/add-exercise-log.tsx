@@ -1,24 +1,27 @@
-import { Ionicons } from "@expo/vector-icons";
+import { ExerciseCard } from '@/components/cards/ExerciseCard';
+import { ErrorState } from "@/components/ErrorState";
+import { BottomSection } from "@/components/ExerciseDataBottom";
+import ScreenHeader from '@/components/headers/ScreenHeader';
+import { ExerciseModal } from "@/components/models/ExerciseModel";
+import { ExerciseDataSkeleton } from "@/components/skeleton/ExerciseDataSkeleton";
+import { useCurrentTime } from "@/hooks/useCurrentTime";
+import { useExerciseData } from "@/hooks/useExerciseData";
+import { useDateSelectorForHealthStore, useExerciseLogMutations } from "@/store/healthStore";
+import { CreateExerciseLogData, ExerciseLog as Exercise, ExerciseIntensity } from "@/types/type";
+import { router } from 'expo-router';
 import React, { useState } from "react";
 import {
+    FlatList,
     ScrollView,
     StatusBar,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import {CreateExerciseLogData, ExerciseIntensity} from "@/types/type";
-import { ExerciseLog as Exercise } from '@/types/type';
-import { HeaderComponent } from '@/components/headers/ExerciseHeader';
-import { ExerciseCard } from '@/components/cards/ExerciseCard';
-import {useExerciseData} from "@/hooks/useExerciseData";
-import {useCurrentTime} from "@/hooks/useCurrentTime";
-import {ExerciseModal} from "@/components/models/ExerciseModel";
-import {ErrorState} from "@/components/ErrorState";
-import {ExerciseDataSkeleton} from "@/components/skeleton/ExerciseDataSkeleton";
-import {BottomSection} from "@/components/ExerciseDataBottom";
-import {useExerciseLogMutations} from "@/store/healthStore";
 
 
 const ExerciseLogScreen: React.FC = () => {
+
+    const {selectedDate} = useDateSelectorForHealthStore();
+
     const [selectedExercise, setSelectedExercise] = useState<string | null>(null);
     const [openModal, setOpenModal] = useState<boolean>(false);
     const [currentOpenedModal, setCurrentOpenModal] = useState<Exercise | null>(null);
@@ -35,7 +38,7 @@ const ExerciseLogScreen: React.FC = () => {
 
     const {
         addExerciseLog
-    } = useExerciseLogMutations()
+    } = useExerciseLogMutations(selectedDate);
 
     const currentTime = useCurrentTime();
 
@@ -65,15 +68,15 @@ const ExerciseLogScreen: React.FC = () => {
 
     const handleSubmit = () => {
         if (selectedExercise) {
-            console.log("Exercise logged:", selectedExercise);
+            // console.log("Exercise logged:", selectedExercise);
 
-            console.log(exerciseData)
+            // console.log(exerciseData)
 
             const exercise: Exercise | undefined = exerciseData.find(
                 (f) => f.id === Number(selectedExercise)
             );
 
-            console.log("Mutating : " , exercise);
+            // console.log("Mutating : " , exercise);
             if(exercise) {
                 addExerciseLog.mutate({
                     exerciseName : exercise.exerciseName,
@@ -81,9 +84,13 @@ const ExerciseLogScreen: React.FC = () => {
                     intensity : exercise.intensity,
                     loggedAt : new Date().toISOString(),
                     caloriesBurned : exercise.caloriesBurned,
-                } as CreateExerciseLogData)
+                } as CreateExerciseLogData , {
+                    onSettled : () => {
+                        router.back();
+                    }
+                })
             }else {
-                console.log("Select valid excercise");
+                // console.log("Select valid excercise");
             }
         }
     };
@@ -94,21 +101,28 @@ const ExerciseLogScreen: React.FC = () => {
     if (error) return <ErrorState />;
 
     return (
-        <SafeAreaView className="flex-1 bg-white">
+        <SafeAreaView className="flex-1 px-2 py-1 bg-white">
             <StatusBar barStyle="dark-content" backgroundColor="white" />
 
-            <HeaderComponent />
+           <ScreenHeader
+               title='Add Exercise Log'
+               iconName='plus-circle'
+               onPress={() => {}}
+           />
 
             <ScrollView className="flex-1 py-4">
-                {exerciseData.map((exercise) => (
-                    <ExerciseCard
-                        key={exercise.id}
-                        exercise={exercise}
-                        isSelected={selectedExercise === exercise.id.toString()}
+                <FlatList  
+                    data={exerciseData}
+                    keyExtractor={(item) => item.id.toString()}
+                    renderItem={({ item }) => (
+                        <ExerciseCard
+                        exercise={item}
+                        isSelected={selectedExercise === item.id.toString()}
                         onSelect={handleExerciseSelect}
                         onEditPress={openExerciseModal}
-                    />
-                ))}
+                        />
+                    )}
+                />
             </ScrollView>
 
             <BottomSection

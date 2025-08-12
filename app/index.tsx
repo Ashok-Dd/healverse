@@ -1,5 +1,5 @@
 // app/index.tsx
-import { View, Text, ViewStyle, TextStyle } from "react-native";
+import { View, ViewStyle, ActivityIndicator } from "react-native";
 
 export default function Test() {
   // Remove navigation logic from here - let layout.tsx handle it
@@ -9,7 +9,8 @@ export default function Test() {
         { flex: 1, justifyContent: "center", alignItems: "center" } as ViewStyle
       }
     >
-      <Text style={{ fontSize: 16 } as TextStyle}>Initializing...</Text>
+      <ActivityIndicator size="large" color="#0de271ff" />
+      
     </View>
   );
 }

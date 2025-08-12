@@ -67,12 +67,14 @@ export const useAuthStore = create<AuthState>()(
                     body: credentials
                 });
 
+                console.log("Login successful:", response);
+
                 // Store only token in secure storage
-                await storeToken(response.token);
+                await storeToken(response!.token);
 
                 // Store user data only in state
                 set({
-                    user: response.user,
+                    user: response!.user,
                     isAuthenticated: true,
                     isLoading: false,
                     error: null
@@ -98,11 +100,11 @@ export const useAuthStore = create<AuthState>()(
                 });
 
                 // Store only token in secure storage
-                await storeToken(response.token);
+                await storeToken(response!.token);
 
                 // Store user data only in state
                 set({
-                    user: response.user,
+                    user: response!.user,
                     isAuthenticated: true,
                     isLoading: false,
                     error: null
@@ -137,11 +139,11 @@ export const useAuthStore = create<AuthState>()(
                 });
 
                 // Store new token in secure storage
-                await storeToken(response.token);
+                await storeToken(response!.token);
 
                 // Update state with fresh user data
                 set({
-                    user: response.user,
+                    user: response!.user,
                     isAuthenticated: true,
                     isInitializing: false
                 });

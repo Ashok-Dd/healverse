@@ -1,30 +1,28 @@
-import { Feather, Ionicons } from "@expo/vector-icons";
+import { ExerciseModal } from "@/components/models/ExerciseModel";
+import {
+    useDateSelectorForHealthStore, useExerciseLogMutations,
+    useExerciseLogs,
+} from "@/store/healthStore";
+import { ExerciseIntensity, ExerciseLog } from "@/types/type";
+import { Ionicons } from "@expo/vector-icons";
 import React, { useState } from "react";
 import {
     Modal,
     Pressable,
-    ScrollView,
     Text,
     TouchableOpacity,
     View,
 } from "react-native";
-import {ExerciseIntensity, ExerciseLog} from "@/types/type";
-import {
-    useDashboardData,
-    useDateSelectorForHealthStore, useExerciseLogMutations,
-} from "@/store/healthStore";
-import { ExerciseModal } from "@/components/models/ExerciseModel";
 
 const AllLoggedExercises: React.FC = () => {
     const { selectedDate } = useDateSelectorForHealthStore();
-    const { isLoading, getExerciseLogs } = useDashboardData(selectedDate);
+    const { isLoading, error, data: loggedExercises } = useExerciseLogs.ByDate(selectedDate);
 
     const {
         updateExerciseLog,
         deleteExerciseLog
     } = useExerciseLogMutations()
 
-    const loggedExercises = getExerciseLogs();
 
     // menu state
     const [selectedExerciseId, setSelectedExerciseId] = useState<number | null>(
@@ -48,7 +46,7 @@ const AllLoggedExercises: React.FC = () => {
     };
 
     const handleEdit = () => {
-        const exercise = loggedExercises.find((e) => e.id === selectedExerciseId);
+        const exercise = loggedExercises?.find((e) => e.id === selectedExerciseId);
         if (exercise) {
             setUpdateExercise(exercise);
             setUpdateModalVisible(true);
@@ -131,13 +129,13 @@ const AllLoggedExercises: React.FC = () => {
                 <Text className="text-center text-gray-500">Loading...</Text>
             )}
 
-            {!isLoading && loggedExercises.length > 0 && (
+            {!isLoading && loggedExercises && loggedExercises.length > 0 && (
                 <>
-                    {loggedExercises.map((exercise) => renderExerciseItem(exercise))}
+                    {loggedExercises?.map((exercise) => renderExerciseItem(exercise))}
                 </>
             )}
 
-            {!isLoading && loggedExercises.length === 0 && (
+            {!isLoading && loggedExercises && loggedExercises.length === 0 && (
                 <View className="flex-1 justify-center items-center mt-10">
                     <Ionicons name="fitness" size={32} color="#2196F3" />
                     <Text className="mt-2 text-gray-500">No exercises logged</Text>

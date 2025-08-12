@@ -1,6 +1,9 @@
+import ErrorCard from "@/components/cards/ErrorCard";
+import ScreenHeader from "@/components/headers/ScreenHeader";
+import PlaceHolder from "@/components/PlaceHolder";
 import { useConversations } from "@/lib/tanstack";
 import { Conversation } from "@/types/type";
-import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
+import { Ionicons } from "@expo/vector-icons";
 import BottomSheet, { BottomSheetView } from "@gorhom/bottom-sheet";
 import { router } from "expo-router";
 import React, { useCallback, useMemo, useRef, useState } from "react";
@@ -17,9 +20,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 const SearchIcon = () => <Ionicons name="search" size={20} color="#9CA3AF" />;
 
-const EmptyStateIcon = () => (
-  <Text className="text-gray-200 text-[76px] mt-7">💭</Text>
-);
+
 
 const ConversationSkeleton = () => (
   <View className="mx-4 my-2 bg-gray-100 rounded-2xl h-[64px] px-5 py-4">
@@ -131,24 +132,15 @@ const Conversations = () => {
   );
 
   return (
-    <SafeAreaView className="flex-1 bg-white">
-      <View className="px-3 pt-2 pb-4 ">
-        <View className="flex w-full flex-row items-center mb-5 justify-between px-2">
-          <TouchableOpacity onPress={() => router.back()}>
-            <Ionicons name="arrow-back" color={"black"} size={25} />
-          </TouchableOpacity>
+    <SafeAreaView className="flex-1 px-2 py-1 bg-white">
 
-          <View className="flex flex-row items-center justify-center gap-x-2">
-            <MaterialCommunityIcons name="history" size={24} color="black" />
-            <Text className="text-black text-base font-bold">
-              Conversations
-            </Text>
-          </View>
 
-          <View className="flex items-center justify-center bg-blue-200 rounded-full p-1">
-            <Ionicons name="help" color={"blue"} size={12} />
-          </View>
-        </View>
+        <ScreenHeader
+          title="Conversations"
+          iconName="clock"
+          onPress={() => router.push("/(root)/conversation" as any)}
+        />
+
         <View className="relative mb-1">
           <View className="absolute left-3 top-1/2 -translate-y-1/2 z-10">
             <SearchIcon />
@@ -173,13 +165,6 @@ const Conversations = () => {
             </Pressable>
           )}
         </View>
-        {search.length > 0 && (
-          <Text className="text-sm text-gray-500 mt-2">
-            {filteredData.length} result{filteredData.length !== 1 ? "s" : ""}{" "}
-            found
-          </Text>
-        )}
-      </View>
 
       {isLoading && (
         <View className="flex-1 ">
@@ -192,23 +177,10 @@ const Conversations = () => {
       )}
 
       {error && !isLoading && (
-        <View className="flex-1 justify-center items-center px-8">
-          <Text className="text-6xl mb-4">⚠️</Text>
-          <Text className="text-lg font-semibold text-gray-900 mb-2 text-center">
-            Oops! Something went wrong
-          </Text>
-          <Text className="text-gray-600 text-center mb-6">
-            Failed to load conversations. Please check your connection and try
-            again.
-          </Text>
-          <Pressable
-            className="bg-blue-500 px-6 py-3 rounded-xl"
-            onPress={() => refetch()}
-            accessibilityLabel="Try Again"
-          >
-            <Text className="text-white font-semibold">Try Again</Text>
-          </Pressable>
-        </View>
+        <ErrorCard
+          message={error.message}
+          onPress={() => refetch()}
+        />
       )}
 
       {!isLoading && !error && (
@@ -230,12 +202,7 @@ const Conversations = () => {
           }
           ListEmptyComponent={
             <View className="flex-1 justify-center items-center px-8">
-              <EmptyStateIcon />
-              <Text className="text-xl font-semibold text-gray-900 mb-2 text-center mt-4">
-                {search.length > 0
-                  ? "No results found"
-                  : "No conversations yet"}
-              </Text>
+              <PlaceHolder message={search.length > 0 ? "No results found" : "No conversations found"} />
               <Text className="text-gray-600 text-center mb-8">
                 {search.length > 0
                   ? `Try searching for something else or start a new conversation.`

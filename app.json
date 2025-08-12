@@ -42,7 +42,8 @@
           "microphonePermission": "Allow $(PRODUCT_NAME) to access the microphone.",
           "speechRecognitionPermission": "Allow $(PRODUCT_NAME) to use speech recognition."
         }
-      ]
+      ],
+      "expo-audio"
     ],
     "experiments": {
       "typedRoutes": true

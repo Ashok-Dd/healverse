@@ -17,12 +17,21 @@ import {
     View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import GlobalHeader from "@/components/headers/GlobalHeader";
+import ErrorCard from "@/components/cards/ErrorCard";
+import TabSwitcher from "@/components/ui/TabSwitcher";
+import IconButton from "@/components/ui/IconButton";
 
 // Register the linear gradient globally
 // SkeletonPlaceholder.setLinearGradient(LinearGradient);
 
 const Profile = () => {
-  const [activeTab, setActiveTab] = useState<"daily" | "weekly">("daily");
+  const [activeTab, setActiveTab] = useState("weekly");
+
+  const tabs = [
+    { key: "weekly", label: "Weekly Plan", icon: "calendar-week" },
+    { key: "daily", label: "Daily Plan", icon: "calendar-check" },
+  ];
 
   const {
     selectedDate,
@@ -32,7 +41,7 @@ const Profile = () => {
     isLoading,
     error,
     totalNutrition,
-    getMealsByType,
+    // getMealsByType,
     handleGenerate,
     handleRefresh,
     isGenerating,
@@ -67,18 +76,14 @@ const Profile = () => {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-white">
+    <SafeAreaView className="flex-1 px-1 py-1 bg-white">
       <StatusBar barStyle="dark-content" backgroundColor="#f9fafb" />
 
       {/* Header */}
-      <View className="bg-white px-4 py-1">
-        <View className="flex-row items-center justify-between mb-2">
-          <View className="flex-row items-center">
-            <Text className="text-sm mr-2">🥗</Text>
-            <Text className="text-sm font-bold text-green-600">HealVerse</Text>
-          </View>
-        </View>
-      </View>
+      <GlobalHeader/>
+
+      {/*<TabSwitcher tabs={tabs} activeTab={activeTab} setActiveTab={setActiveTab} />*/}
+
 
       {/* Always show Date Selector */}
       <DaySelector
@@ -92,84 +97,18 @@ const Profile = () => {
       {isLoading || isGenerating ? (
         <MealPlanSkeleton />
       ) : error && !dietPlan ? (
-        <View className="flex-1 justify-center items-center px-6 bg-white">
-          <View className="w-full p-6 rounded-2xl shadow-md bg-white border border-gray-200">
-            <Text className="text-xl font-semibold text-center text-red-500 mb-2">
-              Oops! Something went wrong
-            </Text>
-
-            <Text className="text-center text-gray-600 text-base mb-6">
-              {"Failed to load diet plan. Please try again later."}
-            </Text>
-            <TouchableOpacity onPress={() => {}} disabled={isRefreshing}>
-              <ImageBackground
-                source={require("@/assets/images/empty-state.png")} // or a URL
-                resizeMode="cover"
-                imageStyle={styles.image}
-                style={styles.container}
-              >
-                <Text style={styles.text as TextStyle}>
-                  {isRefreshing ? "Retrying..." : "Try Again"}
-                </Text>
-              </ImageBackground>
-            </TouchableOpacity>
-          </View>
-        </View>
+       <ErrorCard message={error} onPress={handleRefresh} />
       ) : !isValidDate ? (
         <PlaceHolder message="You're on invalid date ...!" />
       ) : !dietPlan ? (
         <PlaceHolder message="You haven't created diet plan here." />
       ) : (
-        <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
-          {/* Tab Selector */}
-          <View className="bg-white py-1 border-gray-200">
-            <View className="flex-row bg-gray-100 rounded-xl p-1 mx-2">
-              <TouchableOpacity
-                className={`flex-1 py-1 rounded-xl ${
-                  activeTab === "weekly" ? "bg-white shadow-sm" : ""
-                }`}
-                onPress={() => setActiveTab("weekly")}
-              >
-                <View className="flex-row items-center justify-center">
-                  <Text className="text-lg mr-2">
-                    <MaterialCommunityIcons name="calendar-week" size={15} />
-                  </Text>
-                  <Text
-                    className={`font-medium ${
-                      activeTab === "weekly" ? "text-gray-800" : "text-gray-600"
-                    }`}
-                  >
-                    Weekly Plan
-                  </Text>
-                </View>
-              </TouchableOpacity>
-              <TouchableOpacity
-                onPress={() => setActiveTab("daily")}
-                className={`flex-1 py-1 rounded-xl ${
-                  activeTab === "daily" ? "bg-white shadow-sm" : ""
-                }`}
-              >
-                <View className="flex-row items-center justify-center">
-                  <Text className="text-lg mr-2">
-                    <MaterialCommunityIcons name="calendar-check" size={15} />
-                  </Text>
-                  <Text
-                    className={`font-medium ${
-                      activeTab === "daily" ? "text-gray-800" : "text-gray-600"
-                    }`}
-                  >
-                    Daily Plan
-                  </Text>
-                </View>
-              </TouchableOpacity>
-            </View>
-          </View>
-
+        <ScrollView className="flex-1 py-1" showsVerticalScrollIndicator={false}>
           {/* Nutrition Info */}
-          <View className="px-2">
-            <View className="flex-row items-center mb-2 ml-3">
+          <View >
+            <View className="flex-row items-center  ml-3">
               <Text className="text-2xl mr-2">≡</Text>
-              <Text className="text-xl font-semibold text-gray-800">
+              <Text className="text-xs font-semibold text-gray-800">
                 Daily Total
               </Text>
             </View>
@@ -183,30 +122,22 @@ const Profile = () => {
 
           {/* Refresh Button */}
           <View className="mb-4 px-2 gap-3 flex-row items-center justify-between">
-            <Text className="text-sm font-medium text-gray-800 flex-1 pr-2">
+            <Text className="text-xs font-medium text-gray-800 flex-1 pr-2">
               Balanced Healthy Indian Diet Plan for User
             </Text>
-            <TouchableOpacity
-              className="bg-blue-100 px-2 py-1 rounded-full"
-              onPress={handleGenerateNewPlan}
-              disabled={isGenerating}
-            >
-              <View className="flex-row items-center space-x-1">
-                <Feather
-                  name={isGenerating ? "loader" : "refresh-cw"}
-                  size={14}
-                  color="#1D4ED8"
-                />
-                <Text className="text-blue-700 text-xs">
-                  {isGenerating ? "Generating..." : "AI Replace Day"}
-                </Text>
-              </View>
-            </TouchableOpacity>
+            <IconButton
+                iconName="refresh-cw"
+                loadingIconName="loader"
+                label="AI Replace Day"
+                loadingLabel="Generating..."
+                loading={isGenerating}
+                onPress={handleGenerateNewPlan}
+            />
           </View>
 
           {/* Meals List */}
           {dietPlan?.meals && dietPlan!.meals?.length > 0 ? (
-            <View className="px-2">
+            <View>
               {isRefreshing && (
                 <View className="absolute top-0 left-0 right-0 bottom-0 bg-white bg-opacity-80 z-10 justify-center items-center">
                   <Text className="text-gray-600">Refreshing...</Text>

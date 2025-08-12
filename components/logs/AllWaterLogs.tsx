@@ -1,3 +1,5 @@
+import { useDateSelectorForHealthStore, useWaterLogs } from "@/store/healthStore";
+import { WaterLog } from "@/types/type";
 import { Ionicons } from "@expo/vector-icons";
 import React, { useState } from "react";
 import {
@@ -9,8 +11,6 @@ import {
     TouchableOpacity,
     View,
 } from "react-native";
-import { useDashboardData, useDateSelectorForHealthStore } from "@/store/healthStore";
-import {WaterLog} from "@/types/type";
 
 
 
@@ -26,7 +26,7 @@ const WaterLogsComponent: React.FC<WaterLogsComponentProps> = ({
                                                                    onCopyFood,
                                                                }) => {
     const { selectedDate } = useDateSelectorForHealthStore();
-    const { isLoading, error, getWaterLogs } = useDashboardData(selectedDate);
+    const { isLoading, error, data: waterLogs } = useWaterLogs.ByDate(selectedDate);
 
     const [selectedCard, setSelectedCard] = useState<number | null>(null);
     const [modalVisible, setModalVisible] = useState<boolean>(false);
@@ -109,9 +109,8 @@ const WaterLogsComponent: React.FC<WaterLogsComponentProps> = ({
             );
         }
 
-        const waterLogs = getWaterLogs();
 
-        if (!waterLogs.length) {
+        if (!waterLogs?.length) {
             return (
                 <View className="flex-1 justify-center items-center mt-10">
                     <Ionicons name="water-outline" size={32} color="#2196F3" />

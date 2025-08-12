@@ -1,113 +1,111 @@
-import React from "react";
-import { View, Image, ActivityIndicator, Text } from "react-native";
-import { useFoodLogMutationTracker } from "@/hooks/useFoodMutationTracker";
+// FoodLoggingTrackerCard.tsx - Optimized main component
 import Skeleton from "@/components/skeleton/Skeleton";
-import {FoodItem} from "@/types/type";
+import { images } from "@/constants";
+import { useFoodLogMutationTracker } from "@/hooks/useFoodMutationTracker";
+import { useFoodLogs } from "@/store/healthStore";
+import { FoodLog } from "@/types/type";
+import { router } from "expo-router";
+import React, { useMemo } from "react";
+import { Image, ScrollView, Text, TouchableOpacity, View } from "react-native";
+import FoodLogCard from "./FoodLogCard";
 
-const FoodLoggingTrackerCard = () => {
+interface FoodLoggingTrackerCardProps {
+    date: string;
+}
+
+const FoodLoggingTrackerCard = ({ date }: FoodLoggingTrackerCardProps) => {
     const { loading, variables, result } = useFoodLogMutationTracker();
+    const { data: foodLogs, isLoading: foodLogsLoading } = useFoodLogs.ByDate(date);
 
-    if (!loading && !result) {
-        return <Text className="text-gray-500">No logging in progress</Text>;
-    }
-
-    const renderImagePreview = () => {
+    // Memoized helper functions
+    const imagePreview = useMemo(() => {
         if (variables instanceof FormData) {
             const imageEntry = variables.get("image");
             if (imageEntry && typeof imageEntry === "object" && "uri" in imageEntry) {
-                const imageUri = (imageEntry as any).uri;
-                return (
-                    <View className="h-28 w-28 relative">
-                        <Image
-                            source={{ uri: imageUri }}
-                            className="w-28 h-28 rounded-lg mb-4"
-                            resizeMode="cover"
-                        />
-                        <ActivityIndicator
-                            size="large"
-                            color="#22c55e"
-                            style={{
-                                position: "absolute",
-                                top: "50%",
-                                left: "50%",
-                                transform: [{ translateX: -12 }, { translateY: -12 }],
-                                zIndex: 10,
-                            } as any}
-                        />
-                    </View>
-                );
+                return (imageEntry as any).uri;
             }
         }
         return null;
-    };
+    }, [variables]);
 
-    const getMealType = () => {
+    const mealType = useMemo(() => {
         if (variables instanceof FormData) {
-            const mealType = variables.get("mealType");
-            return typeof mealType === "string" ? mealType : "Unknown";
+            const mealTypeEntry = variables.get("mealType");
+            return typeof mealTypeEntry === "string" ? mealTypeEntry : "Unknown";
         }
         return "Unknown";
-    };
+    }, [variables]);
 
-    const totals = (result?.items as FoodItem[])?.reduce(
-        (acc, item) => {
-            acc.calories += item.calories || 0;
-            acc.protein += item.protein || 0;
-            acc.carbs += item.carbs || 0;
-            acc.fats += item.fats || 0;
-            return acc;
-        },
-        { calories: 0, protein: 0, carbs: 0, fats: 0 }
-    );
+    // Memoized loading food log for ongoing mutation
+    const loadingFoodLog = useMemo(() => ({
+        items: (result as unknown as FoodLog)?.items || [],
+        mealName: `Logging ${mealType}...`,
+        loggedAt: new Date().toISOString()
+    }), [result, mealType]);
+
+    // Show empty state if no ongoing mutations and no existing food logs
+    if (!loading && !result && (!foodLogs || foodLogs.length === 0)) {
+        return (
+            <View className="bg-gray-100 rounded-xl px-1 py-1">
+                <View className="flex flex-row items-center">
+                    <Image
+                        source={images.emptyState}
+                        className="w-28 h-24 rounded-lg"
+                        resizeMode="cover"
+                    />
+                    <View className="flex-row text-wrap justify-center items-center flex-1">
+                        <Text className="text-xs text-gray-500" style={{ flexShrink: 1 }}>
+                            You haven't logged any foods yet! Start logging foods by clicking
+                            the log button
+                        </Text>
+                    </View>
+                </View>
+            </View>
+        );
+    }
 
     return (
-        <View className="w-full gap-3">
-            {/* Loading state */}
-            {loading && !result && (
-                <View className="bg-white p-5 w-full rounded-xl flex-row gap-3 items-center min-w-[200px]">
-                    {renderImagePreview()}
-                    <View className="flex-1 gap-2">
-                        <Text className="text-black text-base font-semibold">
-                            Logging {getMealType()}...
-                        </Text>
-                        <Skeleton />
-                        <Skeleton />
-                    </View>
-                </View>
-            )}
-
-            {/* Completed state */}
-            {result && (
-                <View className="bg-white p-4 w-full rounded-xl flex-row items-center min-w-[200px] gap-4">
-                    {result.imageUrl ? (
-                        <Image
-                            source={{ uri: result.imageUrl }}
-                            className="w-28 h-28 rounded-lg"
-                            resizeMode="cover"
+        <View className="w-full my-2">
+            <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={{ paddingHorizontal: 4 }}
+            >
+                {/* Show ongoing mutation (loading state) */}
+                {loading && !result && (
+                    <View className="mr-3">
+                        <FoodLogCard
+                            foodLog={loadingFoodLog}
+                            isLoading={true}
+                            imagePreview={imagePreview}
+                            mealType={mealType}
                         />
-                    ) : (
-                        <View className="w-28 h-28 rounded-lg bg-gray-200 items-center justify-center">
-                            <Text className="text-gray-500 text-xs">No Image</Text>
-                        </View>
-                    )}
-
-                    <View className="flex-1 gap-2">
-                        <Text className="text-black text-base font-semibold">
-                            {result.mealName || `Logged ${getMealType()}`}
-                        </Text>
-                        <Text className="text-xs text-gray-500">
-                            {new Date(result.loggedAt).toLocaleString()}
-                        </Text>
-
-                        <View className="flex-row flex-wrap gap-x-3 mt-1">
-                            <Text className="text-red-500 font-semibold">{totals?.calories} kcal</Text>
-                            <Text className="text-green-500 font-semibold">{totals?.protein}g protein</Text>
-                            <Text className="text-yellow-500 font-semibold">{totals?.carbs}g carbs</Text>
-                            <Text className="text-blue-500 font-semibold">{totals?.fats}g fat</Text>
-                        </View>
                     </View>
-                </View>
-            )}
+                )}
+
+                {/* Show existing food logs for the day */}
+                {foodLogs?.map((foodLog: any, index: number) => (
+                    <View key={`existing-${index}`} className="mr-3 bg-gray-100 rounded-xl">
+                        <TouchableOpacity onPress={() => router.push(`/(root)/food-log/${foodLog.id}`)}>
+                            <FoodLogCard foodLog={foodLog} />
+                        </TouchableOpacity>
+                    </View>
+                ))}
+
+                {/* Show loading skeletons for existing food logs if they're loading */}
+                {foodLogsLoading && !foodLogs && (
+                    Array.from({ length: 2 }).map((_, index) => (
+                        <View key={`skeleton-${index}`} className="bg-white p-4 rounded-xl min-w-[280px] gap-4 mr-3 flex-row">
+                            <View className="w-28 h-28 rounded-lg bg-gray-200" />
+                            <View className="flex-1 gap-2">
+                                <Skeleton />
+                                <Skeleton />
+                                <Skeleton />
+                            </View>
+                        </View>
+                    ))
+                )}
+            </ScrollView>
         </View>
     );
 };

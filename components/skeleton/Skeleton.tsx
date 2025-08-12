@@ -10,7 +10,7 @@ interface SkeletonProps {
 }
 
 const Skeleton = ({
-  width = "100%",
+  width = "70%",
   height = 20,
   radius = 6,
   style,

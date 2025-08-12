@@ -45,15 +45,8 @@ const ChatScreen = ({
     console.log("Menu pressed");
   };
 
-  const handleTryFreePress = () => {
-    // Show premium features
-    console.log("Try free pressed");
-  };
 
-  const handleDiscountPress = () => {
-    // Show discount offer
-    console.log("Discount pressed");
-  };
+
 
   return (
     <SafeAreaView className={"flex-1"}>
@@ -73,6 +66,7 @@ const ChatScreen = ({
           onRefresh={refetchMessages}
           error={errorLoadingMessages?.message}
           flatListRef={flatListRef}
+          isSending={isSendingMessage}
         />
       </View>
 
@@ -87,9 +81,9 @@ const ChatScreen = ({
 
       <Modal
         animationType="slide"
-        transparent={false} // Set to false for full-screen
+        transparent={false}
         visible={isModalVisible}
-        onRequestClose={closeModal} // Android back button
+        onRequestClose={closeModal}
       >
         <VoiceModel/>
       </Modal>

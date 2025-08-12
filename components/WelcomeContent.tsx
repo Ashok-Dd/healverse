@@ -33,14 +33,11 @@ const FeatureButton = ({
 
 const WelcomeContent: React.FC = () => {
   return (
-    <View className=" px-6 py-5  ">
+    <View className=" px-6 ">
       {/* 🔥 Title */}
       <View className="mb-6">
-        <Text className="text-center text-2xl font-jakarta-bold text-gray-900">
-          Welcome to HealVerse 🌿
-        </Text>
         <Text className="text-center font-jakarta-extra-bold text-base text-gray-600 mt-1">
-          Your personalized wellness companion
+            🌿Your personalized wellness companion
         </Text>
       </View>
 

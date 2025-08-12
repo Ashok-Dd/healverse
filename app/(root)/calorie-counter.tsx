@@ -1,4 +1,5 @@
 // CalorieMeterPage.tsx - Fixed Version
+import { useDateSelectorForHealthStore, useFoodLogMutations } from "@/store/healthStore";
 import { Feather, Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { CameraType, CameraView, useCameraPermissions } from "expo-camera";
 import * as ImagePicker from "expo-image-picker";
@@ -6,16 +7,15 @@ import { Link, useRouter } from "expo-router";
 import React, { useEffect, useRef, useState } from "react";
 import {
     Alert,
+    Animated,
     Image,
     StyleSheet,
     Text,
     TextInput,
     TouchableOpacity,
     View,
-    Animated,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useFoodLogMutations } from "@/store/healthStore";
 
 // Header Component
 interface HeaderProps {
@@ -341,6 +341,9 @@ interface CalorieMeterPageProps {}
 
 const CalorieMeterPage: React.FC<CalorieMeterPageProps> = () => {
     const router = useRouter();
+
+    const {selectedDate} = useDateSelectorForHealthStore();
+
     const [cameraPermission, requestCameraPermission] = useCameraPermissions();
     const [cameraType, setCameraType] = useState<CameraType>("back");
     const [capturedImage, setCapturedImage] = useState<string | null>(null);
@@ -350,7 +353,7 @@ const CalorieMeterPage: React.FC<CalorieMeterPageProps> = () => {
     const [textInput, setTextInput] = useState("");
     const cameraRef = useRef<CameraView | null>(null);
 
-    const { addFoodLog } = useFoodLogMutations();
+    const { addFoodLog } = useFoodLogMutations(selectedDate);
 
     // Request camera permission if not granted
     useEffect(() => {

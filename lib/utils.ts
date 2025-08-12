@@ -1,3 +1,4 @@
+import { FoodItem } from "@/types/type";
 
 
 export const convertWeight = (weight : number, fromUnit : string | "kg" | "lbs", toUnit : "kg" | "lbs" ) => {
@@ -26,3 +27,18 @@ export const generateUUID = (): string => {
     const random = Math.random().toString(36).substring(2, 10); // 8-char random
     return `${timestamp}-${random}`;
 };
+
+export const generateSessionId = () =>  `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+
+export const calculateTotals = (items: FoodItem[]) => {
+        return items?.reduce(
+            (acc, item) => {
+                acc.calories += item.calories || 0;
+                acc.protein += item.protein || 0;
+                acc.carbs += item.carbs || 0;
+                acc.fats += item.fats || 0;
+                return acc;
+            },
+            { calories: 0, protein: 0, carbs: 0, fats: 0 }
+        );
+    };
