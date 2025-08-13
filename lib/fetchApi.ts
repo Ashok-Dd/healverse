@@ -1,7 +1,7 @@
+import { API_URL as API_BASE_URL } from "@/constants/api";
 import { ApiResponse } from '@/types/type';
 import { appTokenCache } from './auth';
 import { showToast } from './toast';
-import {API_URL as API_BASE_URL} from "@/constants/api";
 
 
 if(!API_BASE_URL){
@@ -174,6 +174,8 @@ export const fetchApi = async <T = unknown>(
         if (!suppressToasts && parsedResponse.message) {
             showToast(parsedResponse.message, { type: "success" });
         }
+
+        // console.log("[fetchApi] Response:", parsedResponse);
 
         return parsedResponse.data;
 

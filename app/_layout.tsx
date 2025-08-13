@@ -11,25 +11,13 @@ import {
   ReanimatedLogLevel,
 } from "react-native-reanimated";
 // Optional: global styles for tailwind or other CSS-in-JS
-import "./globals.css";
 import { NotificationProvider } from "@/context/NotificationContext";
-import * as Notifications from "expo-notifications";
+import "./globals.css";
 // Configure Reanimated logs (optional)
 configureReanimatedLogger({
   level: ReanimatedLogLevel.warn,
   strict: false,
 });
-
-
-Notifications.setNotificationHandler({
-  handleNotification: async () => ({
-    shouldPlaySound: true,
-    shouldSetBadge: true,
-    shouldShowBanner: true,
-    shouldShowList: true,
-  }),
-});
-
 
 export default function RootLayout() {
   const [fontsLoaded, fontError] = useFonts({
