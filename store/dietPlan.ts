@@ -1,15 +1,15 @@
 import { getDummyDietPlan } from "@/constants/data";
-import { fetchApi } from '@/lib/fetchApi';
+import { fetchApi } from "@/lib/fetchApi";
 import { useAuthStore } from "@/store/authStore";
 import { DietPlan, Meal, MealType } from "@/types/type";
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useCallback, useMemo, useState } from 'react';
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useCallback, useMemo, useState } from "react";
 
 // ==================== QUERY KEYS ====================
 export const dietPlanKeys = {
-  all: ['dietPlans'] as const,
-  byDate: (date: string) => [...dietPlanKeys.all, 'byDate', date] as const,
-  today: () => [...dietPlanKeys.all, 'today'] as const
+  all: ["dietPlans"] as const,
+  byDate: (date: string) => [...dietPlanKeys.all, "byDate", date] as const,
+  today: () => [...dietPlanKeys.all, "today"] as const,
 } as const;
 
 // ==================== API FUNCTIONS ====================
@@ -17,10 +17,9 @@ const dietPlanApi = {
   fetchByDate: async (date: string): Promise<DietPlan | null> => {
     try {
       return await fetchApi<DietPlan>(`/api/diet-plans/generate/${date}`, {
-        method: 'POST',
+        method: "POST",
         requiresAuth: true,
       });
-
     } catch (error: any) {
       // // If not found, return dummy data or generate new plan
       // if (error.status === 404) {
@@ -36,8 +35,8 @@ const dietPlanApi = {
 
   fetchToday: async (): Promise<DietPlan> => {
     try {
-      return await fetchApi<DietPlan>('/api/diet-plans/today', {
-        method: 'GET',
+      return await fetchApi<DietPlan>("/api/diet-plans/today", {
+        method: "GET",
         requiresAuth: true,
       });
     } catch (error: any) {
@@ -51,14 +50,14 @@ const dietPlanApi = {
 
   generate: async (planDate?: string): Promise<DietPlan> => {
     try {
-      return await fetchApi<DietPlan>('/api/diet-plans/generate', {
-        method: 'POST',
+      return await fetchApi<DietPlan>("/api/diet-plans/generate", {
+        method: "POST",
         requiresAuth: true,
         body: planDate ? { planDate } : {},
       });
     } catch (error) {
       // Fallback to dummy data for development
-      console.warn('API not available, using dummy data');
+      console.warn("API not available, using dummy data");
       return getDummyDietPlan();
     }
   },
@@ -67,55 +66,61 @@ const dietPlanApi = {
 // ==================== UTILITY FUNCTIONS ====================
 export const getCurrentDate = (): string => {
   try {
-    return new Date().toISOString().split('T')[0];
+    return new Date().toISOString().split("T")[0];
   } catch (error) {
-    console.error('Error getting current date:', error);
-    return new Date().toLocaleDateString('en-CA'); // Fallback format YYYY-MM-DD
+    console.error("Error getting current date:", error);
+    return new Date().toLocaleDateString("en-CA"); // Fallback format YYYY-MM-DD
   }
 };
 
-export const isValidDateForData = (date: string | undefined | null): boolean => {
+export const isValidDateForData = (
+  date: string | undefined | null
+): boolean => {
   // console.log('🔍 Validating date:', date);
-  
-  if (!date || typeof date !== 'string') {
-    console.log('❌ Date validation failed: Invalid date format', { date, type: typeof date });
+
+  if (!date || typeof date !== "string") {
+    console.log("❌ Date validation failed: Invalid date format", {
+      date,
+      type: typeof date,
+    });
     return false;
   }
-  
+
   const { user: currentUser } = useAuthStore.getState();
   // console.log('👤 Current user:', currentUser ? 'exists' : 'null');
 
   if (!currentUser) {
-    console.log('❌ Date validation failed: No current user');
+    console.log("❌ Date validation failed: No current user");
     return false;
   }
 
   try {
     const selectedDateObj = new Date(date);
     const currentDateObj = new Date(getCurrentDate());
-    
+
     // console.log('📅 Dates parsed:', {
     //   selectedDate: date,
     //   selectedDateObj: selectedDateObj.toISOString(),
     //   currentDate: getCurrentDate(),
     //   currentDateObj: currentDateObj.toISOString(),
     // });
-    
+
     // Handle createdAt safely
     const createdAtDate = currentUser.createdAt;
     // console.log('🎂 User createdAt:', createdAtDate, typeof createdAtDate);
-    
+
     if (!createdAtDate) {
-      console.log('❌ Date validation failed: No user creation date');
+      console.log("❌ Date validation failed: No user creation date");
       return false;
     }
-    
-    const userCreatedDateStr = typeof createdAtDate === 'string' 
-      ? createdAtDate.split('T')[0] 
-      : (createdAtDate as Date).toISOString().split('T')[0];
-    
+
+    const userCreatedDateStr =
+      typeof createdAtDate === "string"
+        ? createdAtDate.split("T")[0]
+        : (createdAtDate as Date).toISOString().split("T")[0];
+
     const userCreatedDateObj = new Date(userCreatedDateStr);
-    
+
     // console.log('🎂 User creation date processed:', {
     //   original: createdAtDate,
     //   processed: userCreatedDateStr,
@@ -123,9 +128,11 @@ export const isValidDateForData = (date: string | undefined | null): boolean => 
     // });
 
     // Check for invalid dates
-    if (isNaN(selectedDateObj.getTime()) || 
-        isNaN(currentDateObj.getTime()) || 
-        isNaN(userCreatedDateObj.getTime())) {
+    if (
+      isNaN(selectedDateObj.getTime()) ||
+      isNaN(currentDateObj.getTime()) ||
+      isNaN(userCreatedDateObj.getTime())
+    ) {
       // console.log('❌ Date validation failed: Invalid date objects', {
       //   selectedValid: !isNaN(selectedDateObj.getTime()),
       //   currentValid: !isNaN(currentDateObj.getTime()),
@@ -155,7 +162,7 @@ export const isValidDateForData = (date: string | undefined | null): boolean => 
     // console.log('✅ Date validation passed!');
     return true;
   } catch (error) {
-    console.error('❌ Error validating date:', error, { date, currentUser });
+    console.error("❌ Error validating date:", error, { date, currentUser });
     return false;
   }
 };
@@ -167,14 +174,17 @@ interface UseDietPlanOptions {
   gcTime?: number;
 }
 
-export const useDietPlan = (date?: string | null, options: UseDietPlanOptions = {}) => {
+export const useDietPlan = (
+  date?: string | null,
+  options: UseDietPlanOptions = {}
+) => {
   const targetDate = date || getCurrentDate();
   const isValidDate = isValidDateForData(targetDate);
 
   const query = useQuery({
     queryKey: dietPlanKeys.byDate(targetDate),
     queryFn: () => dietPlanApi.fetchByDate(targetDate),
-    enabled: isValidDate && (options.enabled !== false),
+    enabled: isValidDate && options.enabled !== false,
     staleTime: options.staleTime ?? 5 * 60 * 1000, // 5 minutes
     gcTime: options.gcTime ?? 10 * 60 * 1000, // 10 minutes
     retry: (failureCount, error: any) => {
@@ -184,19 +194,28 @@ export const useDietPlan = (date?: string | null, options: UseDietPlanOptions = 
   });
 
   // Utility functions for working with meals
-  const getMealsByType = useCallback((mealType: MealType): Meal[] => {
-    if (!query.data?.meals) return [];
-    return (query.data.meals as Meal[]).filter(meal => meal.mealType === mealType);
-  }, [query.data]);
+  const getMealsByType = useCallback(
+    (mealType: MealType): Meal[] => {
+      if (!query.data?.meals) return [];
+      return (query.data.meals as Meal[]).filter(
+        (meal) => meal.mealType === mealType
+      );
+    },
+    [query.data]
+  );
 
-  const getMealById = useCallback((id: number): Meal | undefined => {
-    if (!query.data?.meals) return undefined;
-    return (query.data.meals as Meal[]).find(meal => meal.id === id);
-  }, [query.data]);
+  const getMealById = useCallback(
+    (id: number): Meal | undefined => {
+      if (!query.data?.meals) return undefined;
+      return (query.data.meals as Meal[]).find((meal) => meal.id === id);
+    },
+    [query.data]
+  );
 
   const totalNutrition = useMemo(() => {
-    if (!query.data?.meals) return { calories: 0, protein: 0, carbs: 0, fat: 0 };
-    
+    if (!query.data?.meals)
+      return { calories: 0, protein: 0, carbs: 0, fat: 0 };
+
     const meals = query.data.meals as Meal[];
     return meals.reduce(
       (total, meal) => ({
@@ -218,10 +237,10 @@ export const useDietPlan = (date?: string | null, options: UseDietPlanOptions = 
     error: query.error,
     isError: query.isError,
     isSuccess: query.isSuccess,
-    
+
     // Query actions
     refetch: query.refetch,
-    
+
     // Utility functions
     getMealsByType,
     getMealById,
@@ -237,27 +256,32 @@ interface UseDateSelectorOptions {
   autoFetch?: boolean;
 }
 
-export const useDateSelectorForDietplan = (options: UseDateSelectorOptions = {}) => {
+export const useDateSelectorForDietplan = (
+  options: UseDateSelectorOptions = {}
+) => {
   const queryClient = useQueryClient();
   const currentDate = getCurrentDate();
   const [selectedDate, setSelectedDate] = useState(
     options.initialDate || currentDate
   );
 
-  const selectDate = useCallback((date: string | null | undefined) => {
-    // Safely handle date input
-    const safeDate = date && typeof date === 'string' ? date : currentDate;
-    setSelectedDate(safeDate);
-    
-    // Prefetch data for the selected date if valid and autoFetch is enabled
-    if (options.autoFetch !== false && isValidDateForData(safeDate)) {
-      queryClient.prefetchQuery({
-        queryKey: dietPlanKeys.byDate(safeDate),
-        queryFn: () => dietPlanApi.fetchByDate(safeDate),
-        staleTime: 5 * 60 * 1000,
-      });
-    }
-  }, [queryClient, options.autoFetch, currentDate]);
+  const selectDate = useCallback(
+    (date: string | null | undefined) => {
+      // Safely handle date input
+      const safeDate = date && typeof date === "string" ? date : currentDate;
+      setSelectedDate(safeDate);
+
+      // Prefetch data for the selected date if valid and autoFetch is enabled
+      if (options.autoFetch !== false && isValidDateForData(safeDate)) {
+        queryClient.prefetchQuery({
+          queryKey: dietPlanKeys.byDate(safeDate),
+          queryFn: () => dietPlanApi.fetchByDate(safeDate),
+          staleTime: 5 * 60 * 1000,
+        });
+      }
+    },
+    [queryClient, options.autoFetch, currentDate]
+  );
 
   const selectToday = useCallback(() => {
     selectDate(currentDate);
@@ -266,13 +290,13 @@ export const useDateSelectorForDietplan = (options: UseDateSelectorOptions = {})
   const selectPreviousDay = useCallback(() => {
     const prevDate = new Date(selectedDate);
     prevDate.setDate(prevDate.getDate() - 1);
-    selectDate(prevDate.toISOString().split('T')[0]);
+    selectDate(prevDate.toISOString().split("T")[0]);
   }, [selectedDate, selectDate]);
 
   const selectNextDay = useCallback(() => {
     const nextDate = new Date(selectedDate);
     nextDate.setDate(nextDate.getDate() + 1);
-    selectDate(nextDate.toISOString().split('T')[0]);
+    selectDate(nextDate.toISOString().split("T")[0]);
   }, [selectedDate, selectDate]);
 
   const isToday = selectedDate === currentDate;
@@ -284,13 +308,13 @@ export const useDateSelectorForDietplan = (options: UseDateSelectorOptions = {})
     currentDate,
     isToday,
     isValidDate,
-    
+
     // Actions
     setSelectedDate: selectDate,
     selectToday,
     selectPreviousDay,
     selectNextDay,
-    
+
     // Utilities
     isValidDateForData,
   };
@@ -300,35 +324,88 @@ export const useDateSelectorForDietplan = (options: UseDateSelectorOptions = {})
 export const useDietPlanMutations = () => {
   const queryClient = useQueryClient();
 
-  const generatePlan = useMutation({
-    mutationFn: dietPlanApi.generate,
-    onSuccess: (data, variables) => {
-      const targetDate = variables || getCurrentDate();
-      
+  const reGeneratePlan = useMutation({
+    mutationFn: async (dietPlanId: number): Promise<DietPlan> => {
+      try {
+        return await fetchApi<DietPlan>(
+          `/api/diet-plans/${dietPlanId}/regenerate`,
+          {
+            method: "PUT",
+            requiresAuth: true,
+          }
+        );
+      } catch (error) {
+        console.warn("API not available, using dummy data");
+        return getDummyDietPlan();
+      }
+    },
+    onSuccess: (data, dietPlanId) => {
+      const targetDate = data.planDate || getCurrentDate();
+
       // Update the cache for the specific date
       queryClient.setQueryData(dietPlanKeys.byDate(targetDate), data);
-      
+
       // If generating for today, also update today's query
       if (targetDate === getCurrentDate()) {
         queryClient.setQueryData(dietPlanKeys.today(), data);
       }
-      
+
       // Invalidate related queries to ensure consistency
-      queryClient.invalidateQueries({ 
+      queryClient.invalidateQueries({
         queryKey: dietPlanKeys.all,
-        refetchType: 'none' // Don't refetch immediately since we just updated
+        refetchType: "none",
       });
     },
     onError: (error) => {
-      console.error('Failed to generate diet plan:', error);
+      console.error("Failed to regenerate diet plan:", error);
+    },
+  });
+
+  const replaceMeal = useMutation({
+    mutationFn: async ({
+      mealType,
+      dietPlanId,
+    }: {
+      mealType: MealType;
+      dietPlanId: number;
+    }) => {
+      try {
+        return await fetchApi<DietPlan>(
+          `/api/diet-plans/${dietPlanId}/meals/${mealType}/regenerate`,
+          {
+            method: "PUT",
+            requiresAuth: true,
+          }
+        );
+      } catch (error) {
+        console.warn("API not available, using dummy data:", error);
+        return getDummyDietPlan();
+      }
+    },
+
+    onSuccess: (data, { mealType, dietPlanId }) => {
+      const targetDate = data.planDate || getCurrentDate();
+
+      // Update the cache for the specific date
+      queryClient.setQueryData(dietPlanKeys.byDate(targetDate), data);
+
+      // If generating for today, also update today's query
+      if (targetDate === getCurrentDate()) {
+        queryClient.setQueryData(dietPlanKeys.today(), data);
+      }
+
+      // Invalidate related queries to ensure consistency
+      queryClient.invalidateQueries({
+        queryKey: dietPlanKeys.all,
+        refetchType: "none",
+      });
     },
   });
 
   const refreshPlan = useMutation({
     mutationFn: async (date: string) => {
-      // Invalidate and refetch the specific date
-      await queryClient.invalidateQueries({ 
-        queryKey: dietPlanKeys.byDate(date) 
+      await queryClient.invalidateQueries({
+        queryKey: dietPlanKeys.byDate(date),
       });
       return queryClient.fetchQuery({
         queryKey: dietPlanKeys.byDate(date),
@@ -336,52 +413,66 @@ export const useDietPlanMutations = () => {
       });
     },
     onSuccess: (data, date) => {
-      // Ensure the cache is updated
       queryClient.setQueryData(dietPlanKeys.byDate(date), data);
     },
   });
 
-  const clearCache = useCallback((date?: string) => {
-    if (date) {
-      queryClient.removeQueries({ queryKey: dietPlanKeys.byDate(date) });
-    } else {
-      queryClient.removeQueries({ queryKey: dietPlanKeys.all });
-    }
-  }, [queryClient]);
+  const clearCache = useCallback(
+    (date?: string) => {
+      if (date) {
+        queryClient.removeQueries({ queryKey: dietPlanKeys.byDate(date) });
+      } else {
+        queryClient.removeQueries({ queryKey: dietPlanKeys.all });
+      }
+    },
+    [queryClient]
+  );
 
-  const prefetchDate = useCallback((date: string) => {
-    if (!isValidDateForData(date)) return;
-    
-    return queryClient.prefetchQuery({
-      queryKey: dietPlanKeys.byDate(date),
-      queryFn: () => dietPlanApi.fetchByDate(date),
-      staleTime: 5 * 60 * 1000,
-    });
-  }, [queryClient]);
+  const prefetchDate = useCallback(
+    (date: string) => {
+      if (!isValidDateForData(date)) return;
 
-  const getCachedPlan = useCallback((date: string): DietPlan | undefined => {
-    return queryClient.getQueryData(dietPlanKeys.byDate(date));
-  }, [queryClient]);
+      return queryClient.prefetchQuery({
+        queryKey: dietPlanKeys.byDate(date),
+        queryFn: () => dietPlanApi.fetchByDate(date),
+        staleTime: 5 * 60 * 1000,
+      });
+    },
+    [queryClient]
+  );
+
+  const getCachedPlan = useCallback(
+    (date: string): DietPlan | undefined => {
+      return queryClient.getQueryData(dietPlanKeys.byDate(date));
+    },
+    [queryClient]
+  );
 
   return {
     // Mutations
-    generatePlan,
+    reGeneratePlan,
     refreshPlan,
-    
-    // Mutation states
-    isGenerating: generatePlan.isPending,
+    replaceMeal,
+
+    // States
+    isRegenerating: reGeneratePlan.isPending,
     isRefreshing: refreshPlan.isPending,
-    generateError: generatePlan.error,
+    isReplacing: replaceMeal.isPending,
+
+    reGenerateError: reGeneratePlan.error,
     refreshError: refreshPlan.error,
-    
-    // Actions
-    generate: generatePlan.mutateAsync,
+    replaceError: replaceMeal.error,
+
+    // Async Actions
+    reGenerate: reGeneratePlan.mutateAsync,
     refresh: refreshPlan.mutateAsync,
-    
-    // Sync actions
-    generateSync: generatePlan.mutate,
+    replace: replaceMeal.mutateAsync,
+
+    // Sync Actions
+    reGenerateSync: reGeneratePlan.mutate,
     refreshSync: refreshPlan.mutate,
-    
+    replaceSync: replaceMeal.mutate,
+
     // Cache utilities
     clearCache,
     prefetchDate,
@@ -398,44 +489,49 @@ export const useDietPlanManager = (initialDate?: string) => {
 
   const mutations = useDietPlanMutations();
 
-  const handleDateChange = useCallback((date: string) => {
-    dateSelector.setSelectedDate(date);
-  }, [dateSelector]);
+  const handleDateChange = useCallback(
+    (date: string) => {
+      dateSelector.setSelectedDate(date);
+    },
+    [dateSelector]
+  );
 
-  const handleGenerate = useCallback(async () => {
-    try {
-      await mutations.generate(dateSelector.selectedDate);
-    } catch (error) {
-      console.error('Failed to generate diet plan:', error);
-      throw error;
-    }
-  }, [mutations, dateSelector.selectedDate]);
+  const handleReGenerate = useCallback(
+    async (dietPlanId: number) => {
+      try {
+        await mutations.reGenerate(dietPlanId);
+      } catch (error) {
+        console.error("Failed to regenerate diet plan:", error);
+        throw error;
+      }
+    },
+    [mutations, dateSelector.selectedDate]
+  );
 
   const handleRefresh = useCallback(async () => {
     try {
       await mutations.refresh(dateSelector.selectedDate);
     } catch (error) {
-      console.error('Failed to refresh diet plan:', error);
+      console.error("Failed to refresh diet plan:", error);
       throw error;
     }
   }, [mutations, dateSelector.selectedDate]);
-
-
 
   return {
     // Date management
     ...dateSelector,
     handleDateChange,
-    
+
     // Diet plan data
     ...dietPlan,
-    
+
     // Mutations
     ...mutations,
-    handleGenerate,
+    handleReGenerate,
     handleRefresh,
-    
+
     // Combined loading states
-    isLoading: dietPlan.isLoading || mutations.isGenerating || mutations.isRefreshing,
+    isLoading:
+      dietPlan.isLoading || mutations.isRegenerating || mutations.isRefreshing,
   };
 };

@@ -1,3 +1,8 @@
+import {
+  FREQUENCY_OPTIONS,
+  MEDICINE_TYPES,
+  TIME_OPTIONS,
+} from "@/constants/data";
 import { useCreateMedication } from "@/hooks/useMedications";
 import {
   CreateMedicationRequest,
@@ -5,8 +10,10 @@ import {
   MedicationType,
 } from "@/types/type";
 import { Ionicons } from "@expo/vector-icons";
+import { router } from "expo-router";
 import React, { useCallback, useMemo, useState } from "react";
 import {
+  Alert,
   FlatList,
   ScrollView,
   Text,
@@ -14,11 +21,10 @@ import {
   TouchableOpacity,
   View,
   ViewStyle,
-  Alert,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-// Internal component interfaces for UI
+// Form type
 interface MedicationFormData {
   name: string;
   dosage: string;
@@ -26,22 +32,22 @@ interface MedicationFormData {
   frequency: FrequencyType | "";
   selectedTimes: string[];
   notes?: string;
+  startDate: string;
+  endDate?: string;
 }
 
-interface MedicineTypeOption {
-  id: MedicationType;
-  title: string;
-  icon: string;
-  bgColor: string;
-  iconBg: string;
-}
-
-interface FrequencyOption {
-  id: FrequencyType;
-  title: string;
-  subtitle: string;
-  recommendedTimes: number;
-}
+// Helper functions
+const formatDateForDisplay = (dateString: string): string => {
+  if (!dateString) return "";
+  const date = new Date(dateString);
+  return date.toLocaleDateString("en-US", {
+    weekday: "long",
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
+};
+const getTodayString = (): string => new Date().toISOString().split("T")[0];
 
 const AddMedicineScreen: React.FC = () => {
   const [currentStep, setCurrentStep] = useState(1);
@@ -52,130 +58,28 @@ const AddMedicineScreen: React.FC = () => {
     frequency: "",
     selectedTimes: [],
     notes: "",
+    startDate: getTodayString(),
+    endDate: "",
   });
 
-  // Initialize mutation
   const createMedicationMutation = useCreateMedication();
 
-  // Static data with updated typing
-  const medicineTypes: MedicineTypeOption[] = useMemo(
-    () => [
-      {
-        id: "TABLET",
-        title: "Tablet",
-        icon: "💊",
-        bgColor: "bg-blue-100",
-        iconBg: "bg-blue-500",
-      },
-      {
-        id: "CAPSULE",
-        title: "Capsule",
-        icon: "💊",
-        bgColor: "bg-gray-100",
-        iconBg: "bg-teal-500",
-      },
-      {
-        id: "LIQUID",
-        title: "Liquid",
-        icon: "🧪",
-        bgColor: "bg-gray-100",
-        iconBg: "bg-purple-500",
-      },
-      {
-        id: "INJECTION",
-        title: "Injection",
-        icon: "💉",
-        bgColor: "bg-gray-100",
-        iconBg: "bg-pink-500",
-      },
-      {
-        id: "INHALER",
-        title: "Inhaler",
-        icon: "🫁",
-        bgColor: "bg-gray-100",
-        iconBg: "bg-orange-500",
-      },
-      {
-        id: "DROPS",
-        title: "Drops",
-        icon: "💧",
-        bgColor: "bg-gray-100",
-        iconBg: "bg-blue-400",
-      },
-    ],
-    []
-  );
-
-  const frequencyOptions: FrequencyOption[] = useMemo(
-    () => [
-      {
-        id: "DAILY",
-        title: "Once Daily",
-        subtitle: "Take once per day",
-        recommendedTimes: 1,
-      },
-      {
-        id: "TWICE_DAILY",
-        title: "Twice Daily",
-        subtitle: "Morning & Evening",
-        recommendedTimes: 2,
-      },
-      {
-        id: "THREE_TIMES",
-        title: "Three Times",
-        subtitle: "Morning, Afternoon & Night",
-        recommendedTimes: 3,
-      },
-      {
-        id: "WEEKLY",
-        title: "Weekly",
-        subtitle: "Once a week",
-        recommendedTimes: 1,
-      },
-    ],
-    []
-  );
-
-  const timeOptions: string[] = useMemo(
-    () => [
-      "6:00 AM",
-      "7:00 AM",
-      "8:00 AM",
-      "9:00 AM",
-      "10:00 AM",
-      "11:00 AM",
-      "12:00 PM",
-      "1:00 PM",
-      "2:00 PM",
-      "3:00 PM",
-      "4:00 PM",
-      "5:00 PM",
-      "6:00 PM",
-      "7:00 PM",
-      "8:00 PM",
-      "9:00 PM",
-      "10:00 PM",
-      "11:00 PM",
-    ],
-    []
-  );
-
-  // Computed values
+  // Derived values
   const selectedMedicineType = useMemo(
-    () => medicineTypes.find((type) => type.id === medicineData.type),
-    [medicineData.type, medicineTypes]
+    () => MEDICINE_TYPES.find((type: any) => type.id === medicineData.type),
+    [medicineData.type]
   );
-
   const selectedFrequency = useMemo(
-    () => frequencyOptions.find((freq) => freq.id === medicineData.frequency),
-    [medicineData.frequency, frequencyOptions]
+    () =>
+      FREQUENCY_OPTIONS.find((freq: any) => freq.id === medicineData.frequency),
+    [medicineData.frequency]
   );
-
   const getProgressWidth = useCallback(
     () => `${(currentStep / 5) * 100}%`,
     [currentStep]
   );
 
+  // Validation
   const isStepValid = useMemo(() => {
     switch (currentStep) {
       case 1:
@@ -197,36 +101,27 @@ const AddMedicineScreen: React.FC = () => {
 
   // Event handlers
   const handleNext = useCallback(() => {
-    if (currentStep < 5 && isStepValid) {
-      setCurrentStep((prev) => prev + 1);
-    }
+    if (currentStep < 6 && isStepValid) setCurrentStep((prev) => prev + 1);
   }, [currentStep, isStepValid]);
-
   const handlePrevious = useCallback(() => {
-    if (currentStep > 1) {
-      setCurrentStep((prev) => prev - 1);
-    }
+    if (currentStep > 1) setCurrentStep((prev) => prev - 1);
   }, [currentStep]);
-
   const handleInputChange = useCallback(
     (field: keyof MedicationFormData, value: string) => {
       setMedicineData((prev) => ({ ...prev, [field]: value }));
     },
     []
   );
-
   const handleTypeSelect = useCallback((type: MedicationType) => {
     setMedicineData((prev) => ({ ...prev, type }));
   }, []);
-
   const handleFrequencySelect = useCallback((frequency: FrequencyType) => {
     setMedicineData((prev) => ({
       ...prev,
       frequency,
-      selectedTimes: [], // Reset selected times when frequency changes
+      selectedTimes: [],
     }));
   }, []);
-
   const handleTimeSelect = useCallback((time: string) => {
     setMedicineData((prev) => ({
       ...prev,
@@ -238,14 +133,13 @@ const AddMedicineScreen: React.FC = () => {
 
   // Create medication request object
   const createMedicationRequest = useCallback((): CreateMedicationRequest => {
-    const now = new Date().toISOString();
-
     return {
       name: medicineData.name,
       dosage: medicineData.dosage,
       type: medicineData.type as MedicationType,
       frequency: medicineData.frequency as FrequencyType,
-      startDate: now,
+      startDate: medicineData.startDate,
+      endDate: medicineData.endDate,
       scheduleTimes: medicineData.selectedTimes,
       notes: medicineData.notes || undefined,
     };
@@ -264,8 +158,7 @@ const AddMedicineScreen: React.FC = () => {
           {
             text: "OK",
             onPress: () => {
-              // Navigate back or to dashboard
-              console.log("Navigate to dashboard or back");
+              router.push("/(root)/(med-tabs)/tracker" as any);
             },
           },
         ]
@@ -280,22 +173,24 @@ const AddMedicineScreen: React.FC = () => {
 
   // Step components
   const renderStep1 = () => (
-    <View className="flex-1 px-6">
-      <View className="items-center mb-8">
-        <Text className="text-3xl font-bold text-gray-800 mb-2">
+    <View className="flex-1 px-5">
+      {/* Header */}
+      <View className="items-center mb-4">
+        <Text className="text-xl font-bold text-gray-800 mb-1">
           Medicine Details
         </Text>
-        <Text className="text-gray-600 text-center">
+        <Text className="text-gray-500 text-sm text-center">
           Enter your medicine information
         </Text>
       </View>
 
-      <View className="mb-6">
-        <Text className="text-gray-700 font-semibold mb-3 text-lg">
+      {/* Medicine Name */}
+      <View className="mb-4">
+        <Text className="text-gray-700 font-semibold mb-2 text-base">
           Medicine Name *
         </Text>
         <TextInput
-          className="bg-white rounded-2xl px-5 py-4 text-gray-800 text-lg border border-gray-200"
+          className="bg-white rounded-xl px-4 py-3 text-gray-800 text-base border border-gray-200"
           placeholder="e.g., Lisinopril, Aspirin"
           value={medicineData.name}
           onChangeText={(text) => handleInputChange("name", text)}
@@ -304,12 +199,13 @@ const AddMedicineScreen: React.FC = () => {
         />
       </View>
 
-      <View className="mb-6">
-        <Text className="text-gray-700 font-semibold mb-3 text-lg">
+      {/* Dosage */}
+      <View className="mb-4">
+        <Text className="text-gray-700 font-semibold mb-2 text-base">
           Dosage *
         </Text>
         <TextInput
-          className="bg-white rounded-2xl px-5 py-4 text-gray-800 text-lg border border-gray-200"
+          className="bg-white rounded-xl px-4 py-3 text-gray-800 text-base border border-gray-200"
           placeholder="e.g., 10mg, 5ml, 1 tablet"
           value={medicineData.dosage}
           onChangeText={(text) => handleInputChange("dosage", text)}
@@ -317,12 +213,13 @@ const AddMedicineScreen: React.FC = () => {
         />
       </View>
 
-      <View className="mb-8">
-        <Text className="text-gray-700 font-semibold mb-3 text-lg">
+      {/* Notes */}
+      <View className="mb-5">
+        <Text className="text-gray-700 font-semibold mb-2 text-base">
           Notes (Optional)
         </Text>
         <TextInput
-          className="bg-white rounded-2xl px-5 py-4 text-gray-800 text-lg border border-gray-200"
+          className="bg-white rounded-xl px-4 py-3 text-gray-800 text-base border border-gray-200"
           placeholder="e.g., Take with food, Special instructions..."
           value={medicineData.notes}
           onChangeText={(text) => handleInputChange("notes", text)}
@@ -333,9 +230,10 @@ const AddMedicineScreen: React.FC = () => {
         />
       </View>
 
+      {/* Warning Message */}
       {(!medicineData.name.trim() || !medicineData.dosage.trim()) && (
-        <View className="bg-amber-50 border border-amber-200 rounded-xl p-4">
-          <Text className="text-amber-700 text-sm">
+        <View className="bg-amber-50 border border-amber-200 rounded-lg p-3">
+          <Text className="text-amber-700 text-xs">
             Please fill in all required fields to continue
           </Text>
         </View>
@@ -355,7 +253,7 @@ const AddMedicineScreen: React.FC = () => {
       </View>
       <FlatList
         key={"flatlist-2"}
-        data={medicineTypes}
+        data={MEDICINE_TYPES}
         keyExtractor={(item) => item.id}
         numColumns={2}
         columnWrapperStyle={{ justifyContent: "space-between" }}
@@ -411,7 +309,7 @@ const AddMedicineScreen: React.FC = () => {
 
       <FlatList
         key={"flatlist-1"}
-        data={frequencyOptions}
+        data={FREQUENCY_OPTIONS}
         numColumns={1}
         keyExtractor={(item) => item.id}
         ItemSeparatorComponent={() => <View style={{ height: 12 }} />}
@@ -481,12 +379,14 @@ const AddMedicineScreen: React.FC = () => {
 
       <ScrollView showsVerticalScrollIndicator={false}>
         <View className="flex-row flex-wrap justify-between">
-          {timeOptions.map((time) => {
-            const selected = medicineData.selectedTimes.includes(time);
+          {Object.entries(TIME_OPTIONS).map(([label, value]) => {
+            const selected = medicineData.selectedTimes.includes(
+              value as string
+            );
             return (
               <TouchableOpacity
-                key={time}
-                onPress={() => handleTimeSelect(time)}
+                key={label}
+                onPress={() => handleTimeSelect(value as string)}
                 activeOpacity={0.8}
                 className={`flex-row items-center justify-center mb-3 rounded-full px-4 py-3 w-[32%] border-2 ${
                   selected
@@ -512,7 +412,7 @@ const AddMedicineScreen: React.FC = () => {
                     selected ? "text-white" : "text-gray-700"
                   }`}
                 >
-                  {time}
+                  {label}
                 </Text>
               </TouchableOpacity>
             );
@@ -523,6 +423,268 @@ const AddMedicineScreen: React.FC = () => {
   );
 
   const renderStep5 = () => (
+    <View className="flex-1 px-6">
+      <View className="items-center mb-8">
+        <Text className="text-3xl font-bold text-gray-800 mb-2">
+          Schedule Duration
+        </Text>
+        <Text className="text-gray-600 text-center">
+          Set when to start and optionally when to end this medication
+        </Text>
+      </View>
+
+      <ScrollView showsVerticalScrollIndicator={false}>
+        {/* Start Date Section */}
+        <View className="mb-8">
+          <Text className="text-gray-700 font-semibold mb-4 text-lg">
+            Start Date *
+          </Text>
+
+          {/* Current Start Date Display */}
+          <View className="bg-white rounded-2xl border border-gray-200 mb-4">
+            <TouchableOpacity
+              className="flex-row items-center justify-between p-4"
+              onPress={() => {
+                // You would implement a date picker here
+                // For React Native, you might use @react-native-datepicker/datepicker
+                console.log("Open start date picker");
+              }}
+              activeOpacity={0.8}
+            >
+              <View className="flex-row items-center flex-1">
+                <View className="w-12 h-12 bg-teal-100 rounded-xl items-center justify-center mr-4">
+                  <Ionicons name="calendar-outline" size={24} color="#059669" />
+                </View>
+                <View>
+                  <Text className="text-gray-800 font-semibold text-base">
+                    {formatDateForDisplay(medicineData.startDate) ||
+                      "Select start date"}
+                  </Text>
+                  <Text className="text-gray-500 text-sm">
+                    {medicineData.startDate === getTodayString()
+                      ? "Today"
+                      : "Custom date"}
+                  </Text>
+                </View>
+              </View>
+              <Ionicons name="chevron-forward" size={20} color="#6B7280" />
+            </TouchableOpacity>
+          </View>
+
+          {/* Quick Start Date Options */}
+          <Text className="text-gray-600 text-sm mb-3">Quick options:</Text>
+          <View className="flex-row flex-wrap">
+            <TouchableOpacity
+              onPress={() => handleInputChange("startDate", getTodayString())}
+              className={`mr-3 mb-3 px-4 py-2 rounded-full border-2 ${
+                medicineData.startDate === getTodayString()
+                  ? "bg-teal-50 border-teal-400"
+                  : "bg-white border-gray-200"
+              }`}
+            >
+              <Text
+                className={`text-sm ${
+                  medicineData.startDate === getTodayString()
+                    ? "text-teal-700 font-semibold"
+                    : "text-gray-700"
+                }`}
+              >
+                Today
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              onPress={() => {
+                const tomorrow = new Date();
+                tomorrow.setDate(tomorrow.getDate() + 1);
+                handleInputChange(
+                  "startDate",
+                  tomorrow.toISOString().split("T")[0]
+                );
+              }}
+              className={`mr-3 mb-3 px-4 py-2 rounded-full border-2 ${
+                medicineData.startDate ===
+                new Date(Date.now() + 24 * 60 * 60 * 1000)
+                  .toISOString()
+                  .split("T")[0]
+                  ? "bg-teal-50 border-teal-400"
+                  : "bg-white border-gray-200"
+              }`}
+            >
+              <Text
+                className={`text-sm ${
+                  medicineData.startDate ===
+                  new Date(Date.now() + 24 * 60 * 60 * 1000)
+                    .toISOString()
+                    .split("T")[0]
+                    ? "text-teal-700 font-semibold"
+                    : "text-gray-700"
+                }`}
+              >
+                Tomorrow
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        {/* End Date Section */}
+        <View className="mb-6">
+          <Text className="text-gray-700 font-semibold mb-4 text-lg">
+            End Date (Optional)
+          </Text>
+
+          <Text className="text-gray-600 text-sm mb-4">
+            Leave empty for ongoing medication or set an end date for temporary
+            treatments
+          </Text>
+
+          {/* Current End Date Display */}
+          <View className="bg-white rounded-2xl border border-gray-200 mb-4">
+            <TouchableOpacity
+              className="flex-row items-center justify-between p-4"
+              onPress={() => {
+                // You would implement a date picker here
+                console.log("Open end date picker");
+              }}
+              activeOpacity={0.8}
+            >
+              <View className="flex-row items-center flex-1">
+                <View className="w-12 h-12 bg-blue-100 rounded-xl items-center justify-center mr-4">
+                  <Ionicons name="calendar-outline" size={24} color="#3B82F6" />
+                </View>
+                <View>
+                  <Text className="text-gray-800 font-semibold text-base">
+                    {medicineData.endDate
+                      ? formatDateForDisplay(medicineData.endDate)
+                      : "No end date (ongoing)"}
+                  </Text>
+                  <Text className="text-gray-500 text-sm">
+                    {medicineData.endDate
+                      ? "Custom end date"
+                      : "Continuous medication"}
+                  </Text>
+                </View>
+              </View>
+              <Ionicons name="chevron-forward" size={20} color="#6B7280" />
+            </TouchableOpacity>
+          </View>
+
+          {/* Quick End Date Options */}
+          {medicineData.startDate && (
+            <>
+              <Text className="text-gray-600 text-sm mb-3">
+                Common durations:
+              </Text>
+              <View className="flex-row flex-wrap">
+                {[
+                  { label: "1 Week", days: 7 },
+                  { label: "2 Weeks", days: 14 },
+                  { label: "1 Month", days: 30 },
+                  { label: "3 Months", days: 90 },
+                ].map((option) => {
+                  const endDate = new Date(medicineData.startDate);
+                  endDate.setDate(endDate.getDate() + option.days);
+                  const endDateString = endDate.toISOString().split("T")[0];
+
+                  return (
+                    <TouchableOpacity
+                      key={option.label}
+                      onPress={() =>
+                        handleInputChange("endDate", endDateString)
+                      }
+                      className={`mr-3 mb-3 px-4 py-2 rounded-full border-2 ${
+                        medicineData.endDate === endDateString
+                          ? "bg-blue-50 border-blue-400"
+                          : "bg-white border-gray-200"
+                      }`}
+                    >
+                      <Text
+                        className={`text-sm ${
+                          medicineData.endDate === endDateString
+                            ? "text-blue-700 font-semibold"
+                            : "text-gray-700"
+                        }`}
+                      >
+                        {option.label}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
+
+                <TouchableOpacity
+                  onPress={() => handleInputChange("endDate", "")}
+                  className={`mr-3 mb-3 px-4 py-2 rounded-full border-2 ${
+                    !medicineData.endDate
+                      ? "bg-gray-100 border-gray-400"
+                      : "bg-white border-gray-200"
+                  }`}
+                >
+                  <Text
+                    className={`text-sm ${
+                      !medicineData.endDate
+                        ? "text-gray-700 font-semibold"
+                        : "text-gray-700"
+                    }`}
+                  >
+                    No end date
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            </>
+          )}
+        </View>
+
+        {/* Duration Summary */}
+        {medicineData.startDate && (
+          <View className="bg-gradient-to-r from-teal-50 to-blue-50 rounded-2xl p-4 border border-teal-200">
+            <View className="flex-row items-center mb-2">
+              <Ionicons name="time-outline" size={20} color="#059669" />
+              <Text className="text-teal-800 font-semibold ml-2">
+                Duration Summary
+              </Text>
+            </View>
+            <Text className="text-teal-700 text-sm">
+              {medicineData.endDate ? (
+                <>
+                  Treatment from{" "}
+                  <Text className="font-semibold">
+                    {formatDateForDisplay(medicineData.startDate)}
+                  </Text>{" "}
+                  to{" "}
+                  <Text className="font-semibold">
+                    {formatDateForDisplay(medicineData.endDate)}
+                  </Text>
+                  {(() => {
+                    const start = new Date(medicineData.startDate);
+                    const end = new Date(medicineData.endDate);
+                    const diffTime = Math.abs(end.getTime() - start.getTime());
+                    const diffDays = Math.ceil(
+                      diffTime / (1000 * 60 * 60 * 24)
+                    );
+                    return (
+                      <Text className="text-teal-600">
+                        {"\n"}({diffDays} day{diffDays !== 1 ? "s" : ""} total)
+                      </Text>
+                    );
+                  })()}
+                </>
+              ) : (
+                <>
+                  Ongoing treatment starting{" "}
+                  <Text className="font-semibold">
+                    {formatDateForDisplay(medicineData.startDate)}
+                  </Text>
+                  <Text className="text-teal-600">{"\n"}(No end date set)</Text>
+                </>
+              )}
+            </Text>
+          </View>
+        )}
+      </ScrollView>
+    </View>
+  );
+
+  const renderStep6 = () => (
     <ScrollView>
       <View className="flex-1 px-6 mt-10 justify-center">
         {/* Success Animation */}
@@ -541,47 +703,43 @@ const AddMedicineScreen: React.FC = () => {
         {/* Comprehensive Medicine Card */}
         <View className="bg-white rounded-3xl p-6 shadow-lg border border-gray-100">
           {/* Header */}
-          <View className="flex-row items-start mb-5">
-            <View className="w-16 h-16 bg-gradient-to-br from-teal-500 to-teal-600 rounded-2xl items-center justify-center mr-4 shadow-sm">
-              <Text className="text-3xl">
+          <View className="flex-row items-start mb-2">
+            <View className="w-8 h-8 bg-gradient-to-br from-teal-500 to-teal-600 rounded-2xl items-center justify-center mr-4 shadow-sm">
+              <Text className="text-md">
                 {selectedMedicineType?.icon || "💊"}
               </Text>
             </View>
             <View className="flex-1">
-              <Text className="text-xl font-bold text-gray-900 mb-1">
+              <Text className="text-sm font-bold text-gray-900 mb-1">
                 {medicineData.name}
               </Text>
-              <Text className="text-gray-600">
+              <Text className="text-gray-600 text-xs ">
                 {medicineData.dosage} •{" "}
                 {selectedMedicineType?.title || "Medicine"}
               </Text>
             </View>
-            <View className="bg-teal-50 px-3 py-1 rounded-full">
-              <Text className="text-teal-600 font-semibold text-sm">
-                Active
-              </Text>
+            <View className="bg-teal-50 px-3 py-1 rounded-full border border-teal-600 ">
+              <Text className="text-teal-600  text-xs">Active</Text>
             </View>
           </View>
 
           {/* Frequency Info */}
-          <View className="bg-gray-50 rounded-2xl p-4 mb-5">
+          <View className="bg-gray-50 rounded-2xl p-4 mb-2">
             <View className="flex-row items-center mb-2">
               <Ionicons name="refresh-outline" size={20} color="#059669" />
               <Text className="text-gray-800 font-semibold ml-2">
                 Frequency
               </Text>
             </View>
-            <Text className="text-gray-700 ml-7">
-              {selectedFrequency?.title || medicineData.frequency}
-            </Text>
-            <Text className="text-gray-500 text-sm ml-7">
+            <Text className="text-gray-700 text-xs ml-7">
+              {selectedFrequency?.title || medicineData.frequency} -{" "}
               {selectedFrequency?.subtitle}
             </Text>
           </View>
 
           {/* Timing Schedule */}
           {medicineData.selectedTimes.length > 0 && (
-            <View className="mb-5">
+            <View className="mb-2">
               <View className="flex-row items-center mb-3 ">
                 <Ionicons name="time-outline" size={20} color="#059669" />
                 <Text className="text-gray-800 font-semibold ml-2">
@@ -592,11 +750,9 @@ const AddMedicineScreen: React.FC = () => {
                 {medicineData.selectedTimes.map((time, index) => (
                   <View
                     key={index}
-                    className="bg-teal-100 px-3 py-1 rounded-xl mr-2 mb-2"
+                    className="bg-teal-100 px-3 py-1 border border-teal-700 rounded-xl mr-2 mb-2"
                   >
-                    <Text className="text-teal-700 font-medium text-sm">
-                      {time}
-                    </Text>
+                    <Text className="text-teal-700  text-xs">{time}</Text>
                   </View>
                 ))}
               </View>
@@ -604,7 +760,7 @@ const AddMedicineScreen: React.FC = () => {
           )}
 
           {/* Quick Stats */}
-          <View className="flex-row justify-between bg-gradient-to-r from-teal-50 to-blue-50 rounded-2xl p-4 ">
+          <View className="flex-row justify-between bg-gradient-to-r from-teal-50 to-blue-50 rounded-2xl px-4 py-2 ">
             <View className="items-center flex-1">
               <Text className="text-lg font-bold text-teal-600">
                 {medicineData.selectedTimes.length || "0"}
@@ -648,6 +804,8 @@ const AddMedicineScreen: React.FC = () => {
         return renderStep4();
       case 5:
         return renderStep5();
+      case 6:
+        return renderStep6();
       default:
         return renderStep1();
     }
@@ -671,7 +829,7 @@ const AddMedicineScreen: React.FC = () => {
 
         <View className="items-center">
           <Text className="text-xl font-bold text-gray-800">Add Medicine</Text>
-          <Text className="text-gray-500">Step {currentStep} of 5</Text>
+          <Text className="text-gray-500">Step {currentStep} of 6</Text>
         </View>
 
         <View className="w-10" />
@@ -692,7 +850,7 @@ const AddMedicineScreen: React.FC = () => {
 
       {/* Navigation Buttons */}
       <View className="px-6 pb-6">
-        {currentStep < 5 ? (
+        {currentStep < 6 ? (
           <View className="flex-row space-x-4">
             {currentStep > 1 && (
               <TouchableOpacity
@@ -721,7 +879,7 @@ const AddMedicineScreen: React.FC = () => {
                     isStepValid ? "text-white" : "text-gray-500"
                   }`}
                 >
-                  {currentStep === 4 ? "Create Medicine" : "Next"}
+                  {currentStep === 5 ? "Create Medicine" : "Next"}
                 </Text>
                 <Ionicons
                   name="chevron-forward"

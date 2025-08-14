@@ -28,24 +28,14 @@ const mealEmojis: Record<MealType, string> = {
 export default function FoodLogs({ date }: FoodLogsProps) {
   const router = useRouter();
 
-  const {
-    data: foodLogs = [],
-    isLoading,
-    isError,
-  } = useFoodLogs.ByDate(date);
+  const { data: foodLogs = [], isLoading, isError } = useFoodLogs.ByDate(date);
 
   if (isLoading) {
-    return (
-      <SkeletonLogCard/>
-    );
+    return <SkeletonLogCard />;
   }
 
   if (isError) {
-    return (
-     <ErrorCard 
-        message="Failed to load food logs."
-     />
-    );
+    return <ErrorCard message="Failed to load food logs." />;
   }
 
   return (
@@ -62,7 +52,9 @@ export default function FoodLogs({ date }: FoodLogsProps) {
                 : "Recommended meal intake"
             }
             buttonText={mealType === "SNACK" ? "+ Log Snack" : "+ Log Food"}
-            Link={() => router.push("/(root)/calorie-counter")}
+            Link={() =>
+              router.push(`/(root)/calorie-counter/${mealType}` as any)
+            }
             showArrow={false}
             emojiIcon={mealEmojis[mealType]}
             backgroundStyle="bg-orange-50"

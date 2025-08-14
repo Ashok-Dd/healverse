@@ -3,12 +3,13 @@ import {
   CreateExerciseLogData,
   CreateWaterLogData,
   DailySummary,
-  ExerciseLog, FoodItem,
+  ExerciseLog,
+  FoodItem,
   FoodLog,
   MealType,
   UpdateExerciseLogData,
   UpdateFoodLogData,
-  WaterLog
+  WaterLog,
 } from "@/types/type";
 import type { QueryClient } from "@tanstack/react-query";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -29,8 +30,7 @@ export const healthQueryKeys = {
       [...healthBaseKey, "food-logs", "meal-type", mealType] as const,
     byDate: (date: string) =>
       [...healthBaseKey, "food-logs", "date", date] as const,
-    byId: (id: number) =>
-      [...healthBaseKey, "food-logs", "id", id] as const,
+    byId: (id: number) => [...healthBaseKey, "food-logs", "id", id] as const,
   },
 
   exerciseLogs: {
@@ -50,32 +50,31 @@ export const healthQueryKeys = {
   },
 
   weekly: () => [...healthBaseKey, "weekly"] as const,
-
 } as const;
 
 export const healthAPIs = {
-  fetchDashboardDataByDate: async (date: string): Promise<DailySummary | null> => {
+  fetchDashboardDataByDate: async (
+    date: string
+  ): Promise<DailySummary | null> => {
     // Uncomment when API is ready
     return await fetchApi<DailySummary>(`/api/dashboard/summary/${date}`, {
       method: "GET",
       requiresAuth: true,
-    })
+    });
   },
-  fetchFoodLogsByDate: async (date: string): Promise<FoodLog[]> => await fetchApi<FoodLog[]>(`/api/food-logs/date/${date}`, {
-    method: "GET",
-    requiresAuth: true,
-  }) ?? [],
-
+  fetchFoodLogsByDate: async (date: string): Promise<FoodLog[]> =>
+    (await fetchApi<FoodLog[]>(`/api/food-logs/date/${date}`, {
+      method: "GET",
+      requiresAuth: true,
+    })) ?? [],
 
   fetchTodayFoodLogsByMealType: async (
     mealType: MealType
-  ): Promise<FoodLog[]> => await fetchApi<FoodLog[]>(
-    `/api/food-logs/today/${mealType}`,
-    {
+  ): Promise<FoodLog[]> =>
+    (await fetchApi<FoodLog[]>(`/api/food-logs/today/${mealType}`, {
       method: "GET",
       requiresAuth: true,
-    }
-  ) ?? [],
+    })) ?? [],
 
   fetchFoodLogById: async (id: number): Promise<FoodLog> =>
     await fetchApi<FoodLog>(`/api/food-logs/${id}`, {
@@ -89,27 +88,32 @@ interface UseDateSelectorOptions {
   autoFetch?: boolean;
 }
 
-export const useDateSelectorForHealthStore = (options: UseDateSelectorOptions = {}) => {
+export const useDateSelectorForHealthStore = (
+  options: UseDateSelectorOptions = {}
+) => {
   const queryClient = useQueryClient();
   const currentDate = getCurrentDate();
   const [selectedDate, setSelectedDate] = useState(
     options.initialDate || currentDate
   );
 
-  const selectDate = useCallback((date: string | null | undefined) => {
-    // Safely handle date input
-    const safeDate = date && typeof date === 'string' ? date : currentDate;
-    setSelectedDate(safeDate);
+  const selectDate = useCallback(
+    (date: string | null | undefined) => {
+      // Safely handle date input
+      const safeDate = date && typeof date === "string" ? date : currentDate;
+      setSelectedDate(safeDate);
 
-    // Prefetch data for the selected date if valid and autoFetch is enabled
-    if (options.autoFetch !== false && isValidDateForData(safeDate)) {
-      queryClient.prefetchQuery({
-        queryKey: healthQueryKeys.summary(safeDate),
-        queryFn: () => healthAPIs.fetchDashboardDataByDate(safeDate),
-        staleTime: 5 * 60 * 1000,
-      });
-    }
-  }, [queryClient, options.autoFetch, currentDate]);
+      // Prefetch data for the selected date if valid and autoFetch is enabled
+      if (options.autoFetch !== false && isValidDateForData(safeDate)) {
+        queryClient.prefetchQuery({
+          queryKey: healthQueryKeys.summary(safeDate),
+          queryFn: () => healthAPIs.fetchDashboardDataByDate(safeDate),
+          staleTime: 5 * 60 * 1000,
+        });
+      }
+    },
+    [queryClient, options.autoFetch, currentDate]
+  );
 
   // const selectToday = useCallback(() => {
   //     selectDate(currentDate);
@@ -148,28 +152,25 @@ export const useDateSelectorForHealthStore = (options: UseDateSelectorOptions = 
   };
 };
 
-
 export const useFoodLogs = {
   ByDate: (date: string) => {
-
-
-    const query =  useQuery({
+    const query = useQuery({
       queryKey: healthQueryKeys.foodLogs.byDate(date),
       queryFn: () => healthAPIs.fetchFoodLogsByDate(date),
       staleTime: 2 * 60 * 1000, // 2 minutes
     });
 
-
-    const getById = useCallback((id : number) => {
-      return query.data?.find(log => log.id === id);
-    } , [query.data]);
-
+    const getById = useCallback(
+      (id: number) => {
+        return query.data?.find((log) => log.id === id);
+      },
+      [query.data]
+    );
 
     return {
       ...query,
-      getById
-    }
-
+      getById,
+    };
   },
 
   ByMealType: (mealType: MealType) => {
@@ -180,13 +181,13 @@ export const useFoodLogs = {
     });
   },
 
-  ById : (id : number) => {
+  ById: (id: number) => {
     return useQuery({
       queryKey: healthQueryKeys.foodLogs.byId(id),
       queryFn: () => healthAPIs.fetchFoodLogById(id),
       staleTime: 2 * 60 * 1000,
     });
-  }
+  },
 };
 
 export const useFoodLogMutations = (date: string) => {
@@ -198,7 +199,7 @@ export const useFoodLogMutations = (date: string) => {
         calories: total.calories + item.calories,
         protein: total.protein + item.protein,
         carbs: total.carbs + item.carbs,
-        fat: total.fat + (item.fats || 0)
+        fat: total.fat + (item.fats || 0),
       }),
       { calories: 0, protein: 0, carbs: 0, fat: 0 }
     );
@@ -218,13 +219,15 @@ export const useFoodLogMutations = (date: string) => {
       console.log("Food log added successfully:", newLog);
 
       // Check if this log already exists in the cache to prevent duplicates
-      const existingLogs = queryClient.getQueryData<FoodLog[]>(
-        healthQueryKeys.foodLogs.byDate(date)
-      ) || [];
+      const existingLogs =
+        queryClient.getQueryData<FoodLog[]>(
+          healthQueryKeys.foodLogs.byDate(date)
+        ) || [];
 
-      const logExists = existingLogs.some(log => 
-        log.id === newLog.id || 
-        (log.loggedAt === newLog.loggedAt && log.mealType === newLog.mealType)
+      const logExists = existingLogs.some(
+        (log) =>
+          log.id === newLog.id ||
+          (log.loggedAt === newLog.loggedAt && log.mealType === newLog.mealType)
       );
 
       if (!logExists) {
@@ -233,7 +236,7 @@ export const useFoodLogMutations = (date: string) => {
           healthQueryKeys.foodLogs.byDate(date),
           (old = []) => {
             // Double-check here too
-            const exists = old.some(log => log.id === newLog.id);
+            const exists = old.some((log) => log.id === newLog.id);
             return exists ? old : [...old, newLog];
           }
         );
@@ -250,23 +253,36 @@ export const useFoodLogMutations = (date: string) => {
               consumedProtein: old.consumedProtein + nutrition.protein,
               consumedCarbs: old.consumedCarbs + nutrition.carbs,
               consumedFat: old.consumedFat + nutrition.fat,
+              // update progresses also
+              calorieProgress:
+                ((old.consumedCalories + nutrition.calories) /
+                  old.targetCalories) *
+                100,
+              proteinProgress:
+                ((old.consumedProtein + nutrition.protein) /
+                  old.targetProtein) *
+                100,
+              carbsProgress:
+                ((old.consumedCarbs + nutrition.carbs) / old.targetCarbs) * 100,
+              fatProgress:
+                ((old.consumedFat + nutrition.fat) / old.targetFat) * 100,
             };
           }
         );
       } else {
         console.log("Log already exists in cache, skipping update");
         // If log exists, just invalidate to ensure we have the latest data
-        queryClient.invalidateQueries({ 
-          queryKey: healthQueryKeys.foodLogs.byDate(date) 
+        queryClient.invalidateQueries({
+          queryKey: healthQueryKeys.foodLogs.byDate(date),
         });
-        queryClient.invalidateQueries({ 
-          queryKey: healthQueryKeys.summary(date) 
+        queryClient.invalidateQueries({
+          queryKey: healthQueryKeys.summary(date),
         });
       }
     },
     onError: (error) => {
       console.error("Food log mutation error:", error);
-    }
+    },
   });
 
   // Rest of mutations with similar careful approach...
@@ -286,9 +302,11 @@ export const useFoodLogMutations = (date: string) => {
       return response;
     },
     onSuccess: (updatedLog, variables) => {
-      const oldLog = (queryClient
-        .getQueryData<FoodLog[]>(healthQueryKeys.foodLogs.byDate(date)) as FoodLog[])
-        ?.find((log) => log.id === updatedLog.id);
+      const oldLog = (
+        queryClient.getQueryData<FoodLog[]>(
+          healthQueryKeys.foodLogs.byDate(date)
+        ) as FoodLog[]
+      )?.find((log) => log.id === updatedLog.id);
 
       // Update food logs
       queryClient.setQueryData<FoodLog[]>(
@@ -338,9 +356,11 @@ export const useFoodLogMutations = (date: string) => {
       });
     },
     onSuccess: (_, deletedId) => {
-      const deletedLog = (queryClient
-        .getQueryData<FoodLog[]>(healthQueryKeys.foodLogs.byDate(date)) as FoodLog[])
-        ?.find((log) => log.id === deletedId);
+      const deletedLog = (
+        queryClient.getQueryData<FoodLog[]>(
+          healthQueryKeys.foodLogs.byDate(date)
+        ) as FoodLog[]
+      )?.find((log) => log.id === deletedId);
 
       // Remove from food logs
       queryClient.setQueryData<FoodLog[]>(
@@ -357,9 +377,18 @@ export const useFoodLogMutations = (date: string) => {
             if (!old) return old;
             return {
               ...old,
-              consumedCalories: Math.max(0, old.consumedCalories - deletedNutrition.calories),
-              consumedProtein: Math.max(0, old.consumedProtein - deletedNutrition.protein),
-              consumedCarbs: Math.max(0, old.consumedCarbs - deletedNutrition.carbs),
+              consumedCalories: Math.max(
+                0,
+                old.consumedCalories - deletedNutrition.calories
+              ),
+              consumedProtein: Math.max(
+                0,
+                old.consumedProtein - deletedNutrition.protein
+              ),
+              consumedCarbs: Math.max(
+                0,
+                old.consumedCarbs - deletedNutrition.carbs
+              ),
               consumedFat: Math.max(0, old.consumedFat - deletedNutrition.fat),
             };
           }
@@ -383,13 +412,21 @@ export const useFoodLogMutations = (date: string) => {
     }: {
       logId: number;
       itemId: number;
-      updates: Partial<Pick<FoodItem, 'quantity' | 'unit' | 'calories' | 'protein' | 'carbs' | 'fats'>>;
+      updates: Partial<
+        Pick<
+          FoodItem,
+          "quantity" | "unit" | "calories" | "protein" | "carbs" | "fats"
+        >
+      >;
     }): Promise<FoodLog> => {
-      const response = await fetchApi<FoodLog>(`/api/food-logs/${logId}/items/${itemId}`, {
-        method: "PUT",
-        requiresAuth: true,
-        body: updates,
-      });
+      const response = await fetchApi<FoodLog>(
+        `/api/food-logs/${logId}/items/${itemId}`,
+        {
+          method: "PUT",
+          requiresAuth: true,
+          body: updates,
+        }
+      );
       return response;
     },
     onSuccess: (updatedLog) => {
@@ -411,13 +448,16 @@ export const useFoodLogMutations = (date: string) => {
       item,
     }: {
       logId: number;
-      item: Omit<FoodItem, 'id'>;
+      item: Omit<FoodItem, "id">;
     }): Promise<FoodLog> => {
-      const response = await fetchApi<FoodLog>(`/api/food-logs/${logId}/items`, {
-        method: "POST",
-        requiresAuth: true,
-        body: item,
-      });
+      const response = await fetchApi<FoodLog>(
+        `/api/food-logs/${logId}/items`,
+        {
+          method: "POST",
+          requiresAuth: true,
+          body: item,
+        }
+      );
       return response;
     },
     onSuccess: (updatedLog) => {
@@ -441,10 +481,13 @@ export const useFoodLogMutations = (date: string) => {
       logId: number;
       itemId: number;
     }): Promise<FoodLog> => {
-      const response = await fetchApi<FoodLog>(`/api/food-logs/${logId}/items/${itemId}`, {
-        method: "DELETE",
-        requiresAuth: true,
-      });
+      const response = await fetchApi<FoodLog>(
+        `/api/food-logs/${logId}/items/${itemId}`,
+        {
+          method: "DELETE",
+          requiresAuth: true,
+        }
+      );
       return response;
     },
     onSuccess: (updatedLog) => {
@@ -480,7 +523,6 @@ export const useExerciseLogs = {
           {
             method: "GET",
             requiresAuth: true,
-            suppressToasts: false
           }
         );
         return response ?? [];
@@ -652,7 +694,6 @@ export const useWaterLogMutations = (date: string) => {
       //   healthQueryKeys.waterLogs.todayTotal(),
       //   (old = 0) => old + newLog.amountMl
       // );
-
 
       queryClient.setQueryData<DailySummary>(
         healthQueryKeys.summary(date),

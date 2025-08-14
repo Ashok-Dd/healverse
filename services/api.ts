@@ -10,30 +10,30 @@ import {
 
 export const medicationApi = {
   getAll: (): Promise<Medication[]> =>
-    fetchApi<Medication[]>("/medications", { requiresAuth: true }),
+    fetchApi<Medication[]>("/api/medications", { requiresAuth: true }),
 
   create: (data: CreateMedicationRequest): Promise<Medication> =>
-    fetchApi<Medication>("/medications", {
+    fetchApi<Medication>("/api/medications", {
       method: "POST",
       body: data,
       requiresAuth: true,
     }),
 
   update: (id: string, data: CreateMedicationRequest): Promise<Medication> =>
-    fetchApi<Medication>(`/medications/${id}`, {
+    fetchApi<Medication>(`/api/medications/${id}`, {
       method: "PUT",
       body: data,
       requiresAuth: true,
     }),
 
   delete: (id: string): Promise<void> =>
-    fetchApi<void>(`/medications/${id}`, {
+    fetchApi<void>(`/api/medications/${id}`, {
       method: "DELETE",
       requiresAuth: true,
     }),
 
   logIntake: (id: string, data: LogMedicationRequest): Promise<void> =>
-    fetchApi<void>(`/medications/${id}/log`, {
+    fetchApi<void>(`/api/medications/${id}/log`, {
       method: "POST",
       body: data,
       requiresAuth: true,

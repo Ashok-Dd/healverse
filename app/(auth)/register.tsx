@@ -1,21 +1,23 @@
-import { View, Text, Image, ImageSourcePropType } from "react-native";
-import React from "react";
-import { useUserProfileStore } from "@/store/userProfile";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { useAuthStore } from "@/store/authStore";
 import { images } from "@/constants";
+import { useAuthStore } from "@/store/authStore";
+import { useUserProfileStore } from "@/store/userProfile";
+import React from "react";
+import { Image, ImageSourcePropType, Text, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 // Vector icons
+import Button from "@/components/Button";
 import {
   FontAwesome5,
-  MaterialIcons,
   MaterialCommunityIcons,
+  MaterialIcons,
 } from "@expo/vector-icons";
-import Button from "@/components/Button";
-import { useRouter } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 
 const Register = () => {
   const router = useRouter();
+
+  const { password } = useLocalSearchParams<{ password: string }>();
 
   const profile = useUserProfileStore();
   const { register, error, isLoading } = useAuthStore();
@@ -25,7 +27,7 @@ const Register = () => {
       await register({
         user: {
           username: profile.username,
-          password: profile.username + profile.age,
+          password: password,
         },
         profile: {
           gender: profile.gender,

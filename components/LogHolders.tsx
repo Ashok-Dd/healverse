@@ -7,7 +7,7 @@ import FoodItemCard from "./cards/FoodItemCard";
 
 export const ExerciseLogHolder = (log: ExerciseLog) => {
   return (
-<View className="bg-green-50 border border-green-200 rounded-xl p-2 mb-2 flex-row items-center justify-between">
+    <View className="bg-green-50 border border-green-200 rounded-xl p-2 mb-2 flex-row items-center justify-between">
       {/* Left Section */}
       <View className="flex-row items-center">
         <View className="bg-green-100 p-3 rounded-full mr-3">
@@ -48,13 +48,15 @@ export const WaterLogHolder = (log: WaterLog) => {
           {log.amountMl} mL
         </Text>
         <Text className="text-xs text-gray-500">
-          {new Date(log.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+          {new Date(log.createdAt).toLocaleTimeString([], {
+            hour: "2-digit",
+            minute: "2-digit",
+          })}
         </Text>
       </View>
     </View>
   );
 };
-
 
 export const FoodLogHolder = (log: FoodLog) => {
   return (
@@ -63,7 +65,6 @@ export const FoodLogHolder = (log: FoodLog) => {
         <TouchableOpacity
           key={`${log.id}-${item.id}`}
           onPress={() => {
-            
             router.push(`/(root)/food-log/${log.id}`);
           }}
         >

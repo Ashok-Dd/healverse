@@ -141,15 +141,15 @@ const WellnessDashboard: React.FC = () => {
     },
     {
       id: "4",
-      title: "Daily Insights",
-      description: "Your health data at a glance",
+      title: "Yoga Companion",
+      description: "Track your yoga sessions and progress",
       icon: "analytics-outline",
       color: "#F59E0B",
-      link: "/(root)/(insights-tabs)/home",
+      link: "",
     },
   ]);
 
-  const [insights, setInsights] = useState<InsightMessage[]>([
+  const [insights] = useState<InsightMessage[]>([
     {
       id: "1",
       message:
@@ -166,7 +166,7 @@ const WellnessDashboard: React.FC = () => {
     },
   ]);
 
-  const [calendarData, setCalendarData] = useState(() => {
+  const [calendarData] = useState(() => {
     // Generate sample calendar data for December 2024
     const days = [];
     const today = new Date();
@@ -197,7 +197,7 @@ const WellnessDashboard: React.FC = () => {
   const renderFeatureCard = (feature: TaskItem, onPress: () => void) => (
     <TouchableOpacity
       key={feature.id}
-      className={`flex-1 min-w-[46%] max-w-[48%] m-1 p-4 rounded-2xl border border-gray-100 shadow-sm bg-white`}
+      className={`flex-1 min-w-[46%] max-w-[46%] m-1 p-4 rounded-2xl border border-gray-100 shadow-sm bg-white`}
       style={{
         elevation: 2,
         flexBasis: "48%",
@@ -279,7 +279,7 @@ const WellnessDashboard: React.FC = () => {
         <View className="flex-row items-center justify-between mb-2">
           <View>
             <Text className="text-2xl font-bold text-gray-800">
-              {getGreeting()}, {user?.username || "Sarah"}
+              {getGreeting()}, {user?.username || "User"}
             </Text>
             <Text className="text-gray-500 text-sm mt-1">
               Ready to make today amazing?
@@ -287,7 +287,7 @@ const WellnessDashboard: React.FC = () => {
           </View>
           <TouchableOpacity className="w-12 h-12 bg-blue-100 rounded-full items-center justify-center">
             <Text className="text-blue-600 font-bold text-lg">
-              {user?.username?.charAt(0)?.toUpperCase() || "S"}
+              {user?.username?.charAt(0)?.toUpperCase() || "U"}
             </Text>
           </TouchableOpacity>
         </View>
@@ -315,7 +315,7 @@ const WellnessDashboard: React.FC = () => {
         contentContainerStyle={{ paddingBottom: 100 }}
       >
         {/* Features Section */}
-        <View className="px-6 mt-6">
+        <View className="px-3 mt-6">
           <View className="flex-row flex-wrap justify-between">
             {tasks.map((feature) =>
               renderFeatureCard(feature, () => {
@@ -428,6 +428,14 @@ const WellnessDashboard: React.FC = () => {
             </Text>
           </View>
         </View>
+        <TouchableOpacity
+          className="px-3 py-1 mt-8 mx-auto bg-blue-100 rounded-2xl "
+          onPress={() => router.push("/(root)/medical-checkups")}
+        >
+          <Text className="text-blue-600 text-xs">
+            Health checkup scheduler
+          </Text>
+        </TouchableOpacity>
       </ScrollView>
     </View>
   );

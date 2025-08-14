@@ -1,29 +1,31 @@
-
 import { router } from "expo-router";
 import React, { useState } from "react";
 import { Text, TouchableOpacity, View } from "react-native";
-import {Meal} from "@/types/type";
+import { Meal, MealType } from "@/types/type";
 import IconButton from "@/components/ui/IconButton";
 import NutrientBadge from "@/components/ui/NutritionBadge";
 
 type MealCardProps = Meal & {
-  mealIcon : any;
-}
-
+  mealIcon: any;
+  onReplaceMeal: (mealType: MealType) => void;
+  isReplacing: boolean;
+};
 
 const MealCard = ({
   mealType,
   mealName,
   ingredients,
   instructions,
-  prepTime,
+  preparationTimeMinutes,
   calories,
   protein,
   fat,
   carbs,
   healthBenefits,
+  isReplacing,
   mealIcon,
-} : MealCardProps) => {
+  onReplaceMeal,
+}: MealCardProps) => {
   const [showDetails, setShowDetails] = useState(false);
 
   const getMealTypeIcon = () => {
@@ -53,33 +55,33 @@ const MealCard = ({
 
           <View className="flex-row  items-center gap-2">
             <NutrientBadge
-                iconName="fire"
-                iconColor="red"
-                value={calories}
-                unit="kcal"
-                textColor="text-red-500"
+              iconName="fire"
+              iconColor="red"
+              value={calories}
+              unit="kcal"
+              textColor="text-red-500"
             />
             <NutrientBadge
-                iconName="food-drumstick"
-                iconColor="blue"
-                value={protein}
-                unit="g"
-                textColor="text-blue-600"
+              iconName="food-drumstick"
+              iconColor="blue"
+              value={protein}
+              unit="g"
+              textColor="text-blue-600"
             />
             <NutrientBadge
-                iconType="Entypo"
-                iconName="drop"
-                iconColor="orange"
-                value={fat}
-                unit="g"
-                textColor="text-orange-400"
+              iconType="Entypo"
+              iconName="drop"
+              iconColor="orange"
+              value={fat}
+              unit="g"
+              textColor="text-orange-400"
             />
             <NutrientBadge
-                iconName="leaf"
-                iconColor="green"
-                value={carbs}
-                unit="g"
-                textColor="text-green-600"
+              iconName="leaf"
+              iconColor="green"
+              value={carbs}
+              unit="g"
+              textColor="text-green-600"
             />
           </View>
         </View>
@@ -116,17 +118,19 @@ const MealCard = ({
           </View>
           <View className="flex-row items-center">
             <Text className="text-xs mr-2">⏱</Text>
-            <Text className="text-xs text-gray-600">{prepTime} minutes</Text>
+            <Text className="text-xs text-gray-600">
+              {preparationTimeMinutes} minutes
+            </Text>
           </View>
         </TouchableOpacity>
 
-        { (
+        {
           <View className="mb-4 p-1  rounded-lg">
             <Text className="text-xs text-gray-700 leading-5">
               {instructions}
             </Text>
           </View>
-        )}
+        }
 
         {/* Health Benefits */}
         <View className="mb-4">
@@ -144,22 +148,26 @@ const MealCard = ({
         {/* Action Buttons */}
         <View className="flex-row justify-center gap-5">
           <IconButton
-              iconName="refresh-cw"
-              loadingIconName="loader"
-              label="AI Replace Meal"
-              loadingLabel="Generating..."
-              loading={false}
-              onPress={() => {}}
+            iconName="refresh-cw"
+            loadingIconName="loader"
+            label="AI Replace Meal"
+            loadingLabel="Generating..."
+            loading={isReplacing}
+            onPress={() => onReplaceMeal(mealType)}
           />
           <IconButton
-              iconName="plus"
-              loadingIconName="loader"
-              label="Log Food"
-              loadingLabel="Generating..."
-              loading={false}
-              onPress={() => router.push(`/(root)/calorie-counter/${mealType.toUpperCase()}`)}
-              bgClass={"bg-green-100"}
-              textClass={"text-green-800"}
+            iconName="plus"
+            loadingIconName="loader"
+            label="Log Food"
+            loadingLabel="Generating..."
+            loading={false}
+            onPress={() =>
+              router.push(
+                `/(root)/calorie-counter/${mealType.toUpperCase()}` as any
+              )
+            }
+            bgClass={"bg-green-100"}
+            textClass={"text-green-800"}
           />
         </View>
       </View>
@@ -168,4 +176,3 @@ const MealCard = ({
 };
 
 export default MealCard;
-

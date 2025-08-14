@@ -1,3 +1,4 @@
+import { MealType } from "@/types/type";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import React, { useEffect, useRef } from "react";
@@ -5,6 +6,14 @@ import { Animated, StyleSheet, TouchableOpacity, View } from "react-native";
 
 const PulseButton = () => {
   const pulseAnim = useRef(new Animated.Value(1)).current;
+
+  // Function to decide meal type based on time
+  const getMealType = (): MealType => {
+    const hour = new Date().getHours();
+    if (hour >= 5 && hour < 11) return "BREAKFAST";
+    if (hour >= 11 && hour < 16) return "LUNCH";
+    return "DINNER";
+  };
 
   useEffect(() => {
     Animated.loop(
@@ -24,19 +33,27 @@ const PulseButton = () => {
   }, []);
 
   return (
-    <View style={styles.container} className="bottom-1  right-1 absolute ">
+    <View style={styles.container} className="bottom-1 right-1 absolute">
       <Animated.View
         style={[styles.pulseBackground, { transform: [{ scale: pulseAnim }] }]}
       />
       <TouchableOpacity
         style={styles.button}
-        onPress={() => router.push("/(root)/calorie-counter")}
+        onPress={() => {
+          const mealType = getMealType();
+          router.push(`/(root)/calorie-counter/${mealType}` as any);
+        }}
       >
         <View className="flex-1 w-full items-center justify-center rounded-full bg-green-500">
           <View className="flex-row relative items-center space-x-2">
             <MaterialCommunityIcons
               name="food"
-              className="absolute top-2/3 left-1/2 transform -translate-y-5 -translate-x-6"
+              style={{
+                position: "absolute",
+                top: "66%",
+                left: "40%",
+                transform: [{ translateX: -12 }, { translateY: -20 }],
+              }}
               size={20}
               color="white"
             />
@@ -59,7 +76,7 @@ const styles = StyleSheet.create({
     width: 75,
     height: 75,
     borderRadius: 40,
-    backgroundColor: "#22c55e", // green-500
+    backgroundColor: "#22c55e",
     opacity: 0.5,
   },
   button: {
@@ -70,12 +87,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     elevation: 4,
-  },
-  image: {
-    width: 30,
-    height: 30,
-    tintColor: "#fff",
-    // backgroundColor: "white",
   },
 });
 

@@ -6,18 +6,18 @@ export function useDashboardStats() {
     queryKey: ["dashboard", "stats"],
     queryFn: () => dashboardApi.getStats(),
     staleTime: 2 * 60 * 1000, // 2 minutes
-    refetchInterval: false, // Disable automatic refetch interval
-    refetchOnMount: true, // Only refetch if data is stale
-    refetchOnWindowFocus: false,
-    refetchOnReconnect: true, // Only refetch on reconnect
-    refetchIntervalInBackground: false,
-    retry: 1,
-    // Add network mode to prevent requests when offline
-    networkMode: "online",
-    // Prevent refetch during render cycles
-    notifyOnChangeProps: ["data", "error", "isLoading"],
-    // Use structural sharing to prevent unnecessary re-renders
-    structuralSharing: true,
+    // refetchInterval: false, // Disable automatic refetch interval
+    // refetchOnMount: true, // Only refetch if data is stale
+    // refetchOnWindowFocus: false,
+    // refetchOnReconnect: true, // Only refetch on reconnect
+    // refetchIntervalInBackground: false,
+    // retry: 1,
+    // // Add network mode to prevent requests when offline
+    // networkMode: "online",
+    // // Prevent refetch during render cycles
+    // notifyOnChangeProps: ["data", "error", "isLoading"],
+    // // Use structural sharing to prevent unnecessary re-renders
+    // structuralSharing: true,
   });
 }
 

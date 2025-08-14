@@ -1,6 +1,5 @@
 import Button from "@/components/Button";
 import { CustomInput } from "@/components/CustomInput";
-import { validateUserForm } from "@/lib/validations";
 import { useAuthStore } from "@/store/authStore";
 import { router } from "expo-router";
 import React, { useState } from "react";
@@ -16,7 +15,7 @@ import {
 
 interface UserFormData {
   username: string;
-  age: string;
+  password: string;
 }
 
 const Login: React.FC = () => {
@@ -24,7 +23,7 @@ const Login: React.FC = () => {
 
   const [formData, setFormData] = useState<UserFormData>({
     username: "",
-    age: "",
+    password: "",
   });
 
   const updateFormData = (field: keyof UserFormData, value: string) => {
@@ -34,15 +33,18 @@ const Login: React.FC = () => {
   const handleLogin = async () => {
     try {
       // Validate form
-      const validationError = validateUserForm(formData.username, formData.age);
-      if (validationError) {
-        Alert.alert("Validation Error", validationError);
-        return;
-      }
+      // const validationError = validateUserForm(
+      //   formData.username,
+      //   formData.password
+      // );
+      // if (validationError) {
+      //   Alert.alert("Validation Error", validationError);
+      //   return;
+      // }
 
       await login({
         username: formData.username,
-        password: formData.username + formData.age, // Confirm this logic
+        password: formData.password,
       });
 
       router.push("/(root)/" as any);
@@ -78,11 +80,11 @@ const Login: React.FC = () => {
             />
 
             <CustomInput
-              label="Age"
-              value={formData.age}
-              onChangeText={(text) => updateFormData("age", text)}
-              placeholder="Enter your age"
-              keyboardType="numeric"
+              label="Password"
+              value={formData.password}
+              onChangeText={(text) => updateFormData("password", text)}
+              placeholder="Enter your password"
+              secureTextEntry
             />
 
             {/*<GoogleSignInButton*/}

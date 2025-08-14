@@ -173,7 +173,7 @@ export interface DailySummary {
   consumedFat: number;
   waterConsumedMl: number;
   targetWaterMl: number;
-  caloriesProgress: number; // percentage
+  calorieProgress: number; // percentage
   proteinProgress: number; // percentage
   carbsProgress: number; // percentage
   fatProgress: number; // percentage
@@ -366,6 +366,8 @@ export interface RegisterCredentials {
 
 export interface AuthResponse {
   message: string;
+  // accessToken: string;
+  // refreshToken: string;
   token: string;
   user: User;
 }
@@ -582,4 +584,53 @@ export interface LogMedicationRequest {
   status: LogStatus;
   actualTime?: string;
   notes?: string;
+}
+
+export interface StatusBadge {
+  text: string;
+  color: string;
+}
+
+export interface DateRange {
+  startDate: string; // YYYY-MM-DD format
+  endDate: string; // YYYY-MM-DD format
+}
+
+export interface DateRangeStepProps {
+  onNext: (startDate: string, endDate: string) => void;
+  onBack?: () => void;
+  initialStartDate?: string;
+  initialEndDate?: string;
+  maxDays?: number;
+}
+
+interface DateRangeState {
+  startDate: Date;
+  endDate: Date;
+  showStartPicker: boolean;
+  showEndPicker: boolean;
+}
+
+interface Question {
+  id: keyof CheckupSchedule;
+  botMessage: string;
+  type: "text" | "options" | "input" | "calendar" | "time" | "textarea";
+  options?: string[];
+  placeholder?: string;
+}
+
+interface MessageMedical {
+  id: string;
+  text: string;
+  isBot: boolean;
+  timestamp: Date;
+  type?: "text" | "options" | "input" | "calendar" | "time" | "textarea";
+}
+
+interface CheckupSchedule {
+  checkupType: string;
+  selectedDate: string;
+  selectedTime: string;
+  reminderTime: string;
+  notes: string;
 }

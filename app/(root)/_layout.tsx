@@ -9,10 +9,9 @@ const Layout = () => {
     <GestureHandlerRootView style={styles.container}>
       <BottomSheetModalProvider>
         <Stack screenOptions={{ headerShown: false }}>
-
           <Stack.Screen name="index" options={{ headerShown: false }} />
           <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-          
+          <Stack.Screen name="(med-tabs)" options={{ headerShown: false }} />
         </Stack>
       </BottomSheetModalProvider>
     </GestureHandlerRootView>

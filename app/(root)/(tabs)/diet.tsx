@@ -1,38 +1,29 @@
+import ErrorCard from "@/components/cards/ErrorCard";
 import DaySelector from "@/components/DaySelector";
+import GlobalHeader from "@/components/headers/GlobalHeader";
 import MealCard from "@/components/MealCard";
 import NutritionInfo from "@/components/NutritionInfo";
 import PlaceHolder from "@/components/PlaceHolder";
 import Skeleton from "@/components/skeleton/Skeleton";
+import IconButton from "@/components/ui/IconButton";
+import { showToast } from "@/lib/toast";
 import { useDietPlanManager } from "@/store/dietPlan";
-import { Meal } from "@/types/type";
-import { Feather, MaterialCommunityIcons } from "@expo/vector-icons";
-import React, { useState } from "react";
+import { DietPlan, Meal, MealType } from "@/types/type";
+import React from "react";
 import {
-    ImageBackground,
-    ScrollView,
-    StatusBar,
-    StyleSheet,
-    Text, TextStyle,
-    TouchableOpacity,
-    View,
+  ScrollView,
+  StatusBar,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import GlobalHeader from "@/components/headers/GlobalHeader";
-import ErrorCard from "@/components/cards/ErrorCard";
-import TabSwitcher from "@/components/ui/TabSwitcher";
-import IconButton from "@/components/ui/IconButton";
 
 // Register the linear gradient globally
 // SkeletonPlaceholder.setLinearGradient(LinearGradient);
 
 const Profile = () => {
-  const [activeTab, setActiveTab] = useState("weekly");
-
-  const tabs = [
-    { key: "weekly", label: "Weekly Plan", icon: "calendar-week" },
-    { key: "daily", label: "Daily Plan", icon: "calendar-check" },
-  ];
-
   const {
     selectedDate,
     handleDateChange,
@@ -42,27 +33,56 @@ const Profile = () => {
     error,
     totalNutrition,
     // getMealsByType,
-    handleGenerate,
+    replaceMeal,
+    isReplacing,
+    handleReGenerate,
     handleRefresh,
-    isGenerating,
+    isRegenerating,
     isRefreshing,
   } = useDietPlanManager();
 
   const handleGenerateNewPlan = async () => {
     try {
       console.log("Generating new plan for date:", selectedDate);
-      await handleGenerate();
+      if (dietPlan) {
+        await handleReGenerate((dietPlan as unknown as DietPlan)?.id);
+      }
+
+      // Optionally, you can add any post-generation logic here
     } catch (error) {
       console.error("Failed to generate new plan:", error);
     }
   };
 
-  const handleRefreshPlan = async () => {
+  // const handleRefreshPlan = async () => {
+  //   try {
+  //     console.log("Refreshing plan for date:", selectedDate);
+  //     await handleRefresh();
+  //   } catch (error) {
+  //     console.error("Failed to refresh plan:", error);
+  //   }
+  // };
+
+  const handleReplaceMeal = async (mealType: MealType) => {
     try {
-      console.log("Refreshing plan for date:", selectedDate);
-      await handleRefresh();
+      console.log("Replacing meal:", mealType);
+      // Call the API or perform the necessary action to replace the meal
+      await replaceMeal.mutateAsync(
+        {
+          mealType,
+          dietPlanId: dietPlan?.id!,
+        },
+        {
+          onSuccess: () => {
+            showToast("Meal replaced successfully");
+          },
+          onError: (error) => {
+            showToast("Error replacing meal:");
+          },
+        }
+      );
     } catch (error) {
-      console.error("Failed to refresh plan:", error);
+      console.error("Failed to replace meal:", error);
     }
   };
 
@@ -80,10 +100,9 @@ const Profile = () => {
       <StatusBar barStyle="dark-content" backgroundColor="#f9fafb" />
 
       {/* Header */}
-      <GlobalHeader/>
+      <GlobalHeader />
 
       {/*<TabSwitcher tabs={tabs} activeTab={activeTab} setActiveTab={setActiveTab} />*/}
-
 
       {/* Always show Date Selector */}
       <DaySelector
@@ -94,18 +113,21 @@ const Profile = () => {
       />
 
       {/* Conditional Rendering Section Below DateSelector */}
-      {isLoading || isGenerating ? (
+      {isLoading || isRegenerating ? (
         <MealPlanSkeleton />
       ) : error && !dietPlan ? (
-       <ErrorCard message={error} onPress={handleRefresh} />
+        <ErrorCard message={error} onPress={handleRefresh} />
       ) : !isValidDate ? (
         <PlaceHolder message="You're on invalid date ...!" />
       ) : !dietPlan ? (
         <PlaceHolder message="You haven't created diet plan here." />
       ) : (
-        <ScrollView className="flex-1 py-1" showsVerticalScrollIndicator={false}>
+        <ScrollView
+          className="flex-1 py-1"
+          showsVerticalScrollIndicator={false}
+        >
           {/* Nutrition Info */}
-          <View >
+          <View>
             <View className="flex-row items-center  ml-3">
               <Text className="text-2xl mr-2">≡</Text>
               <Text className="text-xs font-semibold text-gray-800">
@@ -126,18 +148,18 @@ const Profile = () => {
               Balanced Healthy Indian Diet Plan for User
             </Text>
             <IconButton
-                iconName="refresh-cw"
-                loadingIconName="loader"
-                label="AI Replace Day"
-                loadingLabel="Generating..."
-                loading={isGenerating}
-                onPress={handleGenerateNewPlan}
+              iconName="refresh-cw"
+              loadingIconName="loader"
+              label="AI Replace Day"
+              loadingLabel="Generating..."
+              loading={isRegenerating}
+              onPress={handleGenerateNewPlan}
             />
           </View>
 
           {/* Meals List */}
           {dietPlan?.meals && dietPlan!.meals?.length > 0 ? (
-            <View>
+            <View className="px-2 gap-y-5">
               {isRefreshing && (
                 <View className="absolute top-0 left-0 right-0 bottom-0 bg-white bg-opacity-80 z-10 justify-center items-center">
                   <Text className="text-gray-600">Refreshing...</Text>
@@ -146,18 +168,23 @@ const Profile = () => {
 
               {(dietPlan!.meals as Meal[]).map((item, index) => (
                 <MealCard
-                  key={`${item.id}-${index}` }
+                  id={item.id}
+                  key={`${item.id}-${index}`}
                   mealType={item.mealType}
                   mealName={item.mealName}
                   ingredients={item.ingredients}
                   instructions={item.instructions}
-                  prepTime={item.preparationTimeMinutes}
+                  preparationTimeMinutes={item.preparationTimeMinutes}
                   calories={item.calories}
                   protein={item.protein}
                   fat={item.fat}
                   carbs={item.carbs}
                   healthBenefits={item.healthBenefits}
                   mealIcon=""
+                  isReplacing={isReplacing}
+                  onReplaceMeal={(replaceMeal) =>
+                    handleReplaceMeal(replaceMeal)
+                  }
                 />
               ))}
             </View>
@@ -168,11 +195,11 @@ const Profile = () => {
               </Text>
               <TouchableOpacity
                 onPress={handleGenerateNewPlan}
-                disabled={isGenerating}
+                disabled={isRegenerating}
                 className="bg-green-500 px-4 py-2 rounded-lg"
               >
                 <Text className="text-white font-medium">
-                  {isGenerating ? "Generating..." : "Generate Diet Plan"}
+                  {isRegenerating ? "Generating..." : "Generate Diet Plan"}
                 </Text>
               </TouchableOpacity>
             </View>
