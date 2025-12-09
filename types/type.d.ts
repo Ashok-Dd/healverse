@@ -1,5 +1,4 @@
 import { Ionicons } from "@expo/vector-icons";
-import React from "react";
 
 // Enums
 
@@ -207,7 +206,7 @@ export type UpdateWaterLogData = Partial<
   Omit<WaterLog, "id" | "user" | "createdAt">
 >;
 
-/=------------------------------CHAT TYPES-----------------------------/;
+/*------------------------------CHAT TYPES-----------------------------*/
 
 export interface Conversation {
   id: string;
@@ -228,7 +227,7 @@ export interface Message {
   createdAt: string;
 }
 
-/=------------------------------STORE TYPES-----------------------------/;
+/*------------------------------STORE TYPES-----------------------------*/
 
 export interface HealthStore {
   // State
@@ -345,7 +344,7 @@ export interface DietPlanStore {
   clearData: () => void;
 }
 
-/=--------------------------------------------------------------------------/;
+/*------------------------------AUTH TYPES-----------------------------*/
 
 export interface AuthTokens {
   token: string;
@@ -378,7 +377,7 @@ export interface ApiError {
   errors?: Record<string, string[]>;
 }
 
-/=--------------------------------------------------------------------------/;
+/*------------------------------NUTRITION TYPES-----------------------------*/
 
 export interface NutritionInfoProps {
   calories: number;

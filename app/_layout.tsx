@@ -52,14 +52,15 @@ export default function RootLayout() {
     if (appReady) {
       const { isAuthenticated } = useAuthStore.getState();
       if (isAuthenticated) {
-        router.replace("/(root)/" as any);
+        console.log("User is authenticated, navigating to tracker.");
+        router.replace("/(root)/(tabs)/tracker");
       } else {
         router.replace("/(auth)/welcome");
       }
     }
   }, [appReady]);
 
-  // ✅ Only show loading during first-time bootstrap
+
   if (!fontsLoaded || isBootstrapping) {
     return null;
   }
