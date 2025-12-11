@@ -71,6 +71,8 @@ const Tracker = () => {
                 />
             )}
 
+            
+
 
             <Ping />
         </SafeAreaView>

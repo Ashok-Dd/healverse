@@ -1,15 +1,17 @@
+import MedicalHeader from "@/components/headers/MedicalHeader";
+import { useDashboardStats } from "@/hooks/useMedicationDashboard"; // Your hook
 import { Ionicons } from "@expo/vector-icons";
 import React, { useState } from "react";
 import {
   Dimensions,
   SafeAreaView,
   ScrollView,
+  StatusBar,
   Text,
   TouchableOpacity,
   View,
 } from "react-native";
 import { LineChart } from "react-native-chart-kit";
-import { useDashboardStats } from "@/hooks/useMedicationDashboard"; // Your hook
 
 const screenWidth = Dimensions.get("window").width;
 
@@ -18,7 +20,7 @@ const chartConfig = {
   backgroundGradientFrom: "#ffffff",
   backgroundGradientTo: "#ffffff",
   decimalPlaces: 0,
-  color: (opacity = 1) => `rgba(16, 185, 129, ${opacity})`,
+  color: (opacity = 1) => `rgba(74, 222, 128, ${opacity})`, // Green color to match main tabs
   labelColor: (opacity = 1) => `rgba(107, 114, 128, ${opacity})`,
   style: { borderRadius: 16 },
   propsForLabels: { fontSize: 11 },
@@ -69,13 +71,18 @@ const HealthAnalyticsScreen: React.FC = () => {
   };
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: "#FFF" }}>
+    <SafeAreaView className="flex-1 px-2 py-1 bg-white">
+      <StatusBar barStyle="dark-content" backgroundColor="#f9fafb" />
+      
+      {/* Medical Header */}
+      <MedicalHeader />
+      
       <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
         {/* Header */}
-        <View className="px-6 py-4 pt-10">
+        <View className="px-4 py-3 mb-4">
           <View className="flex-row justify-between items-center">
             <View>
-              <Text className="text-3xl font-bold text-gray-900">
+              <Text className="text-2xl font-bold text-gray-900">
                 Health Analytics
               </Text>
               <Text className="text-gray-600 mt-1">
@@ -85,7 +92,7 @@ const HealthAnalyticsScreen: React.FC = () => {
             <TouchableOpacity className="p-2">
               <Ionicons
                 name="notifications-outline"
-                size={24}
+                size={20}
                 color="#6b7280"
               />
             </TouchableOpacity>
@@ -93,68 +100,41 @@ const HealthAnalyticsScreen: React.FC = () => {
         </View>
 
         {/* Summary Cards */}
-        <View className="px-6 mb-6">
-          <View className="flex-row gap-4">
+        <View className="px-4 mb-4">
+          <View className="flex-row gap-3">
             {/* Adherence Rate */}
-            <View
-              className="flex-1 bg-emerald-100 p-4 rounded-2xl"
-              style={{
-                elevation: 2,
-                shadowColor: "#000",
-                shadowOffset: { width: 0, height: 1 },
-                shadowOpacity: 0.1,
-                shadowRadius: 2,
-              }}
-            >
-              <Text className="text-emerald-700 text-sm font-medium">
+            <View className="flex-1 bg-green-100 p-4 rounded-xl">
+              <Text className="text-green-700 text-sm font-medium">
                 Adherence Rate
               </Text>
-              <Text className="text-emerald-900 text-2xl font-bold mt-1">
+              <Text className="text-green-900 text-2xl font-bold mt-1">
                 {dashboardStats.adherenceRate}%
               </Text>
-              <Text className="text-emerald-600 text-xs mt-1">This week</Text>
+              <Text className="text-green-600 text-xs mt-1">This week</Text>
             </View>
 
             {/* Streak */}
-            <View
-              className="flex-1 bg-blue-100 p-4 rounded-2xl"
-              style={{
-                elevation: 2,
-                shadowColor: "#000",
-                shadowOffset: { width: 0, height: 1 },
-                shadowOpacity: 0.1,
-                shadowRadius: 2,
-              }}
-            >
-              <Text className="text-blue-700 text-sm font-medium">
+            <View className="flex-1 bg-gray-100 p-4 rounded-xl">
+              <Text className="text-gray-700 text-sm font-medium">
                 Current Streak
               </Text>
-              <Text className="text-blue-900 text-2xl font-bold mt-1">
+              <Text className="text-gray-900 text-2xl font-bold mt-1">
                 {dashboardStats.currentStreak}
               </Text>
-              <Text className="text-blue-600 text-xs mt-1">days</Text>
+              <Text className="text-gray-600 text-xs mt-1">days</Text>
             </View>
           </View>
         </View>
 
         {/* Weekly Adherence Chart */}
-        <View className="px-6 mb-6">
-          <View
-            className="bg-white rounded-2xl p-4"
-            style={{
-              elevation: 3,
-              shadowColor: "#000",
-              shadowOffset: { width: 0, height: 2 },
-              shadowOpacity: 0.1,
-              shadowRadius: 4,
-            }}
-          >
+        <View className="px-4 mb-4">
+          <View className="bg-gray-100 rounded-xl p-4">
             <View className="flex-row justify-between items-center mb-4">
               <Text className="text-lg font-bold text-gray-900">
                 Weekly Adherence
               </Text>
-              <TouchableOpacity className="bg-emerald-100 px-3 py-1 rounded-full">
-                <Text className="text-emerald-700 text-xs font-medium">
+              <TouchableOpacity className="bg-green-100 px-3 py-1 rounded-full">
+                <Text className="text-green-700 text-xs font-medium">
                   {selectedPeriod}
                 </Text>
               </TouchableOpacity>

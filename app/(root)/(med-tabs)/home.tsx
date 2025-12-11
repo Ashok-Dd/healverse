@@ -1,4 +1,5 @@
 // app/(tabs)/index.tsx (Dashboard)
+import MedicalHeader from "@/components/headers/MedicalHeader";
 import { AdherenceChart } from "@/components/medication/AdherenceChart";
 import { EmptyState } from "@/components/medication/EmptyState";
 import HealthStreakCard from "@/components/medication/HealthStreakCard";
@@ -10,11 +11,12 @@ import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import React from "react";
 import {
-  RefreshControl,
-  ScrollView,
-  Text,
-  TouchableOpacity,
-  View,
+    RefreshControl,
+    ScrollView,
+    StatusBar,
+    Text,
+    TouchableOpacity,
+    View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -85,76 +87,75 @@ export default function DashboardScreen() {
   }
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: "#FFF" }}>
+    <SafeAreaView className="flex-1 px-2 py-1 bg-white">
+      <StatusBar barStyle="dark-content" backgroundColor="#f9fafb" />
+      
+      {/* Medical Header */}
+      <MedicalHeader />
+      
       <ScrollView
-        style={{ flex: 1 }}
+        className="flex-1"
+        showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl refreshing={isRefetching} onRefresh={refetch} />
         }
       >
         {/* Header */}
-        <View style={{ padding: 16, paddingTop: 8 }}>
-          <Text
-            style={{
-              fontSize: 25,
-              fontWeight: "bold",
-              color: "#333",
-              marginBottom: 4,
-            }}
-          >
+        <View className="px-2 pt-2 mb-4">
+          <Text className="text-2xl font-bold text-gray-900 mb-1">
             Good morning{" "}
-            <Text className="text-teal-500 font-bold capitalize px-3">
+            <Text className="text-green-600 font-bold capitalize">
               {user?.username.substring(0, 10)}
             </Text>{" "}
             ! 👋
           </Text>
-          <Text style={{ fontSize: 16, color: "#666" }}>
+          <Text className="text-base text-gray-600">
             Take care of your health today
           </Text>
         </View>
 
         {/* Stats Grid */}
-        <View style={{ paddingHorizontal: 16 }}>
-          <View style={{ flexDirection: "row", gap: 12, marginBottom: 12 }}>
-            <View style={{ flex: 1 }}>
+        <View className="px-2 mb-4">
+          <View className="flex-row gap-3">
+            <View className="flex-1">
               <HealthStreakCard days={stats.currentStreak} />
             </View>
           </View>
         </View>
 
         {/* Adherence Chart */}
-        <View style={{ paddingHorizontal: 16 }}>
+        <View className="px-2 mb-4">
           <AdherenceChart adherenceRate={stats.adherenceRate} />
         </View>
 
         {/* AI Health Assistant */}
-        <View className="mb-8">
-          <View className="bg-white rounded-2xl p-6">
-            <View className="flex-row items-center mb-4">
-              <View className="w-10 h-10 bg-purple-100 rounded-full items-center justify-center mr-3">
-                <Ionicons name="sparkles" size={20} color="#8b5cf6" />
+        <View className="mb-8 px-2">
+          <View className="bg-gray-100 rounded-xl p-4">
+            <View className="flex-row items-center mb-3">
+              <View className="w-8 h-8 bg-green-100 rounded-full items-center justify-center mr-3">
+                <Ionicons name="sparkles" size={18} color="#4ade80" />
               </View>
               <Text className="text-lg font-bold text-gray-900">
                 AI Health Assistant
               </Text>
             </View>
 
-            <Text className="text-gray-600 text-sm mb-4">
+            <Text className="text-gray-600 text-sm mb-3">
               Personalized insights and tips
             </Text>
 
-            <View className="gap-y-5">
+            <View className="gap-y-3">
               {assistantCards.map((card) => (
                 <TouchableOpacity
                   key={card.id}
-                  className={`p-4 rounded-xl border ${card.bgColor}`}
+                  className="p-3 rounded-lg border bg-white border-gray-200"
                 >
                   <View className="flex-row items-start">
                     <Ionicons
                       name={card.icon as any}
-                      size={20}
+                      size={18}
                       color={card.iconColor}
-                      style={{ marginTop: 2, marginRight: 12 }}
+                      style={{ marginTop: 2, marginRight: 10 }}
                     />
                     <Text className="flex-1 text-gray-800 text-sm leading-5">
                       {card.title}

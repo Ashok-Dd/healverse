@@ -22,7 +22,8 @@ export type DietaryRestriction =
   | "GLUTEN_FREE"
   | "DAIRY_FREE"
   | "LOW_CARB"
-  | "LOW_FAT";
+  | "LOW_FAT"
+  | "NONE";
 
 export type Goal =
   | "LOSE_WEIGHT"

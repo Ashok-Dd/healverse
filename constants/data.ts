@@ -520,7 +520,7 @@ export const createDefaultSummary = (date: string): DailySummary => ({
   consumedFat: 0,
   waterConsumedMl: 0,
   targetWaterMl: 0,
-  caloriesProgress: 0,
+  calorieProgress: 0,
   proteinProgress: 0,
   carbsProgress: 0,
   fatProgress: 0,

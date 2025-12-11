@@ -5,7 +5,7 @@ export default function TabLayout() {
     return (
         <Tabs
             screenOptions={{
-                tabBarActiveTintColor: '#3B82F6', // Blue color for active tab
+                tabBarActiveTintColor: '#4ade80', // Green color to match main diet tabs
                 tabBarInactiveTintColor: '#9ca3af', // Gray color for inactive tabs
                 tabBarStyle: {
                     backgroundColor: '#ffffff',

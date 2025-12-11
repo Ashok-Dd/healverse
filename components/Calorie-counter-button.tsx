@@ -33,35 +33,57 @@ const PulseButton = () => {
   }, []);
 
   return (
-    <View style={styles.container} className="bottom-1 right-1 absolute">
-      <Animated.View
-        style={[styles.pulseBackground, { transform: [{ scale: pulseAnim }] }]}
-      />
-      <TouchableOpacity
-        style={styles.button}
-        onPress={() => {
-          const mealType = getMealType();
-          router.push(`/(root)/calorie-counter/${mealType}` as any);
-        }}
-      >
-        <View className="flex-1 w-full items-center justify-center rounded-full bg-green-500">
-          <View className="flex-row relative items-center space-x-2">
-            <MaterialCommunityIcons
-              name="food"
-              style={{
-                position: "absolute",
-                top: "66%",
-                left: "40%",
-                transform: [{ translateX: -12 }, { translateY: -20 }],
-              }}
-              size={20}
-              color="white"
-            />
-            <Ionicons name="scan-outline" size={40} color="white" />
+    <>
+    
+      <View style={styles.container} className="bottom-28 -left-10 absolute">
+        <TouchableOpacity
+          style={styles.medButton}
+          className="rounded-tr-full rounded-br-full bg-blue-500"
+          onPress={() => {
+            router.push(`/(root)/(med-tabs)/home` as any);
+          }}
+        >
+          <View className="flex-1 w-full items-center justify-center rounded-full bg-blue-500">
+            <View className="flex-row relative items-center space-x-2">
+              <MaterialCommunityIcons
+                name="plus-box"
+                size={24}
+                color="white"
+              />
+            </View>
           </View>
-        </View>
-      </TouchableOpacity>
-    </View>
+        </TouchableOpacity>
+      </View>
+      <View style={styles.container} className="bottom-1 right-1 absolute">
+        <Animated.View
+          style={[styles.pulseBackground, { transform: [{ scale: pulseAnim }] }]}
+        />
+        <TouchableOpacity
+          style={styles.button}
+          onPress={() => {
+            const mealType = getMealType();
+            router.push(`/(root)/calorie-counter/${mealType}` as any);
+          }}
+        >
+          <View className="flex-1 w-full items-center justify-center rounded-full bg-green-500">
+            <View className="flex-row relative items-center space-x-2">
+              <MaterialCommunityIcons
+                name="food"
+                style={{
+                  position: "absolute",
+                  top: "66%",
+                  left: "40%",
+                  transform: [{ translateX: -12 }, { translateY: -20 }],
+                }}
+                size={20}
+                color="white"
+              />
+              <Ionicons name="scan-outline" size={40} color="white" />
+            </View>
+          </View>
+        </TouchableOpacity>
+      </View>
+    </>
   );
 };
 
@@ -84,6 +106,14 @@ const styles = StyleSheet.create({
     height: 60,
     borderRadius: 30,
     backgroundColor: "#22c55e",
+    alignItems: "center",
+    justifyContent: "center",
+    elevation: 4,
+  },
+
+  medButton: {
+    width: 70,
+    height: 60,
     alignItems: "center",
     justifyContent: "center",
     elevation: 4,

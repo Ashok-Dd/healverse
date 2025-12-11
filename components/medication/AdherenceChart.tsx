@@ -13,7 +13,7 @@ const chartWidth = width - 64; // Account for padding
 
 export function AdherenceChart({ adherenceRate }: AdherenceChartProps) {
   const getColor = (rate: number) => {
-    if (rate >= 90) return "#14b8a6";
+    if (rate >= 90) return "#4ade80";  // Green to match main tabs
     if (rate >= 70) return "#FF9800";
     return "#F44336";
   };

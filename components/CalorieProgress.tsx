@@ -27,10 +27,11 @@ const NutritionProgress: React.FC<NutritionProgressProps> = ({
   customColor,
   customTitle,
 }) => {
+
+  
   const getNutritionData = (type: NutritionType) => {
     switch (type) {
       case "calories":
-        console.log("Calories Data:", data.calorieProgress);
         return {
           consumed: data.consumedCalories,
           target: data.targetCalories,

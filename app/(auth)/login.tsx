@@ -47,7 +47,7 @@ const Login: React.FC = () => {
         password: formData.password,
       });
 
-      router.push("/(root)/" as any);
+      router.push("/(root)/(tabs)/tracker" as any);
     } catch (e) {
       console.log(e);
       Alert.alert(

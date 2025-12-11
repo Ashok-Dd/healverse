@@ -1,9 +1,9 @@
 
 // FoodLogCard.tsx - Separate component
-import NutrientBadge from "@/components/ui/NutritionBadge";
 import Skeleton from "@/components/skeleton/Skeleton";
+import NutrientBadge from "@/components/ui/NutritionBadge";
 import { calculateTotals } from "@/lib/utils";
-import { FoodItem, FoodLog } from "@/types/type";
+import { FoodItem } from "@/types/type";
 import React, { memo } from "react";
 import { ActivityIndicator, Image, Text, View } from "react-native";
 
@@ -23,7 +23,7 @@ const FoodLogCard = memo(({ foodLog, isLoading = false, imagePreview, mealType }
                 <View className="h-20 w-20 relative">
                     <Image
                         source={{ uri: imagePreview }}
-                        className="w-28 h-28 rounded-lg mb-4"
+                        className="w-20 h-20 rounded-lg mb-4"
                         resizeMode="cover"
                     />
                     <ActivityIndicator

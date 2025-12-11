@@ -1,8 +1,13 @@
 import { PromoteCardExamples } from "@/components/PromotionCard";
 import { useAuthStore } from "@/store/authStore";
+import { useUserProfileStore } from "@/store/userProfile";
+import { User } from "@/types/type";
 import { Feather, MaterialCommunityIcons } from "@expo/vector-icons";
+import { useQueryClient } from "@tanstack/react-query";
 import { LinearGradient } from "expo-linear-gradient";
+import * as Notifications from "expo-notifications";
 import { router } from "expo-router";
+import * as SecureStore from "expo-secure-store";
 import React from "react";
 import {
     Alert,
@@ -14,36 +19,19 @@ import {
 } from "react-native";
 import { LineChart } from "react-native-chart-kit";
 import { SafeAreaView } from "react-native-safe-area-context";
-import {
-    Defs,
-    LinearGradient as SVGLinearGradient,
-    Stop,
-} from "react-native-svg";
-import {UserProfile , User} from "@/types/type";
 
 
-// Component Functions
-const AppHeader = () => {
-    return (
-        <View className="bg-white px-6 py-4 shadow-sm">
-            <View className="flex-row items-center justify-between">
-                <View className="flex-row items-center">
-                    <Text className="text-white text-lg mr-2 font-bold">🥗</Text>
-                    <Text className="text-xl font-bold text-green-500">Heal</Text>
-                    <Text className="text-xl font-bold">Verse</Text>
-                </View>
-            </View>
-        </View>
-    );
-};
 
 const ProfileSection = ({
     user,
     onSettingsPress,
+    onLogoutPress,
 }: {
     user: User;
     onSettingsPress: () => void;
+    onLogoutPress: () => void;
 }) => {
+
     const getCurrentWeight = (): string => {
         return user.profile?.currentWeightKg
             ? `${user.profile.currentWeightKg} kg`
@@ -99,9 +87,12 @@ const ProfileSection = ({
                         </View>
                     </View>
 
-                    <TouchableOpacity className="bg-green-100 py-1 px-6 rounded-xl flex-row items-center shadow-sm">
-                        <Text className="text-green-500 text-xs mr-2">✓</Text>
-                        <Text className="text-green-500 text-xs ">Sign in</Text>
+                    <TouchableOpacity
+                        onPress={onLogoutPress}
+                        className="bg-red-100 py-1 px-6 rounded-xl flex-row items-center shadow-sm"
+                    >
+                        <Text className="text-red-500 text-xs mr-2">✓</Text>
+                        <Text className="text-red-500 text-xs ">Sign out</Text>
                     </TouchableOpacity>
                 </View>
             </LinearGradient>
@@ -109,102 +100,102 @@ const ProfileSection = ({
     );
 };
 
-const WeightProgressChart = ({ profile }: { profile: UserProfile }) => {
-    const screenWidth = Dimensions.get("window").width;
+// const WeightProgressChart = ({ profile }: { profile: UserProfile }) => {
+//     const screenWidth = Dimensions.get("window").width;
 
-    // Generate weight progress data
-    const weightData = [76, 50, 24];
-    const labels = ["Jul 28", "Dec 5", "Dec 10"];
+//     // Generate weight progress data
+//     const weightData = [76, 50, 24];
+//     const labels = ["Jul 28", "Dec 5", "Dec 10"];
 
-    const Gradient = () => (
-        <Defs>
-            <SVGLinearGradient id="lineGradient" x1="0" y1="0" x2="1" y2="0">
-                <Stop offset="0%" stopColor="red" stopOpacity={1} />
-                <Stop offset="50%" stopColor="orange" stopOpacity={1} />
-                <Stop offset="100%" stopColor="green" stopOpacity={1} />
-            </SVGLinearGradient>
-        </Defs>
-    );
+//     const Gradient = () => (
+//         <Defs>
+//             <SVGLinearGradient id="lineGradient" x1="0" y1="0" x2="1" y2="0">
+//                 <Stop offset="0%" stopColor="red" stopOpacity={1} />
+//                 <Stop offset="50%" stopColor="orange" stopOpacity={1} />
+//                 <Stop offset="100%" stopColor="green" stopOpacity={1} />
+//             </SVGLinearGradient>
+//         </Defs>
+//     );
 
-    return (
-        <View className="bg-white mb-1">
-            <View className="mx-6 mb-4">
-                <Text className="text-sm font-bold  text-gray-900 mb-1">
-                    Weight Progress
-                </Text>
-                <Text className="text-gray-500 text-sm">
-                    Your journey from {weightData[0]}kg to {profile.targetWeightKg || 65}
-                    kg
-                </Text>
-            </View>
+//     return (
+//         <View className="bg-white mb-1">
+//             <View className="mx-6 mb-4">
+//                 <Text className="text-sm font-bold  text-gray-900 mb-1">
+//                     Weight Progress
+//                 </Text>
+//                 <Text className="text-gray-500 text-sm">
+//                     Your journey from {weightData[0]}kg to {profile.targetWeightKg || 65}
+//                     kg
+//                 </Text>
+//             </View>
 
-            <View className="bg-white rounded-2xl  shadow-sm border border-gray-100">
-                <LineChart
-                    data={{
-                        labels: labels,
-                        datasets: [
-                            {
-                                data: weightData,
-                                // Use gradient ID for the line stroke
-                                color: () => `url(#lineGradient)`,
-                                strokeWidth: 10,
-                            },
-                        ],
-                    }}
-                    width={screenWidth}
-                    height={220}
-                    yAxisSuffix="kg"
-                    bezier
-                    chartConfig={{
-                        backgroundColor: "#fff",
-                        backgroundGradientFrom: "#fff",
-                        backgroundGradientTo: "#fff",
-                        color: (opacity = 1) => `rgba(0,0,0,${opacity})`,
-                        strokeWidth: 4,
-                    }}
-                    withShadow={false}
-                    withInnerLines={false}
-                    withOuterLines={false}
-                    withVerticalLabels={true}
-                    withHorizontalLabels={true}
-                    fromZero={false}
-                    style={{
-                        marginVertical: 8,
-                        borderRadius: 16,
-                    }}
-                    // Inject our gradient definition
-                    decorator={() => <Gradient />}
-                />
+//             <View className="bg-white rounded-2xl  shadow-sm border border-gray-100">
+//                 <LineChart
+//                     data={{
+//                         labels: labels,
+//                         datasets: [
+//                             {
+//                                 data: weightData,
+//                                 // Use gradient ID for the line stroke
+//                                 color: () => `url(#lineGradient)`,
+//                                 strokeWidth: 10,
+//                             },
+//                         ],
+//                     }}
+//                     width={screenWidth}
+//                     height={220}
+//                     yAxisSuffix="kg"
+//                     bezier
+//                     chartConfig={{
+//                         backgroundColor: "#fff",
+//                         backgroundGradientFrom: "#fff",
+//                         backgroundGradientTo: "#fff",
+//                         color: (opacity = 1) => `rgba(0,0,0,${opacity})`,
+//                         strokeWidth: 4,
+//                     }}
+//                     withShadow={false}
+//                     withInnerLines={false}
+//                     withOuterLines={false}
+//                     withVerticalLabels={true}
+//                     withHorizontalLabels={true}
+//                     fromZero={false}
+//                     style={{
+//                         marginVertical: 8,
+//                         borderRadius: 16,
+//                     }}
+//                     // Inject our gradient definition
+//                     decorator={() => <Gradient />}
+//                 />
 
-                {/* Progress indicators */}
-                {/* <View className="flex-row justify-between mt-4 pt-4 border-t border-gray-100">
-          <View className="items-center">
-            <Text className="text-2xl font-bold text-red-500">
-              {weightData[0]}kg
-            </Text>
-            <Text className="text-gray-500 text-xs">Start Weight</Text>
-          </View>
-          <View className="items-center">
-            <Text className="text-2xl font-bold text-blue-500">
-              {weightData[weightData.length - 1]}kg
-            </Text>
-            <Text className="text-gray-500 text-xs">Current</Text>
-          </View>
-          <View className="items-center">
-            <Text className="text-2xl font-bold text-green-500">
-              {profile.targetWeightKg || 65}kg
-            </Text>
-            <Text className="text-gray-500 text-xs">Target</Text>
-          </View>
-        </View> */}
-            </View>
-        </View>
-    );
-};
+//                 {/* Progress indicators */}
+//                 {/* <View className="flex-row justify-between mt-4 pt-4 border-t border-gray-100">
+//           <View className="items-center">
+//             <Text className="text-2xl font-bold text-red-500">
+//               {weightData[0]}kg
+//             </Text>
+//             <Text className="text-gray-500 text-xs">Start Weight</Text>
+//           </View>
+//           <View className="items-center">
+//             <Text className="text-2xl font-bold text-blue-500">
+//               {weightData[weightData.length - 1]}kg
+//             </Text>
+//             <Text className="text-gray-500 text-xs">Current</Text>
+//           </View>
+//           <View className="items-center">
+//             <Text className="text-2xl font-bold text-green-500">
+//               {profile.targetWeightKg || 65}kg
+//             </Text>
+//             <Text className="text-gray-500 text-xs">Target</Text>
+//           </View>
+//         </View> */}
+//             </View>
+//         </View>
+//     );
+// };
 
 const WeightUpdateSection = ({
-                                 onUpdatePress,
-                             }: {
+    onUpdatePress,
+}: {
     onUpdatePress: () => void;
 }) => {
     const screenWidth = Dimensions.get("window").width;
@@ -287,20 +278,71 @@ const WeightUpdateSection = ({
 // Main Profile Component
 const Profile = () => {
     const { user, logout } = useAuthStore();
+    const { clearProfile } = useUserProfileStore();
+    const queryClient = useQueryClient();
 
-
-
-    const handleLogout = () => {
+    const handleLogout = async () => {
         Alert.alert("Sign Out", "Are you sure you want to sign out?", [
             { text: "Cancel", style: "cancel" },
             {
                 text: "Sign Out",
                 style: "destructive",
-                onPress: () => {
-                    if (logout) {
-                        logout();
+                onPress: async () => {
+                    try {
+                        console.log("🔄 Starting comprehensive logout cleanup...");
+
+                        // 1. Clear all TanStack Query cache
+                        console.log("🗑️ Clearing TanStack Query cache...");
+                        queryClient.clear();
+
+                        // 2. Clear user profile store
+                        console.log("👤 Clearing user profile store...");
+                        clearProfile();
+
+                        // 3. Cancel all scheduled notifications
+                        console.log("🔔 Canceling all scheduled notifications...");
+                        await Notifications.cancelAllScheduledNotificationsAsync();
+
+                        // 4. Clear notification settings from SecureStore
+                        try {
+                            await SecureStore.deleteItemAsync("notification_settings");
+                            console.log("✅ Notification settings cleared");
+                        } catch (error) {
+                            console.warn("⚠️ Could not clear notification settings:", error);
+                        }
+
+                        // 5. Clear any task-related storage (if needed)
+                        const taskKeys = [
+                            "medication_tasks",
+                            "health_reminders",
+                            "user_preferences"
+                        ];
+
+                        for (const key of taskKeys) {
+                            try {
+                                await SecureStore.deleteItemAsync(key);
+                                console.log(`✅ Cleared storage key: ${key}`);
+                            } catch (error) {
+                                console.warn(`⚠️ Could not clear ${key}:`, error);
+                            }
+                        }
+
+                        // 6. Clear auth store and token (this should be last)
+                        console.log("🔐 Clearing authentication data...");
+                        if (logout) {
+                            await logout();
+                        }
+
+                        console.log("✅ Logout cleanup completed successfully!");
+
+                        // 7. Navigate to welcome screen
+                        router.replace("/(auth)/welcome");
+
+                    } catch (error) {
+                        console.error("❌ Error during logout cleanup:", error);
+                        // Still navigate to welcome screen even if there's an error
+                        router.replace("/(auth)/welcome");
                     }
-                    router.replace("/(auth)/welcome");
                 },
             },
         ]);
@@ -339,7 +381,6 @@ const Profile = () => {
         );
     }
 
-    const { profile } = user;
 
     return (
         <SafeAreaView className="flex-1 bg-white ">
@@ -348,14 +389,22 @@ const Profile = () => {
                 showsVerticalScrollIndicator={false}
                 contentContainerStyle={{ paddingBottom: 0 }}
             >
-                <AppHeader />
+                <View className="bg-white px-6 py-4 shadow-sm">
+                    <View className="flex-row items-center justify-between">
+                        <View className="flex-row items-center">
+                            <Text className="text-white text-lg mr-2 font-bold">🥗</Text>
+                            <Text className="text-xl font-bold text-green-500">Heal</Text>
+                            <Text className="text-xl font-bold">Verse</Text>
+                        </View>
+                    </View>
+                </View>
 
                 <ProfileSection
                     user={user as User}
                     onSettingsPress={handleSettings}
+                    onLogoutPress={handleLogout}
                 />
 
-                {/* <WeightProgressChart profile={profile as UserProfile} /> */}
 
                 {/* <CaloriesProgressExample /> */}
 

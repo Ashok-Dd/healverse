@@ -1,26 +1,28 @@
+import MedicalHeader from "@/components/headers/MedicalHeader";
 import {
-  FREQUENCY_OPTIONS,
-  MEDICINE_TYPES,
-  TIME_OPTIONS,
+    FREQUENCY_OPTIONS,
+    MEDICINE_TYPES,
+    TIME_OPTIONS,
 } from "@/constants/data";
 import { useCreateMedication } from "@/hooks/useMedications";
 import {
-  CreateMedicationRequest,
-  FrequencyType,
-  MedicationType,
+    CreateMedicationRequest,
+    FrequencyType,
+    MedicationType,
 } from "@/types/type";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import React, { useCallback, useMemo, useState } from "react";
 import {
-  Alert,
-  FlatList,
-  ScrollView,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
-  ViewStyle,
+    Alert,
+    FlatList,
+    ScrollView,
+    StatusBar,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View,
+    ViewStyle,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -264,11 +266,10 @@ const AddMedicineScreen: React.FC = () => {
             <TouchableOpacity
               onPress={() => handleTypeSelect(type.id)}
               activeOpacity={0.8}
-              className={`w-[48%] rounded-3xl p-5 items-center mb-4 border-2 ${
-                isSelected
+              className={`w-[48%] rounded-3xl p-5 items-center mb-4 border-2 ${isSelected
                   ? "bg-teal-50 border-teal-400"
                   : "bg-white border-gray-200"
-              }`}
+                }`}
               style={{
                 shadowColor: "#000",
                 shadowOffset: { width: 0, height: 2 },
@@ -278,16 +279,14 @@ const AddMedicineScreen: React.FC = () => {
               }}
             >
               <View
-                className={`w-16 h-16 rounded-2xl items-center justify-center mb-4 ${
-                  isSelected ? "bg-teal-500" : type.iconBg
-                }`}
+                className={`w-16 h-16 rounded-2xl items-center justify-center mb-4 ${isSelected ? "bg-teal-500" : type.iconBg
+                  }`}
               >
                 <Text className="text-3xl">{type.icon}</Text>
               </View>
               <Text
-                className={`text-lg font-semibold ${
-                  isSelected ? "text-teal-700" : "text-gray-800"
-                }`}
+                className={`text-lg font-semibold ${isSelected ? "text-teal-700" : "text-gray-800"
+                  }`}
               >
                 {type.title}
               </Text>
@@ -320,11 +319,10 @@ const AddMedicineScreen: React.FC = () => {
             <TouchableOpacity
               onPress={() => handleFrequencySelect(option.id)}
               activeOpacity={0.8}
-              className={`rounded-2xl p-4 border-2 ${
-                isSelected
+              className={`rounded-2xl p-4 border-2 ${isSelected
                   ? "bg-teal-50 border-teal-400"
                   : "bg-white border-gray-200"
-              }`}
+                }`}
               style={{
                 shadowColor: "#000",
                 shadowOffset: { width: 0, height: 1 },
@@ -336,9 +334,8 @@ const AddMedicineScreen: React.FC = () => {
               <View className="flex-row justify-between items-center">
                 <View className="flex-1">
                   <Text
-                    className={`text-lg font-semibold ${
-                      isSelected ? "text-teal-700" : "text-gray-800"
-                    }`}
+                    className={`text-lg font-semibold ${isSelected ? "text-teal-700" : "text-gray-800"
+                      }`}
                   >
                     {option.title}
                   </Text>
@@ -388,11 +385,10 @@ const AddMedicineScreen: React.FC = () => {
                 key={label}
                 onPress={() => handleTimeSelect(value as string)}
                 activeOpacity={0.8}
-                className={`flex-row items-center justify-center mb-3 rounded-full px-4 py-3 w-[32%] border-2 ${
-                  selected
+                className={`flex-row items-center justify-center mb-3 rounded-full px-4 py-3 w-[32%] border-2 ${selected
                     ? "bg-teal-500 border-teal-500"
                     : "bg-white border-gray-200"
-                }`}
+                  }`}
                 style={{
                   shadowColor: "#000",
                   shadowOffset: { width: 0, height: 1 },
@@ -408,9 +404,8 @@ const AddMedicineScreen: React.FC = () => {
                   style={{ marginRight: 4 }}
                 />
                 <Text
-                  className={`font-medium text-xs ${
-                    selected ? "text-white" : "text-gray-700"
-                  }`}
+                  className={`font-medium text-xs ${selected ? "text-white" : "text-gray-700"
+                    }`}
                 >
                   {label}
                 </Text>
@@ -476,18 +471,16 @@ const AddMedicineScreen: React.FC = () => {
           <View className="flex-row flex-wrap">
             <TouchableOpacity
               onPress={() => handleInputChange("startDate", getTodayString())}
-              className={`mr-3 mb-3 px-4 py-2 rounded-full border-2 ${
-                medicineData.startDate === getTodayString()
+              className={`mr-3 mb-3 px-4 py-2 rounded-full border-2 ${medicineData.startDate === getTodayString()
                   ? "bg-teal-50 border-teal-400"
                   : "bg-white border-gray-200"
-              }`}
+                }`}
             >
               <Text
-                className={`text-sm ${
-                  medicineData.startDate === getTodayString()
+                className={`text-sm ${medicineData.startDate === getTodayString()
                     ? "text-teal-700 font-semibold"
                     : "text-gray-700"
-                }`}
+                  }`}
               >
                 Today
               </Text>
@@ -502,24 +495,22 @@ const AddMedicineScreen: React.FC = () => {
                   tomorrow.toISOString().split("T")[0]
                 );
               }}
-              className={`mr-3 mb-3 px-4 py-2 rounded-full border-2 ${
-                medicineData.startDate ===
-                new Date(Date.now() + 24 * 60 * 60 * 1000)
-                  .toISOString()
-                  .split("T")[0]
-                  ? "bg-teal-50 border-teal-400"
-                  : "bg-white border-gray-200"
-              }`}
-            >
-              <Text
-                className={`text-sm ${
-                  medicineData.startDate ===
+              className={`mr-3 mb-3 px-4 py-2 rounded-full border-2 ${medicineData.startDate ===
                   new Date(Date.now() + 24 * 60 * 60 * 1000)
                     .toISOString()
                     .split("T")[0]
+                  ? "bg-teal-50 border-teal-400"
+                  : "bg-white border-gray-200"
+                }`}
+            >
+              <Text
+                className={`text-sm ${medicineData.startDate ===
+                    new Date(Date.now() + 24 * 60 * 60 * 1000)
+                      .toISOString()
+                      .split("T")[0]
                     ? "text-teal-700 font-semibold"
                     : "text-gray-700"
-                }`}
+                  }`}
               >
                 Tomorrow
               </Text>
@@ -592,18 +583,16 @@ const AddMedicineScreen: React.FC = () => {
                       onPress={() =>
                         handleInputChange("endDate", endDateString)
                       }
-                      className={`mr-3 mb-3 px-4 py-2 rounded-full border-2 ${
-                        medicineData.endDate === endDateString
+                      className={`mr-3 mb-3 px-4 py-2 rounded-full border-2 ${medicineData.endDate === endDateString
                           ? "bg-blue-50 border-blue-400"
                           : "bg-white border-gray-200"
-                      }`}
+                        }`}
                     >
                       <Text
-                        className={`text-sm ${
-                          medicineData.endDate === endDateString
+                        className={`text-sm ${medicineData.endDate === endDateString
                             ? "text-blue-700 font-semibold"
                             : "text-gray-700"
-                        }`}
+                          }`}
                       >
                         {option.label}
                       </Text>
@@ -613,18 +602,16 @@ const AddMedicineScreen: React.FC = () => {
 
                 <TouchableOpacity
                   onPress={() => handleInputChange("endDate", "")}
-                  className={`mr-3 mb-3 px-4 py-2 rounded-full border-2 ${
-                    !medicineData.endDate
+                  className={`mr-3 mb-3 px-4 py-2 rounded-full border-2 ${!medicineData.endDate
                       ? "bg-gray-100 border-gray-400"
                       : "bg-white border-gray-200"
-                  }`}
+                    }`}
                 >
                   <Text
-                    className={`text-sm ${
-                      !medicineData.endDate
+                    className={`text-sm ${!medicineData.endDate
                         ? "text-gray-700 font-semibold"
                         : "text-gray-700"
-                    }`}
+                      }`}
                   >
                     No end date
                   </Text>
@@ -812,34 +799,39 @@ const AddMedicineScreen: React.FC = () => {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-gray-50">
+    <SafeAreaView className="flex-1 px-2 py-1 bg-white">
+      <StatusBar barStyle="dark-content" backgroundColor="#f9fafb" />
+      
+      {/* Medical Header */}
+      <MedicalHeader />
+      
       {/* Header */}
-      <View className="flex-row items-center justify-between px-6 py-4">
+      <View className="flex-row items-center justify-between px-4 py-3 mb-4">
         <TouchableOpacity
-          className="w-10 h-10 bg-white rounded-full items-center justify-center shadow-sm"
+          className="w-10 h-10 bg-gray-100 rounded-full items-center justify-center"
           onPress={handlePrevious}
           disabled={currentStep === 1}
         >
           <Ionicons
             name="chevron-back"
             size={20}
-            color={currentStep === 1 ? "#D1D5DB" : "#374151"}
+            color={currentStep === 1 ? "#9ca3af" : "#4ade80"}
           />
         </TouchableOpacity>
 
         <View className="items-center">
-          <Text className="text-xl font-bold text-gray-800">Add Medicine</Text>
-          <Text className="text-gray-500">Step {currentStep} of 6</Text>
+          <Text className="text-xl font-bold text-gray-900">Add Medicine</Text>
+          <Text className="text-gray-600">Step {currentStep} of 6</Text>
         </View>
 
         <View className="w-10" />
       </View>
 
       {/* Progress Bar */}
-      <View className="mx-6 mb-6">
+      <View className="mx-4 mb-4">
         <View className="h-2 bg-gray-200 rounded-full">
           <View
-            className="h-2 bg-teal-500 rounded-full transition-all duration-300"
+            className="h-2 bg-green-500 rounded-full transition-all duration-300"
             style={{ width: getProgressWidth() } as ViewStyle}
           />
         </View>
@@ -867,17 +859,15 @@ const AddMedicineScreen: React.FC = () => {
             )}
 
             <TouchableOpacity
-              className={`rounded-2xl py-4 items-center ${
-                currentStep === 1 ? "flex-1" : "flex-1"
-              } ${isStepValid ? "bg-teal-500" : "bg-gray-300"}`}
+              className={`rounded-2xl py-4 items-center ${currentStep === 1 ? "flex-1" : "flex-1"
+                } ${isStepValid ? "bg-teal-500" : "bg-gray-300"}`}
               onPress={handleNext}
               disabled={!isStepValid}
             >
               <View className="flex-row items-center">
                 <Text
-                  className={`font-semibold mr-1 ${
-                    isStepValid ? "text-white" : "text-gray-500"
-                  }`}
+                  className={`font-semibold mr-1 ${isStepValid ? "text-white" : "text-gray-500"
+                    }`}
                 >
                   {currentStep === 5 ? "Create Medicine" : "Next"}
                 </Text>
@@ -891,9 +881,8 @@ const AddMedicineScreen: React.FC = () => {
           </View>
         ) : (
           <TouchableOpacity
-            className={`bg-teal-500 rounded-2xl py-4 items-center shadow-lg ${
-              createMedicationMutation.isPending ? "opacity-70" : ""
-            }`}
+            className={`bg-teal-500 rounded-2xl py-4 items-center shadow-lg ${createMedicationMutation.isPending ? "opacity-70" : ""
+              }`}
             onPress={handleCreateMedication}
             disabled={createMedicationMutation.isPending}
           >

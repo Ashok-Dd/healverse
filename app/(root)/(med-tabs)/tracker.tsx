@@ -1,3 +1,5 @@
+import DaySelector from "@/components/DaySelector";
+import MedicalHeader from "@/components/headers/MedicalHeader";
 import SwipeableMedicineCard from "@/components/medication/SwipableMedicineCard";
 import { useDashboardStats } from "@/hooks/useMedicationDashboard";
 import { useLogMedication } from "@/hooks/useMedications";
@@ -12,6 +14,7 @@ import {
   Dimensions,
   SafeAreaView,
   ScrollView,
+  StatusBar,
   Text,
   TouchableOpacity,
   View,
@@ -212,56 +215,50 @@ const MedTrackerScreen: React.FC = () => {
   }
 
   return (
-    <SafeAreaView className="flex-1 px-2 py-2 bg-white">
+    <SafeAreaView className="flex-1 px-2 py-1 bg-white">
+      <StatusBar barStyle="dark-content" backgroundColor="#f9fafb" />
+      
+      {/* Medical Header */}
+      <MedicalHeader />
+      
+      {/* Date Selector */}
+      <DaySelector
+        selectedDate={getCurrentDate()}
+        handleDateChange={(date) => console.log('Date changed:', date)}
+      />
+      
       <ScrollView
-        className="flex-1 gap-y-5"
+        className="flex-1"
         showsVerticalScrollIndicator={false}
       >
         {/* Header */}
-        <View className="px-2 mt-10 pbr-4">
-          <View className="flex-row justify-between items-start">
-            <View className="flex-1">
-              <Text className="text-xl font-bold text-gray-900">
-                Med Tracker
-              </Text>
-              <Text className="text-gray-600 mt-1">
-                Stay consistent with your medications
-              </Text>
-            </View>
-            <View
-              className="bg-orange-100 px-2 py-1 flex-row gap-1 justify-center rounded-2xl items-center"
-              style={{
-                elevation: 2,
-                shadowColor: "#000",
-                shadowOffset: { width: 0, height: 1 },
-                shadowOpacity: 0.1,
-                shadowRadius: 2,
-              }}
-            >
-              <Ionicons name="flame" size={14} color="#f97316" />
-              <Text className="text-orange-600 font-bold text-xs">
-                {dashboardStats.currentStreak}
-              </Text>
-              <Text className="text-orange-600 text-xs">day streak</Text>
-            </View>
+        <View className="flex-row items-center justify-between mb-4">
+          <View className="flex flex-row gap-1 items-center">
+            <Feather name="clock" size={16} />
+            <Text className="text-font-semibold">Today's Medications</Text>
+          </View>
+          <View className="bg-green-100 px-2 py-1 flex-row gap-1 justify-center rounded-lg items-center">
+            <Ionicons name="flame" size={14} color="#4ade80" />
+            <Text className="text-green-600 font-bold text-xs">
+              {dashboardStats.currentStreak}
+            </Text>
+            <Text className="text-green-600 text-xs">day streak</Text>
           </View>
         </View>
 
         {/* Today's Progress */}
-        <View className="mt-5 mb-6">
-          <View
-            className="bg-gray-100 px-6 py-2 rounded-2xl"
-            style={{
-              elevation: 3,
-              shadowColor: "#000",
-              shadowOffset: { width: 0, height: 2 },
-              shadowOpacity: 0.1,
-              shadowRadius: 4,
-            }}
-          >
-            <View className="flex-row justify-between items-center mb-4">
+        <View className="mb-4">
+          <View className="flex items-start mb-2">
+            <View className="flex flex-row gap-1 items-center">
+              <Ionicons name="analytics" size={16} />
+              <Text className="text-font-semibold">Medication Overview</Text>
+            </View>
+          </View>
+          
+          <View className="bg-gray-100 rounded-xl p-4">
+            <View className="flex-row justify-between items-center mb-3">
               <View>
-                <Text className="text-md font-bold text-gray-900">
+                <Text className="text-lg font-bold text-gray-900">
                   Today's Progress
                 </Text>
                 <Text className="text-gray-500 text-xs">
@@ -269,24 +266,24 @@ const MedTrackerScreen: React.FC = () => {
                 </Text>
               </View>
               <View className="items-end">
-                <Text className="text-lg font-bold text-emerald-600">
+                <Text className="text-lg font-bold text-green-600">
                   {dashboardStats.todayTaken}/{dashboardStats.todayTotal}
                 </Text>
                 <Text className="text-gray-500 text-sm">medicines taken</Text>
               </View>
             </View>
             {/* Progress Bar */}
-            <View className="mb-4">
+            <View className="mb-3">
               <View className="bg-gray-200 h-2 rounded-full overflow-hidden">
                 <View
-                  className="bg-emerald-500 h-full rounded-full"
+                  className="bg-green-500 h-full rounded-full"
                   style={{ width: `${getProgressPercentage()}%` }}
                 />
               </View>
             </View>
             <View className="flex-row items-center">
-              <Feather name="calendar" size={16} color="#10b981" />
-              <Text className="text-emerald-600 ml-2 text-xs">
+              <Feather name="calendar" size={16} color="#4ade80" />
+              <Text className="text-green-600 ml-2 text-xs">
                 {getProgressPercentage() === 100
                   ? "Perfect! All medications completed for today"
                   : `Adherence rate: ${dashboardStats.adherenceRate.toFixed(
@@ -298,11 +295,12 @@ const MedTrackerScreen: React.FC = () => {
         </View>
 
         {/* Today's Medicines */}
-        <View className=" mb-3 flex-1">
-          <View className="flex-row justify-between items-center mb-4">
-            <Text className="text-sm font-bold text-gray-900">
-              Today's Medicines
-            </Text>
+        <View className="mb-3 flex-1">
+          <View className="flex-row justify-between items-center mb-3">
+            <View className="flex flex-row gap-1 items-center">
+              <Ionicons name="medical" size={16} />
+              <Text className="text-font-semibold">Today's Medicines</Text>
+            </View>
             <TouchableOpacity
               onPress={() => {
                 // Handle View All press
@@ -311,13 +309,13 @@ const MedTrackerScreen: React.FC = () => {
               className="flex-row items-center"
             >
               <Text
-                className={`text-emerald-600 text-xs mr-1 ${
+                className={`text-green-600 text-xs mr-1 ${
                   medicationDisplays.length > 3 ? "visible" : "invisible"
                 }`}
               >
                 View All
               </Text>
-              <Ionicons name="chevron-forward" size={16} color="#10b981" />
+              <Feather name="arrow-right-circle" size={16} color="#4ade80" />
             </TouchableOpacity>
           </View>
           {medicationDisplays.length > 0 ? (
