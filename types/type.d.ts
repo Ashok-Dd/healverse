@@ -77,6 +77,7 @@ export interface UserProfile {
   dietaryRestriction: DietaryRestriction;
   healthCondition: HealthCondition;
   otherHealthConditionDescription?: string;
+  address?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -633,4 +634,25 @@ interface CheckupSchedule {
   selectedTime: string;
   reminderTime: string;
   notes: string;
+}
+
+// Gamification types
+export interface GamificationActivity {
+  id: number;
+  userId: number;
+  pointsEarned: number;
+  reason: string;
+  description: string;
+  date: string; // ISO date string
+  createdAt: string; // ISO date string
+}
+
+export interface GamificationSummary {
+  userId: number;
+  currentStreak: number;
+  longestStreak: number;
+  totalPoints: number;
+  todayPoints: number;
+  lastLogin: string; // ISO date string
+  recentActivity: GamificationActivity[];
 }

@@ -44,7 +44,13 @@
           "speechRecognitionPermission": "Allow $(PRODUCT_NAME) to use speech recognition."
         }
       ],
-      "expo-audio"
+      "expo-audio",
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "Allow app to use your location."
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true

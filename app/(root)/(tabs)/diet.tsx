@@ -39,6 +39,7 @@ const Profile = () => {
     handleRefresh,
     isRegenerating,
     isRefreshing,
+    isToday
   } = useDietPlanManager();
 
   const handleGenerateNewPlan = async () => {
@@ -147,14 +148,14 @@ const Profile = () => {
             <Text className="text-xs font-medium text-gray-800 flex-1 pr-2">
               Balanced Healthy Indian Diet Plan for User
             </Text>
-            <IconButton
+            {isToday && (<IconButton
               iconName="refresh-cw"
               loadingIconName="loader"
               label="AI Replace Day"
               loadingLabel="Generating..."
               loading={isRegenerating}
               onPress={handleGenerateNewPlan}
-            />
+            />)}
           </View>
 
           {/* Meals List */}
@@ -185,6 +186,7 @@ const Profile = () => {
                   onReplaceMeal={(replaceMeal) =>
                     handleReplaceMeal(replaceMeal)
                   }
+                  isToday={isToday}
                 />
               ))}
             </View>

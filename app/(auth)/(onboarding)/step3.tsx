@@ -1,9 +1,9 @@
+import HeightSelector, { feetToCm } from "@/components/HeightSelector";
 import OnboardingWrapper from "@/components/OnboardingWrapper";
-import React, {useCallback, useEffect, useMemo, useRef} from "react";
-import { Text, View } from "react-native";
-import HeightSelector, { feetToCm, cmToFeet } from "@/components/HeightSelector";
 import { useUserProfileStore } from "@/store/userProfile";
 import { Gender } from "@/types/type";
+import React, { useCallback, useEffect, useMemo, useRef } from "react";
+import { Text, View } from "react-native";
 
 // Memoized title component to prevent unnecessary re-renders
 const HeightSelectionTitle = React.memo(() => (
@@ -59,31 +59,31 @@ const Step3 = () => {
         female: require('@/assets/images/girl.png')
     }), []);
 
-    // Stable initial values - only set once and don't change
-    const initialValues = useMemo(() => {
-        // If we haven't initialized yet, set a default
+    // Initialize height in store only once using useEffect (not during render)
+    useEffect(() => {
         if (!hasInitializedHeight.current) {
             hasInitializedHeight.current = true;
-            // If heightCm exists in store, use it; otherwise default to 170
-            const initialHeight = selectedHeight || 170;
-
-            // If heightCm was null/undefined, initialize the store
+            // If heightCm doesn't exist in store, initialize it with selected height or default
             if (!heightCm) {
+                const initialHeight = selectedHeight || 170;
                 setHeightCm(initialHeight);
+                setSelectedHeight(initialHeight);
+            } else {
+                // If heightCm exists, sync local state with store
+                setSelectedHeight(heightCm);
             }
-
-            return {
-                height: initialHeight,
-                unit: 'cm' as const
-            };
         }
+    }, [heightCm, selectedHeight, setHeightCm]);
 
-        // After initial setup, use the current store value or fallback
+    // Stable initial values - only calculate, don't mutate state
+    const initialValues = useMemo(() => {
+        // Use store value if available, otherwise use local state or default
+        const height = heightCm || selectedHeight || 170;
         return {
-            height: selectedHeight || 170,
+            height: height,
             unit: 'cm' as const
         };
-    }, []); // Empty dependency array - only calculate once!
+    }, [heightCm, selectedHeight]);
 
     // Validate height range (optional)
     const isValidHeight = useMemo(() => {

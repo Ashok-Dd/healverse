@@ -1,9 +1,11 @@
 // components/chat/MessageInput.tsx
+import { images } from "@/constants";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import React, { useCallback, useMemo, useRef, useState } from "react";
 import {
   AccessibilityInfo,
   Alert,
+  Image,
   LayoutAnimation,
   Platform,
   Text,
@@ -222,7 +224,30 @@ export const MessageInput: React.FC<MessageInputProps> = ({
 
   const renderWaveButton = useCallback(() => {
     if (!showVoiceButton) return null;
-    return renderActionButton("waveform", handleSpeechPress, "Voice message");
+    return (
+      <TouchableOpacity
+        onPress={handleSpeechPress}
+        disabled={disabled}
+        style={
+          {
+            width: BUTTON_SIZE,
+            height: BUTTON_SIZE,
+            borderRadius: BUTTON_SIZE / 2,
+            backgroundColor: colors.buttonBackground,
+            alignItems: "center",
+            justifyContent: "center",
+            opacity: disabled ? 0.5 : 1,
+          } as any
+        }
+      >
+        <Image
+          source={images.wave}
+          style={{ width: 30, height: 30 }}
+          accessibilityLabel="Voice input"
+          accessibilityRole="button"
+        />
+      </TouchableOpacity>
+    )
   }, [showVoiceButton, renderActionButton, handleSpeechPress]);
 
   const renderSendButton = useCallback(

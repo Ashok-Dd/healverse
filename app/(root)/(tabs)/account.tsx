@@ -1,3 +1,4 @@
+import GamificationSection from "@/components/GamificationSection";
 import { PromoteCardExamples } from "@/components/PromotionCard";
 import { useAuthStore } from "@/store/authStore";
 import { useUserProfileStore } from "@/store/userProfile";
@@ -405,6 +406,8 @@ const Profile = () => {
                     onLogoutPress={handleLogout}
                 />
 
+                {/* Gamification Section */}
+                <GamificationSection />
 
                 {/* <CaloriesProgressExample /> */}
 

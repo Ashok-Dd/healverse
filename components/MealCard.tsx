@@ -1,14 +1,15 @@
+import IconButton from "@/components/ui/IconButton";
+import NutrientBadge from "@/components/ui/NutritionBadge";
+import { Meal, MealType } from "@/types/type";
 import { router } from "expo-router";
 import React, { useState } from "react";
 import { Text, TouchableOpacity, View } from "react-native";
-import { Meal, MealType } from "@/types/type";
-import IconButton from "@/components/ui/IconButton";
-import NutrientBadge from "@/components/ui/NutritionBadge";
 
 type MealCardProps = Meal & {
   mealIcon: any;
   onReplaceMeal: (mealType: MealType) => void;
   isReplacing: boolean;
+  isToday?: boolean;
 };
 
 const MealCard = ({
@@ -24,6 +25,7 @@ const MealCard = ({
   healthBenefits,
   isReplacing,
   mealIcon,
+  isToday,
   onReplaceMeal,
 }: MealCardProps) => {
   const [showDetails, setShowDetails] = useState(false);
@@ -146,7 +148,7 @@ const MealCard = ({
         </View>
 
         {/* Action Buttons */}
-        <View className="flex-row justify-center gap-5">
+        {isToday && (<View className="flex-row justify-center gap-5">
           <IconButton
             iconName="refresh-cw"
             loadingIconName="loader"
@@ -169,7 +171,7 @@ const MealCard = ({
             bgClass={"bg-green-100"}
             textClass={"text-green-800"}
           />
-        </View>
+        </View>)}
       </View>
     </View>
   );
