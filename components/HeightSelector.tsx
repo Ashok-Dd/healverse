@@ -27,13 +27,13 @@ function formatFtInches(value: number): string {
 }
 
 const HeightSelector: React.FC<HeightSelectorProps> = ({
-                                                           onHeightChange,
-                                                           initialHeight = 170,
-                                                           initialUnit = 'cm',
-                                                           gender = 'MALE',
-                                                           maleAvatarSource,
-                                                           femaleAvatarSource,
-                                                       }) => {
+    onHeightChange,
+    initialHeight = 170,
+    initialUnit = 'cm',
+    gender = 'MALE',
+    maleAvatarSource,
+    femaleAvatarSource,
+}) => {
     const [selectedUnit, setSelectedUnit] = useState<'cm' | 'ft'>(initialUnit);
 
     // Store height in cm internally for accuracy

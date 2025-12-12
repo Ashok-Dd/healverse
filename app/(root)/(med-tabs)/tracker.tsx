@@ -1,4 +1,3 @@
-import DaySelector from "@/components/DaySelector";
 import MedicalHeader from "@/components/headers/MedicalHeader";
 import SwipeableMedicineCard from "@/components/medication/SwipableMedicineCard";
 import { useDashboardStats } from "@/hooks/useMedicationDashboard";
@@ -215,17 +214,14 @@ const MedTrackerScreen: React.FC = () => {
   }
 
   return (
-    <SafeAreaView className="flex-1 px-2 py-1 bg-white">
+    <SafeAreaView className="flex-1 p-3 py-5 bg-white">
       <StatusBar barStyle="dark-content" backgroundColor="#f9fafb" />
       
       {/* Medical Header */}
       <MedicalHeader />
       
-      {/* Date Selector */}
-      <DaySelector
-        selectedDate={getCurrentDate()}
-        handleDateChange={(date) => console.log('Date changed:', date)}
-      />
+
+    
       
       <ScrollView
         className="flex-1"
@@ -296,7 +292,7 @@ const MedTrackerScreen: React.FC = () => {
 
         {/* Today's Medicines */}
         <View className="mb-3 flex-1">
-          <View className="flex-row justify-between items-center mb-3">
+          <View className="flex-row justify-between items-center mb-3 px-2">
             <View className="flex flex-row gap-1 items-center">
               <Ionicons name="medical" size={16} />
               <Text className="text-font-semibold">Today's Medicines</Text>

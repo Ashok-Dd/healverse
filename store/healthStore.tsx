@@ -241,6 +241,11 @@ export const useFoodLogMutations = (date: string) => {
           }
         );
 
+        // invalidate the user-gamification summary to reflect any changes
+        queryClient.invalidateQueries({
+          queryKey: ["gamification", "summary"],
+        });
+
         // Update dashboard data
         const nutrition = calculateTotalNutrition(newLog.items);
         queryClient.setQueryData<DailySummary>(

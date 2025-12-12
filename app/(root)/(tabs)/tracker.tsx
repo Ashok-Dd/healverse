@@ -1,14 +1,15 @@
 import Ping from "@/components/Calorie-counter-button";
-import { Text, TouchableOpacity, View } from "react-native";
-import FoodLoggingTrackerCard from "@/components/cards/FoodLoggingTrackerCard";
-import { SafeAreaView } from "react-native-safe-area-context";
-import React, { useCallback } from "react";
-import { useDateSelectorForHealthStore } from "@/store/healthStore";
 import { NutritionGrid } from "@/components/CalorieProgress";
-import { Feather, Ionicons } from "@expo/vector-icons";
+import FoodLoggingTrackerCard from "@/components/cards/FoodLoggingTrackerCard";
+import CompactInsights from "@/components/CompactInsights";
 import DaySelector from "@/components/DaySelector";
-import { useSummaryData } from "@/hooks/useSummaryData";
 import GlobalHeader from "@/components/headers/GlobalHeader";
+import { useSummaryData } from "@/hooks/useSummaryData";
+import { useDateSelectorForHealthStore } from "@/store/healthStore";
+import { Feather, Ionicons } from "@expo/vector-icons";
+import React, { useCallback } from "react";
+import { Text, TouchableOpacity, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 
 const Tracker = () => {
@@ -71,8 +72,10 @@ const Tracker = () => {
                 />
             )}
 
-            
-
+            {/* ai insights ...but like suggestions from ai
+                with UI matching the rest of the app
+            */}
+            <CompactInsights type="health" />
 
             <Ping />
         </SafeAreaView>

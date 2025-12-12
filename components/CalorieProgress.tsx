@@ -1,6 +1,7 @@
 // src/components/dashboard/NutritionProgress.tsx
 import { CircularProgress } from "@/components/ui/CircularProgress";
 import { DailySummary } from "@/types/type";
+import { Ionicons } from "@expo/vector-icons";
 import React from "react";
 import { FlatList, Text, View } from "react-native";
 
@@ -91,6 +92,7 @@ const NutritionProgress: React.FC<NutritionProgressProps> = ({
   const { consumed, target, progress, unit, title, color } =
     getNutritionData(type);
   const displayColor = customColor || color;
+  const isExceeded = consumed > target;
 
   return (
     <View className="items-center justify-center bg-white">
@@ -108,8 +110,30 @@ const NutritionProgress: React.FC<NutritionProgressProps> = ({
         size={size}
         strokeWidth={strokeWidth}
         progressColor={displayColor}
-        label={consumed}
-        subLabel={`/${target}${unit}`}
+        showCenterContent={true}
+        centerContent={
+          <View className="items-center justify-center">
+            <View className="flex-row items-center">
+              <Text
+                className="text-xl font-bold"
+                style={{ color: isExceeded ? '#EF4444' : displayColor }}
+              >
+                {consumed}
+              </Text>
+              {isExceeded && (
+                <Ionicons 
+                  name="warning" 
+                  size={16} 
+                  color="#EF4444" 
+                  style={{ marginLeft: 4 }} 
+                />
+              )}
+            </View>
+            <Text className="text-xs text-gray-500">
+              /{target}{unit}
+            </Text>
+          </View>
+        }
       />
 
       {showBottomStats && (
@@ -198,3 +222,4 @@ const NutritionGrid: React.FC<NutritionGridProps> = ({
 
 export default NutritionProgress;
 export { NutritionGrid };
+

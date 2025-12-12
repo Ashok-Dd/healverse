@@ -1,12 +1,11 @@
 import { useSummaryData } from "@/hooks/useSummaryData";
-import LoggingSkeleton from "./skeleton/LoggingSkeleton";
-import ErrorCard from "./cards/ErrorCard";
-import PlaceHolder from "./PlaceHolder";
-import { Text, TouchableOpacity, View } from "react-native";
-import { Feather } from "@expo/vector-icons";
-import CalorieSummary from "./CalorieSummary";
 import { DailySummary } from "@/types/type";
+import { Feather } from "@expo/vector-icons";
+import { Text, TouchableOpacity, View } from "react-native";
+import CalorieSummary from "./CalorieSummary";
+import ErrorCard from "./cards/ErrorCard";
 import NutritionInfo from "./NutritionInfo";
+import LoggingSkeleton from "./skeleton/LoggingSkeleton";
 
 interface SummarySectionProps {
     date: string;
@@ -48,6 +47,10 @@ const RenderContent = ({ summary } : { summary: DailySummary }) => (
                     carbs={summary?.consumedCarbs || 0}
                     fat={summary?.consumedFat || 0}
                     protein={summary?.consumedProtein || 0}
+                    targetCalories={summary?.targetCalories}
+                    targetCarbs={summary?.targetCarbs}
+                    targetFat={summary?.targetFat}
+                    targetProtein={summary?.targetProtein}
                 />
             </View>
 

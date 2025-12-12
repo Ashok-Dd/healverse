@@ -262,7 +262,7 @@ const GamificationSection = () => {
 
     return (
         <View className="mx-6 mb-6">
-            <View className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
+            <View className="bg-white rounded-2xl  shadow-sm border border-gray-100">
                 {/* Stats Row */}
                 <View className="flex-row justify-between mb-4">
                     <StatItem
@@ -308,7 +308,7 @@ const GamificationSection = () => {
                             <Text className="text-blue-500 font-jakarta-semi-bold text-sm mr-1">
                                 View Activity
                             </Text>
-                            <Ionicons name="chevron-forward" size={16} color="#3b82f6" />
+                            <Ionicons name="arrow-forward-outline" size={16} color="#3b82f6" />
                         </TouchableOpacity>
                     </View>
                 </View>

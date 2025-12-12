@@ -1,30 +1,37 @@
 import MedicalHeader from "@/components/headers/MedicalHeader";
+import MedicineAutocomplete from "@/components/MedicineAutocomplete";
 import {
-    FREQUENCY_OPTIONS,
-    MEDICINE_TYPES,
-    TIME_OPTIONS,
+  FREQUENCY_OPTIONS,
+  MEDICINE_TYPES,
+  TIME_OPTIONS,
 } from "@/constants/data";
 import { useCreateMedication } from "@/hooks/useMedications";
 import {
-    CreateMedicationRequest,
-    FrequencyType,
-    MedicationType,
+  CreateMedicationRequest,
+  FrequencyType,
+  MedicationType,
 } from "@/types/type";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import React, { useCallback, useMemo, useState } from "react";
 import {
-    Alert,
-    FlatList,
-    ScrollView,
-    StatusBar,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
-    ViewStyle,
+  Alert,
+  FlatList,
+  ScrollView,
+  StatusBar,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+  ViewStyle,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+
+// Medicine item interface
+interface MedicineItem {
+  name: string;
+  type: 'medicine' | 'supplement';
+}
 
 // Form type
 interface MedicationFormData {
@@ -36,6 +43,7 @@ interface MedicationFormData {
   notes?: string;
   startDate: string;
   endDate?: string;
+  selectedMedicine?: MedicineItem;
 }
 
 // Helper functions
@@ -133,6 +141,14 @@ const AddMedicineScreen: React.FC = () => {
     }));
   }, []);
 
+  const handleMedicineSelect = useCallback((medicine: MedicineItem) => {
+    setMedicineData((prev) => ({
+      ...prev,
+      selectedMedicine: medicine,
+      name: medicine.name,
+    }));
+  }, []);
+
   // Create medication request object
   const createMedicationRequest = useCallback((): CreateMedicationRequest => {
     return {
@@ -191,14 +207,31 @@ const AddMedicineScreen: React.FC = () => {
         <Text className="text-gray-700 font-semibold mb-2 text-base">
           Medicine Name *
         </Text>
-        <TextInput
-          className="bg-white rounded-xl px-4 py-3 text-gray-800 text-base border border-gray-200"
-          placeholder="e.g., Lisinopril, Aspirin"
+        <MedicineAutocomplete
           value={medicineData.name}
           onChangeText={(text) => handleInputChange("name", text)}
+          onSelect={handleMedicineSelect}
+          placeholder="e.g., Lisinopril, Aspirin"
           autoCapitalize="words"
           returnKeyType="next"
         />
+        {medicineData.selectedMedicine && (
+          <View className="mt-2 flex-row items-center">
+            <View className={`w-6 h-6 rounded-full items-center justify-center mr-2 ${
+              medicineData.selectedMedicine.type === 'medicine' ? 'bg-blue-100' : 'bg-green-100'
+            }`}>
+              <Ionicons 
+                name={medicineData.selectedMedicine.type === 'medicine' ? 'medical' : 'leaf'} 
+                size={12} 
+                color={medicineData.selectedMedicine.type === 'medicine' ? '#3B82F6' : '#10B981'} 
+              />
+            </View>
+            <Text className="text-sm text-gray-600">
+              Selected: <Text className="font-semibold">{medicineData.selectedMedicine.name}</Text>
+              <Text className="text-xs text-gray-500"> ({medicineData.selectedMedicine.type})</Text>
+            </Text>
+          </View>
+        )}
       </View>
 
       {/* Dosage */}

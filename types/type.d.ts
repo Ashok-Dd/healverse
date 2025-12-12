@@ -386,6 +386,10 @@ export interface NutritionInfoProps {
   protein: number;
   fat: number;
   carbs: number;
+  targetCalories?: number;
+  targetProtein?: number;
+  targetFat?: number;
+  targetCarbs?: number;
 }
 
 export interface ButtonProps {
@@ -656,3 +660,18 @@ export interface GamificationSummary {
   lastLogin: string; // ISO date string
   recentActivity: GamificationActivity[];
 }
+
+// Insights API Types
+export type InsightType = "SUGGESTION" | "BETTER" | "WARNING" | "INFO";
+
+export interface Insight {
+  content: string;
+  type: InsightType;
+}
+
+export interface InsightsData {
+  medicationInsights: Insight[];
+  dietInsights: Insight[];
+  healthInsights: Insight[];
+}
+
