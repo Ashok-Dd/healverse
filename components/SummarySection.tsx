@@ -1,11 +1,12 @@
+import { INFO_ABOUT_CALORIE_CALCUATION } from "@/constants";
 import { useSummaryData } from "@/hooks/useSummaryData";
 import { DailySummary } from "@/types/type";
-import { Feather } from "@expo/vector-icons";
-import { Text, TouchableOpacity, View } from "react-native";
+import { Text, View } from "react-native";
 import CalorieSummary from "./CalorieSummary";
 import ErrorCard from "./cards/ErrorCard";
 import NutritionInfo from "./NutritionInfo";
 import LoggingSkeleton from "./skeleton/LoggingSkeleton";
+import GuidanceButton from "./ui/GuidanceButton";
 
 interface SummarySectionProps {
     date: string;
@@ -20,9 +21,13 @@ const RenderContent = ({ summary } : { summary: DailySummary }) => (
                     Remaining Calorie
                 </Text>
 
-                <TouchableOpacity className="ml-auto">
-                    <Feather name="info" color={"skyblue"} size={20} />
-                </TouchableOpacity>
+                <GuidanceButton
+                    title="About Calorie Calculation"
+                    content={INFO_ABOUT_CALORIE_CALCUATION}
+                    variant="icon-only"
+                    size="small"
+                />
+
             </View>
 
             <View className="bg-gray-100 rounded-lg p-4 mx-4 mb-4 shadow-sm">

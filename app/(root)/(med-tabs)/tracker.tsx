@@ -1,3 +1,4 @@
+import CompactInsights from "@/components/CompactInsights";
 import MedicalHeader from "@/components/headers/MedicalHeader";
 import SwipeableMedicineCard from "@/components/medication/SwipableMedicineCard";
 import { useDashboardStats } from "@/hooks/useMedicationDashboard";
@@ -289,6 +290,9 @@ const MedTrackerScreen: React.FC = () => {
             </View>
           </View>
         </View>
+
+
+        <CompactInsights type="medication" maxItems={3}  />
 
         {/* Today's Medicines */}
         <View className="mb-3 flex-1">

@@ -5,12 +5,15 @@ import MealCard from "@/components/MealCard";
 import NutritionInfo from "@/components/NutritionInfo";
 import PlaceHolder from "@/components/PlaceHolder";
 import Skeleton from "@/components/skeleton/Skeleton";
+import GuidanceButton from "@/components/ui/GuidanceButton";
 import IconButton from "@/components/ui/IconButton";
+import { INFO_ABOUT_DIET_PLAN } from "@/constants";
 import { showToast } from "@/lib/toast";
 import { useDietPlanManager } from "@/store/dietPlan";
 import { DietPlan, Meal, MealType } from "@/types/type";
 import React from "react";
 import {
+  RefreshControl,
   ScrollView,
   StatusBar,
   StyleSheet,
@@ -39,7 +42,7 @@ const Profile = () => {
     handleRefresh,
     isRegenerating,
     isRefreshing,
-    isToday
+    isToday,
   } = useDietPlanManager();
 
   const handleGenerateNewPlan = async () => {
@@ -126,6 +129,10 @@ const Profile = () => {
         <ScrollView
           className="flex-1 py-1"
           showsVerticalScrollIndicator={false}
+          refreshControl={
+            // Pull to refresh control
+            <RefreshControl refreshing={isRefreshing} onRefresh={handleRefresh} />
+          }
         >
           {/* Nutrition Info */}
           <View>
@@ -134,6 +141,13 @@ const Profile = () => {
               <Text className="text-xs font-semibold text-gray-800">
                 Daily Total
               </Text>
+
+              <GuidanceButton
+                title="About Diet Plan"
+                content={INFO_ABOUT_DIET_PLAN}
+                variant="icon-only"
+                size="small"
+              />
             </View>
             <NutritionInfo
               calories={totalNutrition.calories}

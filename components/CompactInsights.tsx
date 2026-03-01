@@ -1,6 +1,6 @@
 import { useInsights } from "@/lib/tanstack";
-import { Insight, InsightType } from "@/types/type";
-import { Feather } from "@expo/vector-icons";
+import { Insight } from "@/types/type";
+import { Feather, Ionicons } from "@expo/vector-icons";
 import React from "react";
 import { ActivityIndicator, Text, TouchableOpacity, View } from "react-native";
 
@@ -16,8 +16,6 @@ const CompactInsights: React.FC<CompactInsightsProps> = ({
   onPress
 }) => {
   const { data, isLoading, error } = useInsights();
-
-  console.log("Insights data:", data);
 
   // Get insights based on type
   const getInsights = (): Insight[] => {
@@ -40,118 +38,89 @@ const CompactInsights: React.FC<CompactInsightsProps> = ({
     switch (type) {
       case "health":
         return {
-          color: "text-red-500",
-          bgColor: "bg-red-50",
-          emoji: "❤️",
-          title: "Health Tips"
+          icon: "heart-outline" as keyof typeof Ionicons.glyphMap,
+          title: "AI Health Insights"
         };
       case "diet":
         return {
-          color: "text-green-500",
-          bgColor: "bg-green-50",
-          emoji: "🥗",
-          title: "Diet Tips"
+          icon: "restaurant" as keyof typeof Ionicons.glyphMap,
+          title: "AI Diet Insights"
         };
       case "medication":
         return {
-          color: "text-blue-500",
-          bgColor: "bg-blue-50",
-          emoji: "💊",
-          title: "Medication Tips"
+          icon: "medical" as keyof typeof Ionicons.glyphMap,
+          title: "AI Medication Insights"
         };
       default:
         return {
-          color: "text-gray-500",
-          bgColor: "bg-gray-50",
-          emoji: "ℹ️",
-          title: "Tips"
+          icon: "bulb" as keyof typeof Ionicons.glyphMap,
+          title: "AI Insights"
         };
-    }
-  };
-
-  // Get insight type icon
-  const getInsightIcon = (insightType: InsightType) => {
-    switch (insightType) {
-      case "SUGGESTION":
-        return "💡";
-      case "BETTER":
-        return "📈";
-      case "WARNING":
-        return "⚠️";
-      case "INFO":
-        return "ℹ️";
-      default:
-        return "💭";
     }
   };
 
   const insights = getInsights().slice(0, maxItems);
   const typeConfig = getTypeConfig();
 
-  const renderContent = () => {
-    if (isLoading) {
-      return (
-        <View className="flex-center py-4">
+  // If loading, show skeleton matching tracker style
+  if (isLoading) {
+    return (
+      <View>
+        <View className="flex flex-row gap-1 items-center mb-2">
+          <View className="w-4 h-4 bg-gray-200 rounded-full" />
+          <View className="w-32 h-4 bg-gray-200 rounded" />
+        </View>
+        <View className="bg-gray-100 rounded-xl p-4">
           <ActivityIndicator size="small" color="#9CA3AF" />
         </View>
-      );
-    }
+      </View>
+    );
+  }
 
-    if (error || insights.length === 0) {
-      return (
-        <View className="flex-center py-3">
-          <Text className="text-gray-400 text-xs">No insights available</Text>
+  // If no insights, don't render anything (clean like tracker)
+  if (error || insights.length === 0) {
+    return null;
+  }
+
+  return (
+    <View className="my-5">
+      {/* Header matching tracker style */}
+      <View className="flex flex-row justify-between items-center mb-2">
+        <View className="flex flex-row gap-1 items-center">
+          <Ionicons name={typeConfig.icon} size={16} />
+          <Text className="text-font-semibold">{typeConfig.title}</Text>
         </View>
-      );
-    }
+        {onPress && (
+          <TouchableOpacity onPress={onPress}>
+            <Feather name="arrow-right-circle" size={20} color={"skyblue"} />
+          </TouchableOpacity>
+        )}
+      </View>
 
-    return (
-      <View className="space-y-2">
+      {/* Content in tracker style container */}
+      <View className="bg-gray-100 rounded-xl p-4">
         {insights.map((insight, index) => (
-          <View key={index} className="flex-row items-start">
-            <Text className="text-xs mr-2 mt-0.5">
-              {getInsightIcon(insight.type)}
-            </Text>
-            <Text className="text-xs text-gray-700 leading-relaxed flex-1" numberOfLines={2}>
+          <View 
+            key={index} 
+            className={`flex-row items-start ${index < insights.length - 1 ? 'mb-3' : ''}`}
+          >
+            <View className="w-2 h-2 bg-blue-500 rounded-full mt-2 mr-3" />
+            <Text className="text-sm text-gray-800 leading-relaxed flex-1">
               {insight.content}
             </Text>
           </View>
         ))}
-      </View>
-    );
-  };
-
-  const Component = onPress ? TouchableOpacity : View;
-  const containerProps = onPress ? { onPress, activeOpacity: 0.7 } : {};
-
-  return (
-    <Component 
-      className={`${typeConfig.bgColor} rounded-lg p-3 mx-1 mb-2`}
-      {...containerProps}
-    >
-      {/* Header */}
-      <View className="flex-row items-center justify-between mb-2">
-        <View className="flex-row items-center">
-          <Text className="text-sm mr-2">{typeConfig.emoji}</Text>
-          <Text className="text-sm font-medium text-gray-800">{typeConfig.title}</Text>
-        </View>
-        {onPress && (
-          <Feather name="chevron-right" size={14} color="#9CA3AF" />
+        
+        {/* Show count if there are more */}
+        {data && getInsights().length > maxItems && (
+          <View className="mt-3 pt-3 border-t border-gray-200">
+            <Text className="text-xs text-gray-500 text-center">
+              +{getInsights().length - maxItems} more insight{getInsights().length - maxItems !== 1 ? 's' : ''}
+            </Text>
+          </View>
         )}
       </View>
-
-      {/* Content */}
-      {renderContent()}
-
-      {/* Footer - Show count if there are more */}
-      {!isLoading && !error && data && getInsights().length > maxItems && (
-        <View className="mt-2 pt-2 border-t border-gray-200">
-          <Text className="text-xs text-gray-500 text-center">
-            +{getInsights().length - maxItems} more
-          </Text>
-        </View>
-      )}
-    </Component>
+    </View>
   );
 };
 

@@ -124,7 +124,7 @@ const PulseButton = () => {
   return (
     <>
       {/* Medication Button with Enhanced Animation */}
-      <View style={styles.container} className="bottom-28 -left-10 absolute">
+      <View style={styles.container} className="bottom-1 -left-10 absolute">
         {/* Medication button pulse background */}
         <Animated.View
           style={[
@@ -174,7 +174,7 @@ const PulseButton = () => {
             onPress={() => {
               hideTooltip();
               handleButtonPress(() => {
-                router.push(`/(root)/(med-tabs)/home` as any);
+                router.push(`/(root)/(med-tabs)/tracker` as any);
               });
             }}
           >
@@ -248,7 +248,7 @@ const styles = StyleSheet.create({
     height: 75,
     borderRadius: 40,
     backgroundColor: "#22c55e",
-    opacity: 0.4,
+    opacity: 0.1,
   },
   medPulseBackground: {
     position: "absolute",

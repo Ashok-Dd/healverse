@@ -41,7 +41,7 @@ const Tracker = () => {
                 handleDateChange={handleDateChange}
             />
 
-            <View className=" flex-row flex  items-center justify-between ">
+            <View className=" flex-row flex  py-2  items-center justify-between ">
                 <View className="flex flex-row gap-1  items-center  ">
                     <Feather name="clock" size={16} />
                     <Text className="text-font-semibold">Logged Foods</Text>

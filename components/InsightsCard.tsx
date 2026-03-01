@@ -1,21 +1,21 @@
 import { useInsights } from "@/lib/tanstack";
 import { Insight, InsightType } from "@/types/type";
-import { Feather, MaterialIcons } from "@expo/vector-icons";
+import { Feather, Ionicons } from "@expo/vector-icons";
 import React from "react";
-import { ActivityIndicator, Text, View } from "react-native";
+import { ActivityIndicator, Text, TouchableOpacity, View } from "react-native";
 
 interface InsightsCardProps {
   type: "health" | "diet" | "medication";
   title?: string;
-  showIcon?: boolean;
   maxItems?: number;
+  onViewAll?: () => void;
 }
 
 const InsightsCard: React.FC<InsightsCardProps> = ({ 
   type, 
   title, 
-  showIcon = true, 
-  maxItems = 5 
+  maxItems = 5,
+  onViewAll
 }) => {
   const { data, isLoading, error } = useInsights();
 
@@ -35,144 +35,78 @@ const InsightsCard: React.FC<InsightsCardProps> = ({
     }
   };
 
-  // Get icon and colors based on type
+  // Get icon and title based on type
   const getTypeConfig = () => {
     switch (type) {
       case "health":
         return {
-          icon: "heart",
-          color: "text-red-500",
-          bgColor: "bg-red-50",
-          borderColor: "border-red-100",
-          emoji: "❤️"
+          icon: "heart" as keyof typeof Ionicons.glyphMap,
+          title: title || "Health Insights"
         };
       case "diet":
         return {
-          icon: "restaurant",
-          color: "text-green-500",
-          bgColor: "bg-green-50",
-          borderColor: "border-green-100",
-          emoji: "🥗"
+          icon: "restaurant" as keyof typeof Ionicons.glyphMap,
+          title: title || "Diet Insights"
         };
       case "medication":
         return {
-          icon: "local-pharmacy",
-          color: "text-blue-500",
-          bgColor: "bg-blue-50",
-          borderColor: "border-blue-100",
-          emoji: "💊"
+          icon: "medical" as keyof typeof Ionicons.glyphMap,
+          title: title || "Medication Insights"
         };
       default:
         return {
-          icon: "info",
-          color: "text-gray-500",
-          bgColor: "bg-gray-50",
-          borderColor: "border-gray-100",
-          emoji: "ℹ️"
+          icon: "bulb" as keyof typeof Ionicons.glyphMap,
+          title: title || "Insights"
         };
     }
   };
 
-  // Get insight type styling
-  const getInsightTypeStyle = (insightType: InsightType) => {
+  // Get insight type styling for individual insights
+  const getInsightTypeColor = (insightType: InsightType) => {
     switch (insightType) {
       case "SUGGESTION":
-        return {
-          icon: "lightbulb-outline",
-          color: "text-yellow-600",
-          bgColor: "bg-yellow-50",
-          borderColor: "border-yellow-200"
-        };
+        return "bg-blue-100 border-blue-300";
       case "BETTER":
-        return {
-          icon: "trending-up",
-          color: "text-green-600",
-          bgColor: "bg-green-50",
-          borderColor: "border-green-200"
-        };
+        return "bg-green-100 border-green-300";
       case "WARNING":
-        return {
-          icon: "warning",
-          color: "text-orange-600",
-          bgColor: "bg-orange-50",
-          borderColor: "border-orange-200"
-        };
+        return "bg-orange-100 border-orange-300";
       case "INFO":
-        return {
-          icon: "info-outline",
-          color: "text-blue-600",
-          bgColor: "bg-blue-50",
-          borderColor: "border-blue-200"
-        };
+        return "bg-gray-100 border-gray-300";
       default:
-        return {
-          icon: "info-outline",
-          color: "text-gray-600",
-          bgColor: "bg-gray-50",
-          borderColor: "border-gray-200"
-        };
+        return "bg-gray-100 border-gray-300";
     }
   };
 
   const insights = getInsights().slice(0, maxItems);
   const typeConfig = getTypeConfig();
-  const displayTitle = title || `${type.charAt(0).toUpperCase() + type.slice(1)} Insights`;
 
+  // Loading state matching tracker style
   if (isLoading) {
     return (
-      <View className={`bg-white rounded-xl p-4 mx-1 mb-4 shadow-sm ${typeConfig.borderColor} border`}>
-        <View className="flex-row items-center mb-3">
-          {showIcon && (
-            <View className={`w-8 h-8 ${typeConfig.bgColor} rounded-full flex-center mr-3`}>
-              <Text className="text-sm">{typeConfig.emoji}</Text>
-            </View>
-          )}
-          <Text className="text-lg font-semibold text-gray-800 flex-1">{displayTitle}</Text>
+      <View>
+        <View className="flex flex-row gap-1 items-center mb-2">
+          <View className="w-4 h-4 bg-gray-200 rounded-full" />
+          <View className="w-40 h-4 bg-gray-200 rounded" />
         </View>
-        <View className="flex-center py-8">
-          <ActivityIndicator size="small" color="#6B7280" />
-          <Text className="text-gray-500 text-sm mt-2">Loading insights...</Text>
+        <View className="bg-gray-100 rounded-xl p-4">
+          <ActivityIndicator size="small" color="#9CA3AF" />
+          <Text className="text-gray-500 text-sm mt-2 text-center">Loading insights...</Text>
         </View>
       </View>
     );
   }
 
-  if (error) {
+  // Error or empty state
+  if (error || insights.length === 0) {
     return (
-      <View className={`bg-white rounded-xl p-4 mx-1 mb-4 shadow-sm ${typeConfig.borderColor} border`}>
-        <View className="flex-row items-center mb-3">
-          {showIcon && (
-            <View className={`w-8 h-8 ${typeConfig.bgColor} rounded-full flex-center mr-3`}>
-              <Text className="text-sm">{typeConfig.emoji}</Text>
-            </View>
-          )}
-          <Text className="text-lg font-semibold text-gray-800 flex-1">{displayTitle}</Text>
+      <View>
+        <View className="flex flex-row gap-1 items-center mb-2">
+          <Ionicons name={typeConfig.icon} size={16} />
+          <Text className="text-font-semibold">{typeConfig.title}</Text>
         </View>
-        <View className="flex-center py-4">
-          <Feather name="alert-circle" size={24} color="#EF4444" />
-          <Text className="text-gray-500 text-sm mt-2 text-center">
-            Unable to load insights
-          </Text>
-        </View>
-      </View>
-    );
-  }
-
-  if (insights.length === 0) {
-    return (
-      <View className={`bg-white rounded-xl p-4 mx-1 mb-4 shadow-sm ${typeConfig.borderColor} border`}>
-        <View className="flex-row items-center mb-3">
-          {showIcon && (
-            <View className={`w-8 h-8 ${typeConfig.bgColor} rounded-full flex-center mr-3`}>
-              <Text className="text-sm">{typeConfig.emoji}</Text>
-            </View>
-          )}
-          <Text className="text-lg font-semibold text-gray-800 flex-1">{displayTitle}</Text>
-        </View>
-        <View className="flex-center py-6">
-          <Feather name="smile" size={24} color="#9CA3AF" />
-          <Text className="text-gray-500 text-sm mt-2 text-center">
-            No insights available at the moment
+        <View className="bg-gray-100 rounded-xl p-4">
+          <Text className="text-gray-500 text-sm text-center">
+            {error ? "Unable to load insights" : "No insights available"}
           </Text>
         </View>
       </View>
@@ -180,67 +114,45 @@ const InsightsCard: React.FC<InsightsCardProps> = ({
   }
 
   return (
-    <View className={`bg-white rounded-xl p-4 mx-1 mb-4 shadow-sm ${typeConfig.borderColor} border`}>
-      {/* Header */}
-      <View className="flex-row items-center mb-4">
-        {showIcon && (
-          <View className={`w-8 h-8 ${typeConfig.bgColor} rounded-full flex-center mr-3`}>
-            <Text className="text-sm">{typeConfig.emoji}</Text>
+    <View>
+      {/* Header matching tracker style */}
+      <View className="flex flex-row justify-between items-center mb-2">
+        <View className="flex flex-row gap-1 items-center">
+          <Ionicons name={typeConfig.icon} size={16} />
+          <Text className="text-font-semibold">{typeConfig.title}</Text>
+        </View>
+        {onViewAll && (
+          <TouchableOpacity onPress={onViewAll}>
+            <Feather name="arrow-right-circle" size={20} color={"skyblue"} />
+          </TouchableOpacity>
+        )}
+      </View>
+
+      {/* Content in tracker style container */}
+      <View className="bg-gray-100 rounded-xl p-4">
+        {insights.map((insight, index) => (
+          <View 
+            key={index} 
+            className={`p-3 rounded-lg border-l-4 ${getInsightTypeColor(insight.type)} ${index < insights.length - 1 ? 'mb-3' : ''}`}
+          >
+            <Text className="text-sm text-gray-800 leading-relaxed">
+              {insight.content}
+            </Text>
+            <Text className="text-xs text-gray-600 mt-1 capitalize">
+              {insight.type.toLowerCase()}
+            </Text>
+          </View>
+        ))}
+        
+        {/* Show count if there are more */}
+        {data && getInsights().length > maxItems && (
+          <View className="mt-3 pt-3 border-t border-gray-200">
+            <Text className="text-xs text-gray-500 text-center">
+              +{getInsights().length - maxItems} more insight{getInsights().length - maxItems !== 1 ? 's' : ''} available
+            </Text>
           </View>
         )}
-        <Text className="text-lg font-semibold text-gray-800 flex-1">{displayTitle}</Text>
-        <View className={`px-2 py-1 ${typeConfig.bgColor} rounded-full`}>
-          <Text className={`text-xs font-medium ${typeConfig.color}`}>
-            {insights.length} tip{insights.length !== 1 ? 's' : ''}
-          </Text>
-        </View>
       </View>
-
-      {/* Insights List */}
-      <View className="space-y-3">
-        {insights.map((insight, index) => {
-          const insightStyle = getInsightTypeStyle(insight.type);
-          
-          return (
-            <View 
-              key={index} 
-              className={`p-3 rounded-lg ${insightStyle.bgColor} ${insightStyle.borderColor} border-l-4`}
-            >
-              <View className="flex-row items-start">
-                <View className="mr-3 mt-0.5">
-                  <MaterialIcons 
-                    name={insightStyle.icon as any} 
-                    size={16} 
-                    color={insightStyle.color.includes('yellow') ? '#D97706' : 
-                           insightStyle.color.includes('green') ? '#059669' :
-                           insightStyle.color.includes('orange') ? '#EA580C' :
-                           insightStyle.color.includes('blue') ? '#2563EB' : '#6B7280'} 
-                  />
-                </View>
-                <View className="flex-1">
-                  <Text className="text-sm text-gray-800 leading-relaxed">
-                    {insight.content}
-                  </Text>
-                  <View className="mt-1">
-                    <Text className={`text-xs font-medium capitalize ${insightStyle.color}`}>
-                      {insight.type.toLowerCase()}
-                    </Text>
-                  </View>
-                </View>
-              </View>
-            </View>
-          );
-        })}
-      </View>
-
-      {/* Footer - Show if there are more insights */}
-      {data && getInsights().length > maxItems && (
-        <View className="mt-4 pt-3 border-t border-gray-100">
-          <Text className="text-center text-xs text-gray-500">
-            +{getInsights().length - maxItems} more insight{getInsights().length - maxItems !== 1 ? 's' : ''} available
-          </Text>
-        </View>
-      )}
     </View>
   );
 };

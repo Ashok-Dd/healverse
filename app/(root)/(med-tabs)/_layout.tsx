@@ -22,15 +22,7 @@ export default function TabLayout() {
                 headerShown: false,
             }}>
 
-            <Tabs.Screen
-                name="home"
-                options={{
-                    title: 'Home',
-                    tabBarIcon: ({ color, size }) => (
-                        <Ionicons name="home" size={size} color={color} />
-                    ),
-                }}
-            />
+
 
             <Tabs.Screen
                 name="tracker"

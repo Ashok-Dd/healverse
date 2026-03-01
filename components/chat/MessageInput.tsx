@@ -356,6 +356,10 @@ export const MessageInput: React.FC<MessageInputProps> = ({
                   textAlignVertical: "top",
                 } as TextStyle
               }
+
+              onPress={() => {
+                ;
+              }}
             />
           </View>
 
