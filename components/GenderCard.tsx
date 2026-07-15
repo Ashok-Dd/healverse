@@ -35,7 +35,7 @@ const GenderCard = ({
                 <Image
                     source={image}
                     className={`mb-4 ${
-                        gender === "MALE" ? "w-36 h-64" : "w-34 h-60"
+                        gender === "MALE" ? "w-36 h-64" : "w-36 h-60"
                     }`}
                     resizeMode="contain"
                 />

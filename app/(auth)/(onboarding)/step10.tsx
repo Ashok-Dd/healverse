@@ -14,16 +14,6 @@ const Step10 = () => {
 
     const handleSelectionChange = (value: string | null) => {
         setSelectedOption(value);
-        console.log("Selected option:", value);
-
-        // Handle navigation or next steps based on selection
-        if (value === "add_details") {
-            // Navigate to details form or next screen
-            // console.log("User wants to add more details");
-        } else {
-            // User is all set, proceed to final step
-            // console.log("User is all set");
-        }
     };
 
     return (

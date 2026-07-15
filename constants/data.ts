@@ -3,32 +3,15 @@ import {
   DailySummary,
   DietaryRestriction,
   DietPlan,
-  FrequencyType,
   Goal,
   HealthCondition,
   HealthData,
   HealthQuery,
   Meal,
-  MedicationType,
   OptionsCardProps,
   Question,
   User,
 } from "@/types/type";
-
-export interface MedicineTypeOption {
-  id: MedicationType;
-  title: string;
-  icon: string;
-  bgColor: string;
-  iconBg: string;
-}
-
-export interface FrequencyOption {
-  id: FrequencyType;
-  title: string;
-  subtitle: string;
-  recommendedTimes: number;
-}
 
 export const questions: Question[] = [
   {
@@ -81,78 +64,6 @@ export const questions: Question[] = [
     type: "textarea",
     placeholder:
       "e.g., Fasting required, bring insurance card, discuss symptoms, medication allergies...",
-  },
-];
-
-export const MEDICINE_TYPES: MedicineTypeOption[] = [
-  {
-    id: "TABLET",
-    title: "Tablet",
-    icon: "💊",
-    bgColor: "bg-blue-100",
-    iconBg: "bg-blue-500",
-  },
-  {
-    id: "CAPSULE",
-    title: "Capsule",
-    icon: "💊",
-    bgColor: "bg-gray-100",
-    iconBg: "bg-teal-500",
-  },
-  {
-    id: "LIQUID",
-    title: "Liquid",
-    icon: "🧪",
-    bgColor: "bg-gray-100",
-    iconBg: "bg-purple-500",
-  },
-  {
-    id: "INJECTION",
-    title: "Injection",
-    icon: "💉",
-    bgColor: "bg-gray-100",
-    iconBg: "bg-pink-500",
-  },
-  {
-    id: "INHALER",
-    title: "Inhaler",
-    icon: "🫁",
-    bgColor: "bg-gray-100",
-    iconBg: "bg-orange-500",
-  },
-  {
-    id: "DROPS",
-    title: "Drops",
-    icon: "💧",
-    bgColor: "bg-gray-100",
-    iconBg: "bg-blue-400",
-  },
-];
-
-export const FREQUENCY_OPTIONS: FrequencyOption[] = [
-  {
-    id: "DAILY",
-    title: "Once Daily",
-    subtitle: "Take once per day",
-    recommendedTimes: 1,
-  },
-  {
-    id: "TWICE_DAILY",
-    title: "Twice Daily",
-    subtitle: "Morning & Evening",
-    recommendedTimes: 2,
-  },
-  {
-    id: "THREE_TIMES",
-    title: "Three Times",
-    subtitle: "Morning, Afternoon & Night",
-    recommendedTimes: 3,
-  },
-  {
-    id: "WEEKLY",
-    title: "Weekly",
-    subtitle: "Once a week",
-    recommendedTimes: 1,
   },
 ];
 
@@ -330,12 +241,6 @@ export const THANKS_BOY_OPTIONS = [
     value: "all_set",
     icon: "",
   },
-  {
-    label: "Add more details",
-    image: require("@/assets/images/AddDetails-boy.png"),
-    value: "add_details",
-    icon: "",
-  },
 ];
 
 export const THANKS_GIRL_OPTIONS = [
@@ -343,12 +248,6 @@ export const THANKS_GIRL_OPTIONS = [
     label: "Thanks, I'm all set",
     image: require("@/assets/images/Thanks-girl.png"),
     value: "all_set",
-    icon: "",
-  },
-  {
-    label: "Add more details",
-    image: require("@/assets/images/AddDetails-girl.png"),
-    value: "add_details",
     icon: "",
   },
 ];
@@ -631,10 +530,10 @@ export const healthQueries: HealthQuery[] = [
   },
   {
     id: "4",
-    icon: "medical-outline",
-    title: "Medication Guide",
-    description: "How should I properly manage my daily medications?",
-    category: "Pharmacy",
+    icon: "restaurant-outline",
+    title: "Meal Planning",
+    description: "How do I plan balanced meals that fit my diet goals?",
+    category: "Nutrition",
     color: "#8B5CF6",
   },
   {

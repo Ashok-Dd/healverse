@@ -4,6 +4,7 @@ import { useUserProfileStore } from "@/store/userProfile";
 import { Gender } from "@/types/type";
 import React, { useCallback, useEffect, useMemo, useRef } from "react";
 import { Text, View } from "react-native";
+import { useShallow } from "zustand/react/shallow";
 
 // Memoized title component to prevent unnecessary re-renders
 const HeightSelectionTitle = React.memo(() => (
@@ -16,7 +17,13 @@ HeightSelectionTitle.displayName = 'HeightSelectionTitle';
 
 const Step3 = () => {
 
-    const { gender, heightCm, setHeightCm } = useUserProfileStore();
+    const { gender, heightCm, setHeightCm } = useUserProfileStore(
+        useShallow((state) => ({
+            gender: state.gender,
+            heightCm: state.heightCm,
+            setHeightCm: state.setHeightCm,
+        }))
+    );
 
 
     const [selectedHeight, setSelectedHeight] = React.useState<number>(100);

@@ -1,11 +1,13 @@
 import { Feather } from "@expo/vector-icons";
 import React from "react";
-import { ScrollView, View } from "react-native";
+import { View } from "react-native";
 import Skeleton from "./Skeleton"; // your Skeleton component
 
 const DashboardSkeleton = () => {
     return (
-        <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
+        // No ScrollView here — this renders inside the logging screen's own
+        // ScrollView, and nesting ScrollViews in RN causes gesture/scroll jank.
+        <View>
             {/* Remaining Calorie */}
             <View className="flex-row items-center mb-2 px-5">
                 <Skeleton width={24} height={24} radius={12} className="mr-2" />
@@ -27,7 +29,7 @@ const DashboardSkeleton = () => {
                 </View>
                 <Skeleton height={64} radius={8} />
             </View>
-        </ScrollView>
+        </View>
     );
 };
 

@@ -7,15 +7,22 @@ import { convertWeight } from "@/lib/utils";
 import { useUserProfileStore } from "@/store/userProfile";
 import React, { memo, useCallback, useEffect, useMemo, useState } from "react";
 import { Text, View } from "react-native";
+import { useShallow } from "zustand/react/shallow";
 
-const Step2 = memo(() => {
+const TargetWeightStep = memo(() => {
   const [selectedUnit, setSelectedUnit] = useState<"kg" | "lbs">("kg");
 
   const {
     targetWeightKg,
     setTargetWeightKg,
     heightCm: userHeight,
-  } = useUserProfileStore();
+  } = useUserProfileStore(
+    useShallow((state) => ({
+      targetWeightKg: state.targetWeightKg,
+      setTargetWeightKg: state.setTargetWeightKg,
+      heightCm: state.heightCm,
+    }))
+  );
 
   const [targetWeight, setTargetWeight] = useState<number>(targetWeightKg);
 
@@ -51,25 +58,6 @@ const Step2 = memo(() => {
       ? targetWeight
       : convertWeight(targetWeight, "lbs", "kg");
   }, [targetWeight, selectedUnit]);
-
-  // // Memoize display weight calculation
-  // const displayWeight = useMemo(() => {
-  //     return selectedUnit === "kg"
-  //         ? targetWeight.toFixed(1)
-  //         : Math.round(targetWeight).toString();
-  // }, [targetWeight, selectedUnit]);
-  //
-  // // Unit button styles
-  // const getUnitButtonStyle = useCallback((isSelected: boolean): ViewStyle => ({
-  //     paddingHorizontal: 24,
-  //     paddingVertical: 8,
-  //     backgroundColor: isSelected ? "#10B981" : "transparent",
-  // }), []);
-  //
-  // const getUnitTextStyle = useCallback((isSelected: boolean): TextStyle => ({
-  //     fontWeight: "600" as const,
-  //     color: isSelected ? "#FFFFFF" : "#6B7280",
-  // }), []);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -111,6 +99,6 @@ const Step2 = memo(() => {
   );
 });
 
-Step2.displayName = "Step2";
+TargetWeightStep.displayName = "TargetWeightStep";
 
-export default Step2;
+export default TargetWeightStep;

@@ -1,6 +1,6 @@
 import { NotificationService } from "@/utils/notifications";
 import * as Notifications from "expo-notifications";
-import React, { createContext, ReactNode, useContext, useEffect } from "react";
+import React, { createContext, ReactNode, useContext, useEffect, useMemo } from "react";
 
 interface NotificationContextType {}
 
@@ -44,8 +44,10 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({
     };
   }, []);
 
+  const value = useMemo<NotificationContextType>(() => ({}), []);
+
   return (
-    <NotificationContext.Provider value={{}}>
+    <NotificationContext.Provider value={value}>
       {children}
     </NotificationContext.Provider>
   );

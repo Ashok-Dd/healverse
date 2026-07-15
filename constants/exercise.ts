@@ -1,6 +1,8 @@
 import {IntensityLevel} from "@/types/type";
+import { Ionicons } from "@expo/vector-icons";
+import { ComponentProps } from "react";
 
-export const EXERCISE_ICONS: { [key: string]: string } = {
+export const EXERCISE_ICONS: { [key: string]: ComponentProps<typeof Ionicons>["name"] } = {
     walking: "walk",
     running: "fitness",
     cycling: "bicycle",

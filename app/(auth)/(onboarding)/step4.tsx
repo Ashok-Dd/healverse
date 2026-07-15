@@ -1,13 +1,11 @@
 import OnboardingWrapper from "@/components/OnboardingWrapper";
 import React, {useCallback, useMemo, useState, memo, useEffect} from "react";
-import { Text , Dimensions , TextStyle , View } from "react-native";
-import { RulerPicker } from "react-native-ruler-picker";
+import { Text, View } from "react-native";
 import { useUserProfileStore } from "@/store/userProfile";
+import { useShallow } from "zustand/react/shallow";
 import BMIIndicator from "@/components/BmiIndicator";
 import UnitToggle from "@/components/UnitToggle";
 import WeightRulerPicker from "@/components/WeightRulerPicker";
-
-
 
 interface WeightRange {
     min: number;
@@ -15,64 +13,16 @@ interface WeightRange {
     step: number;
 }
 
-// // Optimized Weight Ruler Component
-// const WeightRuler = memo<{
-//     selectedUnit: "kg" | "lbs";
-//     selectedWeight: number;
-//     weightRange: WeightRange;
-//     onWeightChange: (value: string) => void;
-// }>(({ selectedUnit, selectedWeight, weightRange, onWeightChange }) => {
-//     const screenWidth = useMemo(() => Dimensions.get("window").width, []);
-//
-//     // Memoized text styles for better performance
-//     const valueTextStyle = useMemo((): TextStyle => ({
-//         color: "#3B82F6",
-//         fontSize: 56,
-//         fontWeight: "300",
-//     }), []);
-//
-//     const unitTextStyle = useMemo((): TextStyle => ({
-//         color: "#6B7280",
-//         fontSize: 28,
-//         fontWeight: "400",
-//     }), []);
-//
-//     return (
-//         <View className="flex-1 justify-center">
-//             <RulerPicker
-//                 width={screenWidth}
-//                 height={150}
-//                 min={weightRange.min}
-//                 max={weightRange.max}
-//                 step={weightRange.step}
-//                 fractionDigits={selectedUnit === "kg" ? 1 : 0}
-//                 initialValue={selectedWeight}
-//                 onValueChange={onWeightChange}
-//                 onValueChangeEnd={onWeightChange}
-//                 unit={selectedUnit}
-//                 indicatorColor="#3B82F6"
-//                 indicatorHeight={70}
-//                 shortStepHeight={20}
-//                 longStepHeight={35}
-//                 stepWidth={2}
-//                 gapBetweenSteps={10}
-//                 shortStepColor="#E5E7EB"
-//                 longStepColor="#9CA3AF"
-//                 valueTextStyle={valueTextStyle}
-//                 unitTextStyle={unitTextStyle}
-//                 decelerationRate="fast"
-//             />
-//         </View>
-//     );
-// });
-
-// Optimized Unit Toggle Component
-
 // Main optimized Step4 Component
 const Step4 = memo(() => {
     const [selectedUnit, setSelectedUnit] = useState<"kg" | "lbs">("kg");
 
-    const { currentWeightKg, setCurrentWeightKg } = useUserProfileStore();
+    const { currentWeightKg, setCurrentWeightKg } = useUserProfileStore(
+        useShallow((state) => ({
+            currentWeightKg: state.currentWeightKg,
+            setCurrentWeightKg: state.setCurrentWeightKg,
+        }))
+    );
 
     const [selectedWeight , setSelectedWeight] = useState<number>(currentWeightKg);
 

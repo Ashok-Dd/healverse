@@ -4,11 +4,13 @@ import { create } from "zustand"
 // Base user profile data without actions
 export type UserProfileData = Omit<UserProfile, 'id' | 'createdAt' | 'updatedAt'> & {
     username : string;
+    password : string;
 };
 
 // Actions interface
 type UserProfileActions = {
     setUsername: (username: string) => void;
+    setPassword: (password: string) => void;
     setGender: (gender: UserProfileData['gender']) => void;
     setAge: (age: number) => void;
     setHeightCm: (height: number) => void;
@@ -30,6 +32,7 @@ export type UserProfileState = UserProfileData & UserProfileActions;
 
 export const useUserProfileStore = create<UserProfileState>((set, get) => ({
     username : '',
+    password : '',
     gender: 'MALE' as const,
     age: 20,
     heightCm: 170,
@@ -45,6 +48,7 @@ export const useUserProfileStore = create<UserProfileState>((set, get) => ({
     // Individual field setters
 
     setUsername : (username) => set({ username }),
+    setPassword : (password) => set({ password }),
     setGender: (gender) => set({ gender }),
     setAge: (age) => set({ age }),
     setHeightCm: (height) => set({ heightCm: height }),
@@ -62,6 +66,8 @@ export const useUserProfileStore = create<UserProfileState>((set, get) => ({
 
     // Clear all data (set to empty/zero values)
     clearProfile: () => set({
+        username: '',
+        password: '',
         gender: 'MALE',
         age: 0,
         heightCm: 0,

@@ -94,7 +94,6 @@ export const fetchApi = async <T = unknown>(
     } = options;
 
     const url = `${API_BASE_URL}${endpoint}`;
-    console.log(`[fetchApi] ${method} ${url}`);
 
     // Build request configuration
     const config: RequestInit = {

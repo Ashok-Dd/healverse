@@ -1,4 +1,4 @@
-import { FoodItem, LogStatus, StatusBadge } from "@/types/type";
+import { FoodItem } from "@/types/type";
 
 export const convertWeight = (
   weight: number,
@@ -45,43 +45,3 @@ export const calculateTotals = (items: FoodItem[]) => {
   );
 };
 
-export const getStatusColor = (status: LogStatus): string => {
-  switch (status) {
-    case "TAKEN":
-      return "border-emerald-200 bg-emerald-50";
-    case "MISSED":
-      return "border-red-200 bg-red-50";
-    case "PENDING":
-      return "border-blue-200 bg-blue-50";
-    case "SKIPPED":
-      return "border-red-200 bg-red-50";
-    default:
-      return "border-gray-200 bg-gray-50";
-  }
-};
-
-export const getStatusBadge = (status: LogStatus): StatusBadge => {
-  switch (status) {
-    case "TAKEN":
-      return { text: "Taken", color: "bg-emerald-100 text-emerald-700" };
-    case "MISSED":
-      return { text: "Missed", color: "bg-red-100 text-red-700" };
-    case "PENDING":
-      return { text: "Pending", color: "bg-blue-100 text-blue-700" };
-    case "SKIPPED":
-      return { text: "Skipped", color: "bg-red-100 text-red-700" };
-    default:
-      return { text: "Unknown", color: "bg-gray-100 text-gray-700" };
-  }
-};
-
-export const getCurrentDate = (): string => {
-  const today = new Date();
-  const options: Intl.DateTimeFormatOptions = {
-    weekday: "long",
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  };
-  return today.toLocaleDateString("en-US", options);
-};

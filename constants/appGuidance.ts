@@ -86,11 +86,6 @@ Your personal AI analyzes your daily health data to provide customized recommend
 • Hydration reminders
 • Meal timing and portion suggestions
 
-### Medication Insights 💊
-• Adherence reminders and tips
-• Schedule optimization suggestions
-• Health condition management advice
-
 ## How It Works
 • Your AI learns from your daily logging patterns
 • Insights are updated daily based on new data
@@ -141,44 +136,6 @@ Remember: It's about progress, not perfection. Small consistent improvements lea
     type: 'tip'
   },
 
-  MEDICATION_MANAGEMENT: {
-    title: "💊 Medication Management",
-    content: `# Stay On Top of Your Medications
-
-## Setting Up Your Medications
-• Add all your prescriptions with accurate dosages
-• Set up reminder times that fit your routine
-• Include any supplements or vitamins you take regularly
-
-## Smart Reminders
-• Get notifications when it's time to take your medication
-• Mark medications as taken, missed, or skipped
-• View your adherence rate and streaks
-
-## Health Insights Integration
-• Your medication data helps generate better health insights
-• Get warnings if you're consistently missing doses
-• Receive tips for improving medication compliance
-
-## Managing Complex Schedules
-• Use the pill organizer suggestions for multiple medications
-• Set up different reminder sounds for different medications
-• Coordinate medication times with meal schedules
-
-## Tracking Progress
-• Monitor how consistent medication taking affects your health metrics
-• Share adherence reports with your healthcare provider
-• Get insights on the best times to take medications for your lifestyle
-
-## Safety Features
-• Get alerts for potential medication interactions
-• Receive reminders for prescription refills
-• Track side effects and patterns
-
-Your health depends on consistent medication management. Let us help you stay on track!`,
-    type: 'warning'
-  },
-
   GAMIFICATION_SYSTEM: {
     title: "🎮 Your Health Journey Rewards",
     content: `# Earn Points and Build Streaks!
@@ -186,7 +143,6 @@ Your health depends on consistent medication management. Let us help you stay on
 ## How Points Work
 • **Food Logging**: 10 points per meal logged
 • **Exercise Tracking**: 15 points per workout
-• **Medication Adherence**: 5 points per medication taken
 • **Daily Goals**: 25 bonus points for hitting all targets
 
 ## Streak System
@@ -198,7 +154,6 @@ Your health depends on consistent medication management. Let us help you stay on
 • **Consistency Champion**: 30-day logging streak
 • **Nutrition Master**: Hit nutrition goals 7 days in a row
 • **Workout Warrior**: Complete 10 exercise sessions
-• **Medicine Master**: 100% medication adherence for a month
 
 ## Leaderboards & Challenges
 • Compare your progress with friends (anonymously)
@@ -233,14 +188,14 @@ Remember: The real reward is your improved health, but points make the journey m
 
 ## Daily Routine
 ### Morning
-• Log your breakfast and morning medications
+• Log your breakfast
 • Check your daily insights and goals
 • Plan your meals and activities for the day
 
 ### Throughout the Day
 • Log meals as you eat them
 • Track water intake and exercise
-• Take medications on schedule
+• Log your lunch and snacks
 
 ### Evening
 • Review your daily progress
@@ -308,7 +263,6 @@ Ready to transform your health? Let's start this journey together!`,
 ## Integration Benefits
 • Exercise data improves nutrition recommendations
 • Activity levels affect your daily calorie targets
-• Better medication timing based on workout schedule
 • Comprehensive health picture for better insights
 
 Start where you are, use what you have, do what you can. Every step counts!`,

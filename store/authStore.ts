@@ -188,12 +188,6 @@ export const useAuthStore = create<AuthState>()(
       });
     },
 
-    // Initialize auth (called on app start)
-    initializeAuth: async () => {
-      set({ isInitializing: true });
-      await get().checkAuth();
-    },
-
     // Clear error
     clearError: () => set({ error: null }),
 

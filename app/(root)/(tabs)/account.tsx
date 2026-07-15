@@ -314,7 +314,6 @@ const Profile = () => {
 
                         // 5. Clear any task-related storage (if needed)
                         const taskKeys = [
-                            "medication_tasks",
                             "health_reminders",
                             "user_preferences"
                         ];

@@ -1,4 +1,4 @@
-import { router } from "expo-router";
+import { showToast } from "@/lib/toast";
 import React, { useState } from "react";
 import {
   SafeAreaView,
@@ -167,7 +167,7 @@ const MedicalCheckups: React.FC = () => {
               </Text>
               <TouchableOpacity
                 className="bg-teal-400 px-6 py-2 rounded-lg self-start"
-                onPress={() => router.push("/(root)/MedicalChatForm")}
+                onPress={() => showToast("Scheduling is coming soon", { type: "info" })}
               >
                 <Text className="text-white font-medium">Schedule Now</Text>
               </TouchableOpacity>

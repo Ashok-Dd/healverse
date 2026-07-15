@@ -3,9 +3,15 @@ import OptionsCard from "@/components/OptionsCard";
 import { healthConditions } from "@/constants/data";
 import { FlatList, Text, View } from "react-native";
 import {useUserProfileStore} from "@/store/userProfile";
+import {useShallow} from "zustand/react/shallow";
 
-const Step4 = () => {
-    const {healthCondition , setHealthCondition} = useUserProfileStore();
+const Step9 = () => {
+    const {healthCondition , setHealthCondition} = useUserProfileStore(
+        useShallow((state) => ({
+            healthCondition: state.healthCondition,
+            setHealthCondition: state.setHealthCondition,
+        }))
+    );
 
     return (
         <OnboardingWrapper>
@@ -31,4 +37,4 @@ const Step4 = () => {
     );
 };
 
-export default Step4;
+export default Step9;

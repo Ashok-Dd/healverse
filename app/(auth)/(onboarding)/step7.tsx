@@ -4,10 +4,17 @@ import OnboardingWrapper from "@/components/OnboardingWrapper";
 import ActiveDailyBasis from "@/components/ActiveDailyBasis";
 import { useUserProfileStore } from "@/store/userProfile";
 import { ActivityLevel } from "@/types/type";
+import { useShallow } from "zustand/react/shallow";
 
 const Step7 = () => {
 
-    const { activityLevel, gender, setActivityLevel } = useUserProfileStore();
+    const { activityLevel, gender, setActivityLevel } = useUserProfileStore(
+        useShallow((state) => ({
+            activityLevel: state.activityLevel,
+            gender: state.gender,
+            setActivityLevel: state.setActivityLevel,
+        }))
+    );
 
     const handleActivitySelection = (value: ActivityLevel) => {
         setActivityLevel(value);

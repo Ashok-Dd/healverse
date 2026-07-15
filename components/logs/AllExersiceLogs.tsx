@@ -21,7 +21,7 @@ const AllLoggedExercises: React.FC = () => {
     const {
         updateExerciseLog,
         deleteExerciseLog
-    } = useExerciseLogMutations()
+    } = useExerciseLogMutations(selectedDate)
 
 
     // menu state
@@ -60,17 +60,21 @@ const AllLoggedExercises: React.FC = () => {
     };
 
     const handleConfirmDelete = () => {
-        console.log("Deleting exercise:", selectedExerciseId);
-        deleteExerciseLog.mutate(selectedExerciseId!)
-        setDeleteModalVisible(false);
-        setSelectedExerciseId(null);
+        deleteExerciseLog.mutate(selectedExerciseId!, {
+            onSuccess: () => {
+                setDeleteModalVisible(false);
+                setSelectedExerciseId(null);
+            },
+            // On failure, leave the modal open so the user can retry — the
+            // global mutation error toast (lib/react-query-client.ts) already
+            // tells them what went wrong.
+        });
     };
 
     const handleSaveUpdate = async  (updatedData: {
         intensity: ExerciseIntensity;
         durationMinutes: number;
     }) => {
-        console.log("Updating exercise:", updateExercise?.id, updatedData);
         updateExerciseLog.mutate({
             id : updateExercise?.id!,
             updates : {
@@ -78,9 +82,12 @@ const AllLoggedExercises: React.FC = () => {
                 durationMinutes : updatedData?.durationMinutes,
                 intensity : updatedData.intensity,
             }
+        }, {
+            onSuccess: () => {
+                setUpdateModalVisible(false);
+                setUpdateExercise(null);
+            },
         })
-        setUpdateModalVisible(false);
-        setUpdateExercise(null);
     };
 
     const renderExerciseItem = (exercise: ExerciseLog) => (

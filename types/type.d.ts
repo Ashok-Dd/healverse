@@ -500,102 +500,6 @@ export interface IntensityLevel {
   label: string;
 }
 
-// ============= TYPES =============
-// src/types/medication.ts
-export interface Medication {
-  id: string;
-  name: string;
-  dosage: string;
-  type: MedicationType;
-  frequency: FrequencyType;
-  schedules: MedicationSchedule[];
-  isActive: boolean;
-  startDate: string;
-  endDate?: string;
-  notes?: string;
-  createdAt: string;
-  updatedAt: string;
-}
-
-export type MedicationType =
-  | "TABLET"
-  | "CAPSULE"
-  | "LIQUID"
-  | "INJECTION"
-  | "INHALER"
-  | "DROPS";
-export type FrequencyType = "DAILY" | "TWICE_DAILY" | "THREE_TIMES" | "WEEKLY";
-export type LogStatus = "TAKEN" | "MISSED" | "SKIPPED" | "PENDING";
-
-export interface MedicationSchedule {
-  id: string;
-  time: string;
-  isActive: boolean;
-}
-
-export interface TodayMedication {
-  id: string;
-  medicationId: string;
-  name: string;
-  dosage: string;
-  type: MedicationType;
-  scheduledTime: string;
-  status: LogStatus;
-  actualTime?: string;
-}
-
-export interface DashboardStats {
-  adherenceRate: number;
-  currentStreak: number;
-  totalMedications: number;
-  todayTaken: number;
-  todayTotal: number;
-  todayMedications: TodayMedication[];
-
-  // New analytics data
-  weeklyAdherence: WeeklyAdherenceData;
-  dailyIntake: DailyIntakeData[];
-  medicineStatus: MedicineStatusData;
-}
-
-export interface WeeklyAdherenceData {
-  labels: string[];
-  data: number[];
-}
-
-export interface DailyIntakeData {
-  day: string;
-  value: number;
-}
-
-export interface MedicineStatusData {
-  taken: number;
-  missed: number;
-  skipped: number;
-}
-export interface CreateMedicationRequest {
-  name: string;
-  dosage: string;
-  type: MedicationType;
-  frequency: FrequencyType;
-  startDate: string;
-  endDate?: string;
-  scheduleTimes: string[];
-  notes?: string;
-}
-
-export interface LogMedicationRequest {
-  scheduledTime: string;
-  status: LogStatus;
-  actualTime?: string;
-  notes?: string;
-}
-
-export interface StatusBadge {
-  text: string;
-  color: string;
-}
-
 export interface DateRange {
   startDate: string; // YYYY-MM-DD format
   endDate: string; // YYYY-MM-DD format
@@ -670,7 +574,6 @@ export interface Insight {
 }
 
 export interface InsightsData {
-  medicationInsights: Insight[];
   dietInsights: Insight[];
   healthInsights: Insight[];
 }

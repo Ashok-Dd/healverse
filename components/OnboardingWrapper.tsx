@@ -4,12 +4,15 @@ import { useRouter } from "expo-router";
 import React, { JSX } from "react";
 import { Image, ImageSourcePropType, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import Button from "./Button";
+import { Button } from "./ui/Button";
 import StepProgressBar from "./StepProgressBar";
 
 const OnboardingWrapper = ({ children }: { children: JSX.Element }) => {
   const router = useRouter();
   const { currentStep, totalSteps } = useCurrentStep();
+  const stepImage = images[("onboarding" + currentStep) as string] as
+    | ImageSourcePropType
+    | undefined;
 
   return (
     <SafeAreaView className="flex-1 p-3 gap-y-3 bg-white">
@@ -23,17 +26,13 @@ const OnboardingWrapper = ({ children }: { children: JSX.Element }) => {
         </Text>
       </View>
 
-      {/* image */}
-      <View className="w-full flex items-center justify-center my-3">
-        <Image
-          source={
-            images[
-              ("onboarding" + currentStep) as string
-            ] as ImageSourcePropType
-          }
-          className="h-32 w-28 object-contain"
-        />
-      </View>
+      {/* image — not every step has an illustration; skip the slot instead of
+          rendering a broken <Image> with an undefined source */}
+      {stepImage && (
+        <View className="w-full flex items-center justify-center my-3">
+          <Image source={stepImage} className="h-32 w-28 object-contain" />
+        </View>
+      )}
 
       {/* step */}
       <View className="flex-1">{children}</View>

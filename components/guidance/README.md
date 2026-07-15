@@ -91,7 +91,6 @@ The system comes with predefined guidance for:
 - `FOOD_LOGGING` - Camera and food recognition
 - `AI_INSIGHTS` - Understanding AI recommendations
 - `NUTRITION_TRACKING` - Charts and progress
-- `MEDICATION_MANAGEMENT` - Medication features
 - `EXERCISE_TRACKING` - Workout logging
 - `GAMIFICATION_SYSTEM` - Points and achievements
 - `GETTING_STARTED` - Complete app overview

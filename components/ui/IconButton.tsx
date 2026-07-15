@@ -1,7 +1,9 @@
 import React from "react";
-import { TouchableOpacity, View, Text } from "react-native";
+import { GestureResponderEvent, TouchableOpacity, View, Text } from "react-native";
 import Feather from "react-native-vector-icons/Feather";
 import MaterialIcons from "react-native-vector-icons/MaterialIcons";
+
+type IconType = "Feather" | "MaterialIcons";
 
 interface IconButtonProps {
     iconType?: IconType;

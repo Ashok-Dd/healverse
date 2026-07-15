@@ -4,7 +4,7 @@
     "slug": "R-N",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/logo.png",
+    "icon": "./assets/images/adaptive-icon.png",
     "scheme": "rn",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
@@ -13,8 +13,8 @@
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/images/logo.png",
-        "backgroundColor": "#ffffff"
+        "foregroundImage": "./assets/images/adaptive-icon.png",
+        "backgroundColor": "#2e7d32"
       },
       "edgeToEdgeEnabled": true,
       "googleServicesFile": "./google-services.json",
@@ -30,10 +30,10 @@
       [
         "expo-splash-screen",
         {
-          "image": "./assets/images/logo.png",
-          "imageWidth": 200,
+          "image": "./assets/images/adaptive-icon.png",
+          "imageWidth": 220,
           "resizeMode": "contain",
-          "backgroundColor": "#ffffff"
+          "backgroundColor": "#2e7d32"
         }
       ],
       "expo-secure-store",

@@ -5,7 +5,7 @@ import React from "react";
 import { ActivityIndicator, Text, TouchableOpacity, View } from "react-native";
 
 interface CompactInsightsProps {
-  type: "health" | "diet" | "medication";
+  type: "health" | "diet";
   maxItems?: number;
   onPress?: () => void;
 }
@@ -26,8 +26,6 @@ const CompactInsights: React.FC<CompactInsightsProps> = ({
         return data.healthInsights || [];
       case "diet":
         return data.dietInsights || [];
-      case "medication":
-        return data.medicationInsights || [];
       default:
         return [];
     }
@@ -45,11 +43,6 @@ const CompactInsights: React.FC<CompactInsightsProps> = ({
         return {
           icon: "restaurant" as keyof typeof Ionicons.glyphMap,
           title: "AI Diet Insights"
-        };
-      case "medication":
-        return {
-          icon: "medical" as keyof typeof Ionicons.glyphMap,
-          title: "AI Medication Insights"
         };
       default:
         return {

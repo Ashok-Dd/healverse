@@ -1,5 +1,5 @@
-import Button from "@/components/Button";
-import { CustomInput } from "@/components/CustomInput";
+import { Button } from "@/components/ui/Button";
+import { Input } from "@/components/ui/Input";
 import { images } from "@/constants";
 import { useAuthStore } from "@/store/authStore";
 import { router } from "expo-router";
@@ -113,7 +113,7 @@ const Login: React.FC = () => {
             {/* Middle Section - Form */}
             <View className="flex-1 justify-center min-h-[300px]">
               <View className="space-y-4">
-                <CustomInput
+                <Input
                   label="Username"
                   value={formData.username}
                   onChangeText={(text) => updateFormData("username", text)}
@@ -123,7 +123,7 @@ const Login: React.FC = () => {
                   autoCorrect={false}
                 />
 
-                <CustomInput
+                <Input
                   label="Password"
                   value={formData.password}
                   onChangeText={(text) => updateFormData("password", text)}

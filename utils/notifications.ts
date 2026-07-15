@@ -1,7 +1,5 @@
-import { Medication } from '@/types/type';
 import Constants from 'expo-constants';
 import * as Device from 'expo-device';
-import * as Haptics from 'expo-haptics';
 import * as Notifications from 'expo-notifications';
 import * as SecureStore from "expo-secure-store";
 import { Platform } from 'react-native';
@@ -73,22 +71,12 @@ export class NotificationService {
   static async requestPermissions(): Promise<boolean> {
     try {
       if (Platform.OS === "android") {
-        await Notifications.setNotificationChannelAsync("medication-reminders", {
-          name: "Medication Reminders",
-          importance: Notifications.AndroidImportance.HIGH,
-          sound: "default",
-          vibrationPattern: [0, 250, 250, 250],
-          lightColor: "#4CAF50",
-          description: "Reminders for taking your medications",
-        });
-
-        await Notifications.setNotificationChannelAsync("follow-ups", {
-          name: "Follow-up Reminders",
+        await Notifications.setNotificationChannelAsync("default", {
+          name: "General Notifications",
           importance: Notifications.AndroidImportance.DEFAULT,
           sound: "default",
-          vibrationPattern: [0, 100, 100, 100],
-          lightColor: "#FF9800",
-          description: "Follow-up reminders for missed medications",
+          vibrationPattern: [0, 250, 250, 250],
+          description: "General notification channel",
         });
       }
 
@@ -121,93 +109,6 @@ export class NotificationService {
     } catch (error) {
       console.error("Error requesting notification permissions:", error);
       return false;
-    }
-  }
-
-  static async scheduleMedicationReminders(medication: Medication): Promise<void> {
-    try {
-      const settings = await this.getNotificationSettings();
-      if (!settings.enabled) return;
-
-      for (const schedule of medication.schedules) {
-        if (!schedule.isActive) continue;
-
-        const [hours, minutes] = schedule.time.split(":").map(Number);
-        const now = new Date();
-        const scheduledTime = new Date();
-        scheduledTime.setHours(hours, minutes, 0, 0);
-
-        if (scheduledTime <= now) {
-          scheduledTime.setDate(scheduledTime.getDate() + 1);
-        }
-
-        const trigger: Notifications.NotificationTriggerInput = {
-          type: Notifications.SchedulableTriggerInputTypes.DAILY,
-          hour: hours,
-          minute: minutes,
-        };
-
-        await Notifications.scheduleNotificationAsync({
-          identifier: `medication-${medication.id}-${schedule.id}`,
-          content: {
-            title: "💊 Medication Reminder",
-            body: `Time to take ${medication.name} (${medication.dosage})`,
-            data: {
-              medicationId: medication.id,
-              scheduleId: schedule.id,
-              type: "medication_reminder",
-            },
-            sound: "default",
-            categoryIdentifier: "MEDICATION_REMINDER",
-          },
-          trigger,
-        });
-
-        if (settings.followUpEnabled && settings.followUpDelay > 0) {
-          const followUpTrigger: Notifications.NotificationTriggerInput = {
-            type: Notifications.SchedulableTriggerInputTypes.DAILY,
-            hour: hours,
-            minute: minutes + settings.followUpDelay,
-          };
-
-          await Notifications.scheduleNotificationAsync({
-            identifier: `followup-${medication.id}-${schedule.id}`,
-            content: {
-              title: "⏰ Missed Medication?",
-              body: `Did you take your ${medication.name}? Tap to log it.`,
-              data: {
-                medicationId: medication.id,
-                scheduleId: schedule.id,
-                type: "follow_up",
-              },
-              sound: "default",
-              categoryIdentifier: "FOLLOW_UP",
-            },
-            trigger: followUpTrigger,
-          });
-        }
-      }
-    } catch (error) {
-      console.error("Error scheduling medication reminders:", error);
-    }
-  }
-
-  static async cancelMedicationReminders(medicationId: string): Promise<void> {
-    try {
-      const scheduledNotifications = await Notifications.getAllScheduledNotificationsAsync();
-      const toCancel = scheduledNotifications
-        .filter(
-          (notification) =>
-            notification.identifier.includes(`medication-${medicationId}`) ||
-            notification.identifier.includes(`followup-${medicationId}`)
-        )
-        .map((notification) => notification.identifier);
-
-      for (const id of toCancel) {
-        await Notifications.cancelScheduledNotificationAsync(id);
-      }
-    } catch (error) {
-      console.error("Error canceling medication reminders:", error);
     }
   }
 
@@ -248,10 +149,8 @@ export class NotificationService {
     try {
       const { data } = notification.request.content;
       console.log("Notification received:", data);
-
-      if (data.type === "medication_reminder") {
-        await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
-      }
+      // No-op for unknown/unhandled notification types.
+      // Future features (e.g. diet/meal reminders) can branch on data.type here.
     } catch (error) {
       console.error("Error handling notification:", error);
     }

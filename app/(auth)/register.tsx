@@ -13,31 +13,46 @@ import {
   View
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useShallow } from "zustand/react/shallow";
 
-// Vector icons
-import Button from "@/components/Button";
+import { Button } from "@/components/ui/Button";
 import { useLocation } from "@/hooks/useLocation";
 import {
   FontAwesome5,
   MaterialCommunityIcons,
   MaterialIcons,
 } from "@expo/vector-icons";
-import { useLocalSearchParams, useRouter } from "expo-router";
+import { useRouter } from "expo-router";
 
 const Register = () => {
   const router = useRouter();
 
-  const { password } = useLocalSearchParams<{ password: string }>();
-  const { 
-    location, 
-    region, 
-    isLoading: locationLoading, 
-    error: locationError, 
-    getLocation, 
-    clearError 
+  const {
+    location,
+    region,
+    isLoading: locationLoading,
+    error: locationError,
+    getLocation,
+    clearError
   } = useLocation();
 
-  const profile = useUserProfileStore();
+  const profile = useUserProfileStore(
+    useShallow((state) => ({
+      username: state.username,
+      password: state.password,
+      gender: state.gender,
+      age: state.age,
+      heightCm: state.heightCm,
+      currentWeightKg: state.currentWeightKg,
+      targetWeightKg: state.targetWeightKg,
+      activityLevel: state.activityLevel,
+      goal: state.goal,
+      weightLossSpeed: state.weightLossSpeed,
+      dietaryRestriction: state.dietaryRestriction,
+      healthCondition: state.healthCondition,
+      otherHealthConditionDescription: state.otherHealthConditionDescription,
+    }))
+  );
   const { register, error, isLoading } = useAuthStore();
 
   // Get location when component mounts
@@ -73,7 +88,7 @@ const Register = () => {
       await register({
         user: {
           username: profile.username,
-          password: password,
+          password: profile.password,
         },
         profile: {
           gender: profile.gender,

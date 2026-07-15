@@ -1,4 +1,4 @@
-import { ToastAndroid, Platform } from "react-native";
+import { Alert, ToastAndroid, Platform } from "react-native";
 
 type ToastType = "success" | "error" | "info";
 
@@ -14,7 +14,8 @@ export const showToast = (message: string, { type }: { type?: ToastType } = {}) 
     if (Platform.OS === "android") {
         ToastAndroid.show(finalMessage, ToastAndroid.SHORT);
     } else {
-        // On iOS or Web, just log for now (or integrate another library like react-native-toast-message)
-        console.log(`[${type ?? "info"}] ${message}`);
+        // ToastAndroid doesn't exist on iOS/web — Alert is the cross-platform
+        // fallback that actually surfaces to the user instead of a console.log.
+        Alert.alert(type === "error" ? "Error" : "Notice", finalMessage);
     }
 };

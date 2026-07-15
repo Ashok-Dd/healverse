@@ -29,19 +29,17 @@ The logout function now clears:
   - Food logs
   - Exercise logs
   - Water logs
-  - Medication data
   - Dashboard summaries
   - All other API responses
 
 #### **Notifications & Reminders**
 - Cancels all scheduled notifications using `Notifications.cancelAllScheduledNotificationsAsync()`
 - Clears notification settings from SecureStore
-- Removes medication reminders and health reminders
+- Removes scheduled health reminders
 
 #### **Additional Storage Cleanup**
 - Clears task-related storage keys:
   - `notification_settings`
-  - `medication_tasks`
   - `health_reminders`
   - `user_preferences`
 

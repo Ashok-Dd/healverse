@@ -3,9 +3,15 @@ import { dietaryLimitations } from "@/constants/data";
 import { FlatList, Text, View } from "react-native";
 import {useUserProfileStore} from "@/store/userProfile";
 import OptionsCard from "@/components/OptionsCard";
+import {useShallow} from "zustand/react/shallow";
 
-const Step4 = () => {
-    const {dietaryRestriction , setDietaryRestriction} = useUserProfileStore();
+const Step8 = () => {
+    const {dietaryRestriction , setDietaryRestriction} = useUserProfileStore(
+        useShallow((state) => ({
+            dietaryRestriction: state.dietaryRestriction,
+            setDietaryRestriction: state.setDietaryRestriction,
+        }))
+    );
 
     return (
         <OnboardingWrapper>
@@ -31,4 +37,4 @@ const Step4 = () => {
     );
 };
 
-export default Step4;
+export default Step8;

@@ -62,9 +62,6 @@ const EmptyMessageState: React.FC = () => {
       case "view_progress":
         console.log("Viewing progress...");
         break;
-      case "medicine_reminder":
-        console.log("Setting medicine reminder...");
-        break;
       case "check_symptoms":
         console.log("Checking symptoms...");
         break;

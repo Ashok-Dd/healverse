@@ -3,7 +3,7 @@ import { SafeAreaView, StatusBar, View } from "react-native";
 import Header from "@/components/Header";
 import WelcomeContent from "@/components/WelcomeContent";
 import { router } from "expo-router";
-import Button from "@/components/Button";
+import { Button } from "@/components/ui/Button";
 
 const Welcome: React.FC = () => (
   <>

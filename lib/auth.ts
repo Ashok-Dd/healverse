@@ -7,27 +7,44 @@ export interface AppTokenCache {
     deleteToken?: (key: string) => Promise<void>;
 }
 
+// In-memory cache so N parallel authenticated requests (e.g. 4+ queries firing
+// together on tab mount) share one SecureStore read instead of each hitting
+// the native bridge independently — SecureStore reads are not free.
+const memoryCache = new Map<string, string | null>();
+let inFlightRead: Promise<string | null> | null = null;
+
 const createAppTokenCache = (): AppTokenCache => ({
     getToken: async (key: string) => {
-        try {
-            const item = await SecureStore.getItemAsync(key);
-            if (item) {
-                console.log(`[SecureStore] Retrieved token for key: ${key}`);
-            } else {
-                console.log(`[SecureStore] No token found under key: ${key}`);
-            }
-            return item;
-        } catch (error) {
-            console.error(`[SecureStore] Error retrieving token for key ${key}:`, error);
-            await SecureStore.deleteItemAsync(key);
-            return null;
+        if (memoryCache.has(key)) {
+            return memoryCache.get(key) ?? null;
         }
+
+        if (inFlightRead) {
+            return inFlightRead;
+        }
+
+        inFlightRead = (async () => {
+            try {
+                const item = await SecureStore.getItemAsync(key);
+                memoryCache.set(key, item);
+                return item;
+            } catch (error) {
+                console.error(`[SecureStore] Error retrieving token for key ${key}:`, error);
+                await SecureStore.deleteItemAsync(key);
+                memoryCache.set(key, null);
+                return null;
+            } finally {
+                inFlightRead = null;
+            }
+        })();
+
+        return inFlightRead;
     },
 
     saveToken: async (key: string, token: string) => {
         try {
             await SecureStore.setItemAsync(key, token);
-            console.log(`[SecureStore] Token saved for key: ${key}`);
+            memoryCache.set(key, token);
         } catch (error) {
             console.error(`[SecureStore] Error saving token for key ${key}:`, error);
         }
@@ -36,7 +53,7 @@ const createAppTokenCache = (): AppTokenCache => ({
     deleteToken: async (key: string) => {
         try {
             await SecureStore.deleteItemAsync(key);
-            console.log(`[SecureStore] Token deleted for key: ${key}`);
+            memoryCache.delete(key);
         } catch (error) {
             console.error(`[SecureStore] Error deleting token for key ${key}:`, error);
         }

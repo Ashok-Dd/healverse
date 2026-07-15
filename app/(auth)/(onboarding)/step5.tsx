@@ -4,6 +4,7 @@ import {useState} from "react";
 import DietaryGoals from "@/components/DietaryGoals";
 import {useUserProfileStore} from "@/store/userProfile";
 import {DietaryRestriction, Goal} from "@/types/type";
+import {useShallow} from "zustand/react/shallow";
 
 const DietaryHeader = () => (
     <Text className="text-2xl font-jakarta-semi-bold text-center mb-8 text-secondary-800">
@@ -14,7 +15,9 @@ const DietaryHeader = () => (
 const Step5 = () => {
 
 
-    const {goal, setGoal , gender} = useUserProfileStore();
+    const {goal, setGoal , gender} = useUserProfileStore(
+        useShallow((state) => ({ goal: state.goal, setGoal: state.setGoal, gender: state.gender }))
+    );
 
     const handleSelectionDiet = (value: Goal) => {
         setGoal(value ) ;

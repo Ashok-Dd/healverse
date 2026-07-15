@@ -9,7 +9,7 @@ const GlobalHeader = () => {
             <View className="flex-row items-center justify-between">
                 <View className="flex-row items-center">
                     <Text className="text-md mr-2">🥗</Text>
-                    <Text className="text-md font-bold text-green-600">HealVerse</Text>
+                    <Text className="text-md font-jakarta-bold text-primary-600">HealVerse</Text>
                 </View>
             </View>
         </View>

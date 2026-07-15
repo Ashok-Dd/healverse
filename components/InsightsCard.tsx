@@ -5,7 +5,7 @@ import React from "react";
 import { ActivityIndicator, Text, TouchableOpacity, View } from "react-native";
 
 interface InsightsCardProps {
-  type: "health" | "diet" | "medication";
+  type: "health" | "diet";
   title?: string;
   maxItems?: number;
   onViewAll?: () => void;
@@ -28,8 +28,6 @@ const InsightsCard: React.FC<InsightsCardProps> = ({
         return data.healthInsights || [];
       case "diet":
         return data.dietInsights || [];
-      case "medication":
-        return data.medicationInsights || [];
       default:
         return [];
     }
@@ -47,11 +45,6 @@ const InsightsCard: React.FC<InsightsCardProps> = ({
         return {
           icon: "restaurant" as keyof typeof Ionicons.glyphMap,
           title: title || "Diet Insights"
-        };
-      case "medication":
-        return {
-          icon: "medical" as keyof typeof Ionicons.glyphMap,
-          title: title || "Medication Insights"
         };
       default:
         return {

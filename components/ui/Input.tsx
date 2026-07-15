@@ -39,7 +39,7 @@ export const Input = forwardRef<TextInput, InputProps>(
             style={[
               {
                 fontSize: 16,
-                fontWeight: "500",
+                fontFamily: "Jakarta-Medium",
                 color: "#333333",
                 marginBottom: 8,
               },
@@ -55,7 +55,7 @@ export const Input = forwardRef<TextInput, InputProps>(
             flexDirection: "row",
             alignItems: "center",
             borderWidth: 1,
-            borderColor: error ? "#F44336" : "#E0E0E0",
+            borderColor: error ? "#dc2626" : "#E0E0E0",
             borderRadius: 12,
             paddingHorizontal: 16,
             backgroundColor: "#FFFFFF",
@@ -70,6 +70,7 @@ export const Input = forwardRef<TextInput, InputProps>(
               {
                 flex: 1,
                 fontSize: 16,
+                fontFamily: "Jakarta-Regular",
                 color: "#333333",
                 paddingVertical: 12,
               },
@@ -85,7 +86,8 @@ export const Input = forwardRef<TextInput, InputProps>(
             style={[
               {
                 fontSize: 14,
-                color: "#F44336",
+                fontFamily: "Jakarta-Medium",
+                color: "#dc2626",
                 marginTop: 4,
               },
               errorStyle,
@@ -98,3 +100,5 @@ export const Input = forwardRef<TextInput, InputProps>(
     );
   }
 );
+
+Input.displayName = "Input";

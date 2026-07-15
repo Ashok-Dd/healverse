@@ -3,7 +3,7 @@ import CustomSmoothPicker from "@/components/CustomSmoothPicker";
 import { Text, View } from "react-native";
 import React, {useEffect, useRef, useState} from "react";
 import {useUserProfileStore} from "@/store/userProfile";
-import {shallow} from "zustand/vanilla/shallow";
+import {useShallow} from "zustand/react/shallow";
 
 const AgeSelectionTitle = () => (
     <View className="items-center mb-12">
@@ -16,7 +16,9 @@ const AgeSelectionTitle = () => (
 
 const Step2 = () => {
 
-    const { age, setAge } = useUserProfileStore();
+    const { age, setAge } = useUserProfileStore(
+        useShallow((state) => ({ age: state.age, setAge: state.setAge }))
+    );
     const [selectedAge, setSelectedAge] = useState<number>(age);
 
     const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);

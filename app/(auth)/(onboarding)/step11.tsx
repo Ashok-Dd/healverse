@@ -1,6 +1,6 @@
-import Button from "@/components/Button";
-import { CustomInput } from "@/components/CustomInput";
 import OnboardingWrapper from "@/components/OnboardingWrapper";
+import { Button } from "@/components/ui/Button";
+import { Input } from "@/components/ui/Input";
 import { useUserProfileStore } from "@/store/userProfile";
 import { router } from "expo-router";
 import React, { useState } from "react";
@@ -14,6 +14,7 @@ import {
   TouchableWithoutFeedback,
   View,
 } from "react-native";
+import { useShallow } from "zustand/react/shallow";
 
 interface ValidationErrors {
   username?: string;
@@ -22,7 +23,12 @@ interface ValidationErrors {
 }
 
 export default function Step11() {
-  const { setUsername: setUsernameInZustand } = useUserProfileStore();
+  const { setUsername: setUsernameInZustand, setPassword: setPasswordInZustand } = useUserProfileStore(
+    useShallow((state) => ({
+      setUsername: state.setUsername,
+      setPassword: state.setPassword,
+    }))
+  );
   const [username, setUsername] = useState<string>("");
   const [password, setPassword] = useState<string>("");
   const [confirmPassword, setConfirmPassword] = useState<string>("");
@@ -69,11 +75,12 @@ export default function Step11() {
     try {
       setIsLoading(true);
       setUsernameInZustand(username.trim());
-      
+      setPasswordInZustand(password);
+
       // Add a small delay to show loading state
       await new Promise(resolve => setTimeout(resolve, 500));
-      
-      router.push(`/(auth)/register?password=${encodeURIComponent(password)}`);
+
+      router.push("/(auth)/register" as any);
     } catch (error) {
       Alert.alert(
         "Error",
@@ -112,7 +119,7 @@ export default function Step11() {
               {/* Form Section */}
               <View className="flex-1 justify-center">
                 <View className="space-y-4">
-                  <CustomInput
+                  <Input
                     label="Username"
                     value={username}
                     onChangeText={(text) => {
@@ -136,7 +143,7 @@ export default function Step11() {
                     </View>
                   )}
 
-                  <CustomInput
+                  <Input
                     label="Password"
                     value={password}
                     onChangeText={(text) => {
@@ -159,7 +166,7 @@ export default function Step11() {
                     </View>
                   )}
 
-                  <CustomInput
+                  <Input
                     label="Confirm Password"
                     value={confirmPassword}
                     onChangeText={(text) => {

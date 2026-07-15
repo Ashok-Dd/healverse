@@ -8,6 +8,7 @@ import {
 import GenderCard from "@/components/GenderCard";
 import {Gender} from "@/types/type";
 import {useUserProfileStore} from "@/store/userProfile";
+import {useShallow} from "zustand/react/shallow";
 
 
 const GenderSelectionTitle = () => (
@@ -52,7 +53,9 @@ const GenderOptions = ({
 // Main Component
 const Step1 = () => {
 
-    const {gender , setGender} = useUserProfileStore();
+    const {gender , setGender} = useUserProfileStore(
+        useShallow((state) => ({ gender: state.gender, setGender: state.setGender }))
+    );
 
   const handleGenderSelect = (gender: Gender) => {
     setGender(gender);

@@ -77,7 +77,12 @@ export const useChat = (
         refetchOnReconnect: true,
     });
 
-    const sendMessageMutation = useMutation<Message, Error, string>({
+    const sendMessageMutation = useMutation<
+        Message,
+        Error,
+        string,
+        { previousMessages: Message[] | undefined; tempId: string }
+    >({
         mutationFn: async (userMessage: string) => {
             if (!userMessage.trim()) {
                 throw new Error("Message cannot be empty");
