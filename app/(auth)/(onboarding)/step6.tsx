@@ -1,0 +1,104 @@
+import BMIIndicator from "@/components/BmiIndicator";
+import OnboardingWrapper from "@/components/OnboardingWrapper";
+import UnitToggle from "@/components/UnitToggle";
+import WeightRulerPicker from "@/components/WeightRulerPicker";
+import WeightValidation from "@/components/WeightValidation";
+import { convertWeight } from "@/lib/utils";
+import { useUserProfileStore } from "@/store/userProfile";
+import React, { memo, useCallback, useEffect, useMemo, useState } from "react";
+import { Text, View } from "react-native";
+import { useShallow } from "zustand/react/shallow";
+
+const TargetWeightStep = memo(() => {
+  const [selectedUnit, setSelectedUnit] = useState<"kg" | "lbs">("kg");
+
+  const {
+    targetWeightKg,
+    setTargetWeightKg,
+    heightCm: userHeight,
+  } = useUserProfileStore(
+    useShallow((state) => ({
+      targetWeightKg: state.targetWeightKg,
+      setTargetWeightKg: state.setTargetWeightKg,
+      heightCm: state.heightCm,
+    }))
+  );
+
+  const [targetWeight, setTargetWeight] = useState<number>(targetWeightKg);
+
+  // Memoize unit change handler
+  const handleUnitChange = useCallback(
+    (newUnit: "kg" | "lbs") => {
+      const convertedWeight = convertWeight(
+        targetWeight,
+        selectedUnit,
+        newUnit
+      );
+      setSelectedUnit(newUnit);
+      setTargetWeight(convertedWeight);
+    },
+    [targetWeight, selectedUnit]
+  );
+
+  // Memoize weight change handler
+  const handleWeightChange = useCallback((weight: number) => {
+    setTargetWeight(weight);
+  }, []);
+
+  // Memoize weight range calculation
+  const weightRange = useMemo(() => {
+    return selectedUnit === "kg"
+      ? { min: 30, max: 150, initial: 56 }
+      : { min: 66, max: 330, initial: 123 };
+  }, [selectedUnit]);
+
+  // Memoize weight for BMI calculation
+  const weightForBMI = useMemo(() => {
+    return selectedUnit === "kg"
+      ? targetWeight
+      : convertWeight(targetWeight, "lbs", "kg");
+  }, [targetWeight, selectedUnit]);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setTargetWeightKg(targetWeight);
+    }, 150);
+
+    return () => clearTimeout(timer);
+  }, [targetWeight]);
+
+  return (
+    <OnboardingWrapper>
+      <View className="flex-1 px-4">
+        <Text className="text-2xl font-semibold text-center mb-8 text-gray-800">
+          What is your target weight?
+        </Text>
+
+        <UnitToggle
+          selectedUnit={selectedUnit}
+          onUnitChange={handleUnitChange}
+        />
+
+        <WeightValidation
+          weight={weightForBMI}
+          height={userHeight}
+          unit={selectedUnit}
+        />
+
+        <BMIIndicator height={userHeight} weight={weightForBMI} />
+
+        <WeightRulerPicker
+          minWeight={weightRange.min}
+          maxWeight={weightRange.max}
+          initialWeight={targetWeight}
+          unit={selectedUnit}
+          onWeightChange={handleWeightChange}
+        />
+      </View>
+    </OnboardingWrapper>
+  );
+});
+
+TargetWeightStep.displayName = "TargetWeightStep";
+
+export default TargetWeightStep;

@@ -1,17 +1,17 @@
+import AppGuidanceProvider from "@/components/providers/AppGuidanceProvider";
+import { BottomSheetModalProvider } from "@gorhom/bottom-sheet";
 import { Stack } from "expo-router";
+
 
 const Layout = () => {
   return (
-    <Stack>
-      <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-
-      <Stack.Screen
-        name="calorie-counter"
-        options={{
-          headerShown: false,
-        }}
-      />
-    </Stack>
+    <BottomSheetModalProvider>
+      <AppGuidanceProvider>
+        <Stack screenOptions={{ headerShown: false }}>
+          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+        </Stack>
+      </AppGuidanceProvider>
+    </BottomSheetModalProvider>
   );
 };
 

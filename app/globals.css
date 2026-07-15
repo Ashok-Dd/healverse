@@ -2,3 +2,57 @@
 @tailwind components;
 @tailwind utilities;
 
+@layer utilities {
+    .flex-center {
+        @apply flex justify-center items-center;
+    }
+    .flex-between {
+        @apply flex justify-between items-center;
+    }
+    .flex-start {
+        @apply flex items-start justify-center;
+    }
+}
+
+@layer components {
+    .custom-btn {
+        @apply bg-primary rounded-lg p-3 w-full flex flex-row justify-center items-center;
+    }
+    .searchbar {
+        @apply relative flex flex-row items-center justify-center w-full bg-white shadow-md shadow-black/10 rounded-full  font-jakarta-medium text-dark-100 gap-5;
+    }
+    .h1-bold {
+        @apply text-3xl font-jakarta-bold;
+    }
+    .h3-bold {
+        @apply text-xl font-jakarta-bold;
+    }
+    .base-bold {
+        @apply text-lg font-jakarta-bold !important;
+    }
+
+    .base-semibold {
+        @apply text-lg font-jakarta-semibold;
+    }
+
+    .base-regular {
+        @apply text-lg font-jakarta-regular;
+    }
+    .body-medium {
+        @apply text-sm font-jakarta-medium;
+    }
+
+    .body-regular {
+        @apply text-sm font-jakarta;
+    }
+
+    .small-bold {
+        @apply text-xs font-jakarta-bold;
+    }
+}
+
+@layer onboarding {
+    .title {
+        @apply text-2xl font-jakarta-semi-bold text-center mb-8 text-secondary-800
+    }
+}
