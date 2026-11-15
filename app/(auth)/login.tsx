@@ -1,7 +1,7 @@
+import { ThemedStatusBar } from "@/components/ui/ThemedStatusBar";
 import { Button } from "@/components/ui/Button";
 import { FormError } from "@/components/ui/FormError";
 import { Input } from "@/components/ui/Input";
-import { colors } from "@/constants/theme";
 import { useAuthStore } from "@/store/authStore";
 import type { ApiError } from "@/types/type";
 import { Ionicons } from "@expo/vector-icons";
@@ -12,7 +12,6 @@ import {
   Platform,
   Pressable,
   ScrollView,
-  StatusBar,
   Text,
   TextInput,
   View,
@@ -105,7 +104,7 @@ const Login: React.FC = () => {
 
   return (
     <>
-      <StatusBar barStyle="dark-content" backgroundColor={colors.background} />
+      <ThemedStatusBar />
       <SafeAreaView className="flex-1 bg-background">
         <KeyboardAvoidingView
           className="flex-1"
@@ -123,7 +122,7 @@ const Login: React.FC = () => {
               accessibilityLabel="Go back"
               className="w-11 h-11 rounded-full bg-card items-center justify-center border border-border"
             >
-              <Ionicons name="chevron-back" size={22} color={colors.foreground} />
+              <Ionicons name="chevron-back" size={22} className="text-foreground" />
             </Pressable>
 
             <View className="flex-1 mt-8">
@@ -143,7 +142,7 @@ const Login: React.FC = () => {
                 onChangeText={(text) => updateFormData("username", text)}
                 placeholder="Your username"
                 icon={
-                  <Ionicons name="person-outline" size={20} color={colors.mutedForeground} />
+                  <Ionicons name="person-outline" size={20} className="text-muted-foreground" />
                 }
                 returnKeyType="next"
                 autoCapitalize="none"
@@ -161,7 +160,7 @@ const Login: React.FC = () => {
                 onChangeText={(text) => updateFormData("password", text)}
                 placeholder="Your password"
                 icon={
-                  <Ionicons name="lock-closed-outline" size={20} color={colors.mutedForeground} />
+                  <Ionicons name="lock-closed-outline" size={20} className="text-muted-foreground" />
                 }
                 secureTextEntry
                 autoComplete="password"

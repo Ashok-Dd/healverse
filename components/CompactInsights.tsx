@@ -1,4 +1,3 @@
-import { colors } from "@/constants/theme";
 import { useInsights } from "@/lib/tanstack";
 import type { Insight } from "@/types/type";
 import { Ionicons } from "@expo/vector-icons";
@@ -19,7 +18,7 @@ const CONFIG: Record<InsightType, { icon: React.ComponentProps<typeof Ionicons>[
 
 const Header = ({ type }: { type: InsightType }) => (
   <View className="mb-2 flex-row items-center gap-2">
-    <Ionicons name={CONFIG[type].icon} size={18} color={colors.foreground} />
+    <Ionicons name={CONFIG[type].icon} size={18} className="text-foreground" />
     <Text accessibilityRole="header" className="font-display text-base text-foreground">
       {CONFIG[type].title}
     </Text>

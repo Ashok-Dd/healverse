@@ -7,7 +7,7 @@ import DaySelector from "@/components/DaySelector";
 import GlobalHeader from "@/components/headers/GlobalHeader";
 import PlaceHolder from "@/components/PlaceHolder";
 import { NutritionGridSkeleton } from "@/components/skeleton/NutritionGridSkeleton";
-import { colors } from "@/constants/theme";
+import { useThemeColors } from "@/constants/theme";
 import { useSummaryData } from "@/hooks/useSummaryData";
 import { healthQueryKeys, useDateSelectorForHealthStore } from "@/store/healthStore";
 import { Ionicons } from "@expo/vector-icons";
@@ -30,7 +30,7 @@ const SectionTitle = ({
 }) => (
   <View className="flex-row items-center justify-between py-2">
     <View className="flex-row items-center gap-2">
-      <Ionicons name={icon} size={18} color={colors.foreground} />
+      <Ionicons name={icon} size={18} className="text-foreground" />
       <Text accessibilityRole="header" className="font-display text-base text-foreground">
         {title}
       </Text>
@@ -43,13 +43,14 @@ const SectionTitle = ({
         accessibilityLabel={actionLabel}
         className="min-h-[44px] min-w-[44px] items-end justify-center"
       >
-        <Ionicons name="arrow-forward-circle" size={24} color={colors.ring} />
+        <Ionicons name="arrow-forward-circle" size={24} className="text-ring" />
       </Pressable>
     )}
   </View>
 );
 
 const Tracker = () => {
+  const colors = useThemeColors();
   const queryClient = useQueryClient();
   const { selectedDate, setSelectedDate, isValidDate } = useDateSelectorForHealthStore();
   const summary = useSummaryData(selectedDate);

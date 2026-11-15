@@ -1,4 +1,3 @@
-import { colors } from "@/constants/theme";
 import { Ionicons } from "@expo/vector-icons";
 import React from "react";
 import { Text, View } from "react-native";
@@ -7,7 +6,7 @@ import { Text, View } from "react-native";
 const EmptyMessageState = () => (
   <View className="flex-1 items-center justify-center px-8">
     <View className="mb-4 h-16 w-16 items-center justify-center rounded-full bg-accent">
-      <Ionicons name="sparkles" size={30} color={colors.accentForeground} />
+      <Ionicons name="sparkles" size={30} className="text-accent-foreground" />
     </View>
     <Text accessibilityRole="header" className="mb-2 text-center font-display-bold text-2xl text-foreground">
       Ask your dietitian

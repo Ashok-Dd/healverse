@@ -1,4 +1,3 @@
-import { colors } from "@/constants/theme";
 import { MealType } from "@/types/type";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { router } from "expo-router";
@@ -56,6 +55,7 @@ const PulseButton = () => {
   return (
     <View style={styles.container} className="bottom-1 right-1 absolute">
       <Animated.View
+        className="bg-primary"
         style={[styles.pulseBackground, { transform: [{ scale: pulseAnim }] }]}
       />
       <Animated.View
@@ -67,6 +67,7 @@ const PulseButton = () => {
         ]}
       >
         <TouchableOpacity
+          className="bg-primary"
           style={styles.button}
           accessibilityRole="button"
           accessibilityLabel="Log a meal"
@@ -88,9 +89,9 @@ const PulseButton = () => {
                   transform: [{ translateX: -12 }, { translateY: -20 }],
                 }}
                 size={20}
-                color="white"
+                className="text-primary-foreground"
               />
-              <Ionicons name="scan-outline" size={40} color="white" />
+              <Ionicons name="scan-outline" size={40} className="text-primary-foreground" />
             </View>
           </View>
         </TouchableOpacity>
@@ -110,24 +111,15 @@ const styles = StyleSheet.create({
     width: 75,
     height: 75,
     borderRadius: 40,
-    backgroundColor: colors.primary,
     opacity: 0.1,
   },
   button: {
     width: 60,
     height: 60,
     borderRadius: 30,
-    backgroundColor: colors.primary,
     alignItems: "center",
     justifyContent: "center",
     elevation: 6,
-    shadowColor: colors.primary,
-    shadowOffset: {
-      width: 0,
-      height: 3,
-    },
-    shadowOpacity: 0.3,
-    shadowRadius: 5,
   },
 });
 

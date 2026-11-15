@@ -1,4 +1,3 @@
-import { colors } from "@/constants/theme";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import React from "react";
@@ -22,11 +21,11 @@ export const ChatHeader = React.memo(function ChatHeader({ title, onBackPress }:
             accessibilityLabel="Go back"
             className="h-11 w-11 items-center justify-center"
           >
-            <Ionicons name="arrow-back" size={22} color={colors.foreground} />
+            <Ionicons name="arrow-back" size={22} className="text-foreground" />
           </Pressable>
         )}
         <View className="h-9 w-9 items-center justify-center rounded-full bg-accent">
-          <Ionicons name="sparkles" size={18} color={colors.accentForeground} />
+          <Ionicons name="sparkles" size={18} className="text-accent-foreground" />
         </View>
         <Text accessibilityRole="header" className="font-display-bold text-xl text-foreground">
           {title}
@@ -39,7 +38,7 @@ export const ChatHeader = React.memo(function ChatHeader({ title, onBackPress }:
         accessibilityLabel="Conversation history"
         className="min-h-[44px] flex-row items-center gap-1 rounded-full bg-secondary px-4 active:opacity-80"
       >
-        <Ionicons name="time-outline" size={16} color={colors.foreground} />
+        <Ionicons name="time-outline" size={16} className="text-foreground" />
         <Text className="font-body-semibold text-sm text-secondary-foreground">History</Text>
       </Pressable>
     </View>

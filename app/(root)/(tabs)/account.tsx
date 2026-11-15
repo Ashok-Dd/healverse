@@ -1,8 +1,8 @@
+import { ThemedStatusBar } from "@/components/ui/ThemedStatusBar";
 import GamificationSection from "@/components/GamificationSection";
 import GlobalHeader from "@/components/headers/GlobalHeader";
 import { Button } from "@/components/ui/Button";
 import { ACTIVITY_LABELS } from "@/constants/onboarding";
-import { colors } from "@/constants/theme";
 import { useAuthStore } from "@/store/authStore";
 import { useUserProfileStore } from "@/store/userProfile";
 import type { UserProfile } from "@/types/type";
@@ -12,7 +12,7 @@ import * as Notifications from "expo-notifications";
 import { router } from "expo-router";
 import * as SecureStore from "expo-secure-store";
 import React, { useCallback } from "react";
-import { Alert, Pressable, ScrollView, StatusBar, Text, View } from "react-native";
+import { Alert, Pressable, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 const NOTIFICATION_SETTINGS_KEY = "notification_settings";
@@ -71,9 +71,9 @@ const Row = ({
     accessibilityLabel={label}
     className="min-h-[56px] flex-row items-center gap-3 rounded-2xl border border-border bg-card px-4 active:opacity-80"
   >
-    <Ionicons name={icon} size={22} color={colors.foreground} />
+    <Ionicons name={icon} size={22} className="text-foreground" />
     <Text className="flex-1 font-body-semibold text-base text-foreground">{label}</Text>
-    <Ionicons name="chevron-forward" size={20} color={colors.mutedForeground} />
+    <Ionicons name="chevron-forward" size={20} className="text-muted-foreground" />
   </Pressable>
 );
 
@@ -105,7 +105,7 @@ export default function Account() {
 
   return (
     <>
-      <StatusBar barStyle="dark-content" backgroundColor={colors.background} />
+      <ThemedStatusBar />
       <SafeAreaView className="flex-1 bg-background" edges={["top"]}>
         <ScrollView
           className="flex-1"

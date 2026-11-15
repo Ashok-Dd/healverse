@@ -1,4 +1,4 @@
-import { colors } from "@/constants/theme";
+import { useThemeColors, type ThemeColors } from "@/constants/theme";
 import { Feather } from "@expo/vector-icons";
 import React from "react";
 import { ActivityIndicator, Pressable, Text } from "react-native";
@@ -16,9 +16,12 @@ interface IconButtonProps {
   onPress: () => void;
 }
 
-const variants = {
-  soft: { container: "bg-secondary", text: "text-secondary-foreground", icon: colors.foreground },
-  accent: { container: "bg-accent", text: "text-accent-foreground", icon: colors.accentForeground },
+const variants: Record<
+  NonNullable<IconButtonProps["variant"]>,
+  { container: string; text: string; icon: string; spinner: keyof ThemeColors }
+> = {
+  soft: { container: "bg-secondary", text: "text-secondary-foreground", icon: "text-foreground", spinner: "foreground" },
+  accent: { container: "bg-accent", text: "text-accent-foreground", icon: "text-accent-foreground", spinner: "accentForeground" },
 };
 
 /** Compact pill action with an icon, used inside cards and section headers. */
@@ -32,6 +35,7 @@ const IconButton = ({
   onPress,
 }: IconButtonProps) => {
   const v = variants[variant];
+  const colors = useThemeColors();
   const isDisabled = disabled || loading;
 
   return (
@@ -47,9 +51,9 @@ const IconButton = ({
       }`}
     >
       {loading ? (
-        <ActivityIndicator size="small" color={v.icon} />
+        <ActivityIndicator size="small" color={colors[v.spinner]} />
       ) : (
-        <Feather name={iconName} size={16} color={v.icon} />
+        <Feather name={iconName} size={16} className={v.icon} />
       )}
       <Text className={`font-body-semibold text-sm ${v.text}`}>
         {loading ? loadingLabel : label}

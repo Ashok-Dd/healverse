@@ -1,4 +1,3 @@
-import { colors } from "@/constants/theme";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import React, { memo } from "react";
 import { Text, View } from "react-native";
@@ -13,7 +12,7 @@ const ITEMS: {
   label: string;
   unit: string;
   icon: IconName;
-  color: string;
+  iconClass: string;
   text: string;
 }[] = [
   {
@@ -22,7 +21,7 @@ const ITEMS: {
     label: "Calories",
     unit: "kcal",
     icon: "fire",
-    color: colors.destructive,
+    iconClass: "text-destructive",
     text: "text-destructive",
   },
   {
@@ -31,7 +30,7 @@ const ITEMS: {
     label: "Protein",
     unit: "g",
     icon: "food-drumstick",
-    color: colors.info,
+    iconClass: "text-info",
     text: "text-info",
   },
   {
@@ -40,7 +39,7 @@ const ITEMS: {
     label: "Fat",
     unit: "g",
     icon: "water",
-    color: colors.warning,
+    iconClass: "text-warning",
     text: "text-warning",
   },
   {
@@ -49,7 +48,7 @@ const ITEMS: {
     label: "Carbs",
     unit: "g",
     icon: "leaf",
-    color: colors.success,
+    iconClass: "text-success",
     text: "text-success",
   },
 ];
@@ -70,7 +69,7 @@ const NutritionInfo = (props: NutritionInfoProps) => (
           <MaterialCommunityIcons
             name={exceeded ? "alert-circle" : item.icon}
             size={22}
-            color={exceeded ? colors.destructive : item.color}
+            className={exceeded ? "text-destructive" : item.iconClass}
           />
           <Text
             className={`mt-1 font-display text-lg ${exceeded ? "text-destructive" : item.text}`}

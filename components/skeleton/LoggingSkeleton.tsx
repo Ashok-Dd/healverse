@@ -13,7 +13,7 @@ const DashboardSkeleton = () => {
                 <Skeleton width={24} height={24} radius={12} className="mr-2" />
                 <Skeleton width={160} height={24} radius={6} />
                 <View className="ml-auto">
-                    <Feather name="info" color={"lightgray"} size={20} />
+                    <Feather name="info" className="text-muted-foreground" size={20} />
                 </View>
             </View>
 

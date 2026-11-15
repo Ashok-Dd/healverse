@@ -1,3 +1,4 @@
+import { ThemedStatusBar } from "@/components/ui/ThemedStatusBar";
 import DaySelector from "@/components/DaySelector";
 import ExerciseLogs from "@/components/ExerciseLogs";
 import FoodLogs from "@/components/FoodLogs";
@@ -5,14 +6,15 @@ import GlobalHeader from "@/components/headers/GlobalHeader";
 import PlaceHolder from "@/components/PlaceHolder";
 import SummarySection from "@/components/SummarySection";
 import WaterLogs from "@/components/WaterLogs";
-import { colors } from "@/constants/theme";
+import { useThemeColors } from "@/constants/theme";
 import { healthQueryKeys, useDateSelectorForHealthStore } from "@/store/healthStore";
 import { useQueryClient } from "@tanstack/react-query";
 import React, { useCallback, useState } from "react";
-import { RefreshControl, ScrollView, StatusBar } from "react-native";
+import { RefreshControl, ScrollView } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function Logging() {
+  const colors = useThemeColors();
   const queryClient = useQueryClient();
   const { selectedDate, setSelectedDate, isValidDate } = useDateSelectorForHealthStore();
   const [refreshing, setRefreshing] = useState(false);
@@ -33,7 +35,7 @@ export default function Logging() {
 
   return (
     <>
-      <StatusBar barStyle="dark-content" backgroundColor={colors.background} />
+      <ThemedStatusBar />
       <SafeAreaView className="flex-1 bg-background" edges={["top"]}>
         <ScrollView
           className="flex-1"

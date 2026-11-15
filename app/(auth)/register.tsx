@@ -1,7 +1,8 @@
+import { ThemedStatusBar } from "@/components/ui/ThemedStatusBar";
 import { Button } from "@/components/ui/Button";
 import { FormError } from "@/components/ui/FormError";
 import { ACTIVITY_LABELS } from "@/constants/onboarding";
-import { colors } from "@/constants/theme";
+import { useThemeColors } from "@/constants/theme";
 import { useLocation, type RegionData } from "@/hooks/useLocation";
 import { formatFeetInches } from "@/lib/body";
 import { useAuthStore } from "@/store/authStore";
@@ -10,7 +11,7 @@ import type { ApiError } from "@/types/type";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import React, { useEffect, useState } from "react";
-import { ActivityIndicator, Pressable, ScrollView, StatusBar, Text, View } from "react-native";
+import { ActivityIndicator, Pressable, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 const titleCase = (value: string) =>
@@ -38,6 +39,7 @@ const Row = ({ label, value }: { label: string; value: string }) => (
 );
 
 export default function Register() {
+  const colors = useThemeColors();
   const profile = useUserProfileStore();
   const clearProfile = useUserProfileStore((s) => s.clearProfile);
   const register = useAuthStore((s) => s.register);
@@ -87,7 +89,7 @@ export default function Register() {
 
   return (
     <>
-      <StatusBar barStyle="dark-content" backgroundColor={colors.background} />
+      <ThemedStatusBar />
       <SafeAreaView className="flex-1 bg-background">
         <ScrollView
           className="flex-1"
@@ -101,7 +103,7 @@ export default function Register() {
             accessibilityLabel="Go back"
             className="h-11 w-11 items-center justify-center rounded-full border border-border bg-card"
           >
-            <Ionicons name="chevron-back" size={22} color={colors.foreground} />
+            <Ionicons name="chevron-back" size={22} className="text-foreground" />
           </Pressable>
 
           <Text

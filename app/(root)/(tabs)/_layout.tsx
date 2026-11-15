@@ -1,4 +1,4 @@
-import { colors } from "@/constants/theme";
+import { useThemeColors } from "@/constants/theme";
 import { usePrefetchHome } from "@/hooks/usePrefetchHome";
 import { Ionicons } from "@expo/vector-icons";
 import { Tabs } from "expo-router";
@@ -18,6 +18,7 @@ export const unstable_settings = { initialRouteName: "tracker" };
 
 export default function TabLayout() {
   const insets = useSafeAreaInsets();
+  const colors = useThemeColors();
   usePrefetchHome();
 
   return (

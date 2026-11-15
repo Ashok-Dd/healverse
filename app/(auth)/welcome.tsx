@@ -1,14 +1,14 @@
+import { ThemedStatusBar } from "@/components/ui/ThemedStatusBar";
 import { Button } from "@/components/ui/Button";
 import { images } from "@/constants";
-import { colors } from "@/constants/theme";
 import { router } from "expo-router";
 import React from "react";
-import { Image, ScrollView, StatusBar, Text, View } from "react-native";
+import { Image, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 const Welcome: React.FC = () => (
   <>
-    <StatusBar barStyle="dark-content" backgroundColor={colors.background} />
+    <ThemedStatusBar />
     <SafeAreaView className="flex-1 bg-background">
       <ScrollView
         contentContainerClassName="flex-grow px-6 pt-8 pb-6"

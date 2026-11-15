@@ -6,7 +6,6 @@ import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import React, { useRef, useState } from "react";
 import { TextInput } from "react-native";
-import { colors } from "@/constants/theme";
 
 interface FormErrors {
   username?: string;
@@ -80,7 +79,7 @@ export default function Step10() {
         error={errors.username}
         hint="4-20 letters, numbers or underscores."
         placeholder="Choose a username"
-        icon={<Ionicons name="person-outline" size={20} color={colors.mutedForeground} />}
+        icon={<Ionicons name="person-outline" size={20} className="text-muted-foreground" />}
         autoCapitalize="none"
         autoCorrect={false}
         autoComplete="username-new"
@@ -102,7 +101,7 @@ export default function Step10() {
         error={errors.password}
         hint="At least 6 characters."
         placeholder="Create a password"
-        icon={<Ionicons name="lock-closed-outline" size={20} color={colors.mutedForeground} />}
+        icon={<Ionicons name="lock-closed-outline" size={20} className="text-muted-foreground" />}
         secureTextEntry
         autoCapitalize="none"
         autoComplete="password-new"
@@ -122,7 +121,7 @@ export default function Step10() {
         }}
         error={errors.confirmPassword}
         placeholder="Re-enter your password"
-        icon={<Ionicons name="lock-closed-outline" size={20} color={colors.mutedForeground} />}
+        icon={<Ionicons name="lock-closed-outline" size={20} className="text-muted-foreground" />}
         secureTextEntry
         autoCapitalize="none"
         autoComplete="password-new"

@@ -1,4 +1,4 @@
-import { colors } from "@/constants/theme";
+import { useThemeColors } from "@/constants/theme";
 import React, { useCallback, useMemo, useRef, useState } from "react";
 import { Text, useWindowDimensions, View } from "react-native";
 import { RulerPicker } from "react-native-ruler-picker";
@@ -30,6 +30,7 @@ export function RulerInput({
   onChange,
 }: RulerInputProps) {
   const { width } = useWindowDimensions();
+  const colors = useThemeColors();
   const [live, setLive] = useState(initialValue);
   const onChangeRef = useRef(onChange);
   onChangeRef.current = onChange;
@@ -72,7 +73,7 @@ export function RulerInput({
     ),
     // initialValue is intentionally read once per mount.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [width, min, max, step, fractionDigits, handleChange]
+    [width, colors, min, max, step, fractionDigits, handleChange]
   );
 
   return (

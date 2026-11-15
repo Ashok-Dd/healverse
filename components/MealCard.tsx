@@ -1,5 +1,4 @@
 import IconButton from "@/components/ui/IconButton";
-import { colors } from "@/constants/theme";
 import type { Meal, MealType } from "@/types/type";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
@@ -42,13 +41,13 @@ const MealCard = ({ meal, isToday, isReplacing, onReplace }: MealCardProps) => {
       <View className="mb-3 flex-row items-center justify-between">
         <View className="flex-row items-center gap-2">
           <View className="h-9 w-9 items-center justify-center rounded-full bg-secondary">
-            <Ionicons name={MEAL_ICONS[type] ?? "restaurant-outline"} size={18} color={colors.foreground} />
+            <Ionicons name={MEAL_ICONS[type] ?? "restaurant-outline"} size={18} className="text-foreground" />
           </View>
           <Text className="font-body-bold text-sm capitalize text-muted-foreground">{type}</Text>
         </View>
         {meal.preparationTimeMinutes ? (
           <View className="flex-row items-center gap-1">
-            <Ionicons name="time-outline" size={14} color={colors.mutedForeground} />
+            <Ionicons name="time-outline" size={14} className="text-muted-foreground" />
             <Text className="font-body text-xs text-muted-foreground">
               {meal.preparationTimeMinutes} min
             </Text>
@@ -85,7 +84,7 @@ const MealCard = ({ meal, isToday, isReplacing, onReplace }: MealCardProps) => {
         <Ionicons
           name={expanded ? "chevron-up" : "chevron-down"}
           size={18}
-          color={colors.mutedForeground}
+          className="text-muted-foreground"
         />
       </Pressable>
 

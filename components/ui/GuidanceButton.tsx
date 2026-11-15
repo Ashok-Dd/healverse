@@ -1,5 +1,4 @@
 import { APP_GUIDANCE, getGuidanceContent } from "@/constants/appGuidance";
-import { colors } from "@/constants/theme";
 import { useAppGuidance } from "@/hooks/useAppGuidance";
 import { Feather } from "@expo/vector-icons";
 import React from "react";
@@ -39,7 +38,7 @@ const GuidanceButton = ({ guidanceKey, title, content, type = "info" }: Guidance
       accessibilityLabel={title ? `About: ${title}` : "Help"}
       className="h-11 w-11 items-center justify-center"
     >
-      <Feather name="help-circle" size={18} color={colors.mutedForeground} />
+      <Feather name="help-circle" size={18} className="text-muted-foreground" />
     </Pressable>
   );
 };

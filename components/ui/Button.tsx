@@ -1,4 +1,4 @@
-import { colors } from "@/constants/theme";
+import { useThemeColors, type ThemeColors } from "@/constants/theme";
 import React from "react";
 import {
   ActivityIndicator,
@@ -31,31 +31,31 @@ const sizes: Record<Size, string> = {
   sm: "min-h-[44px] px-5",
 };
 
-const variants: Record<Variant, { container: string; text: string; spinner: string }> = {
+const variants: Record<Variant, { container: string; text: string; spinner: keyof ThemeColors }> = {
   default: {
     container: "bg-primary",
     text: "font-display text-primary-foreground",
-    spinner: colors.primaryForeground,
+    spinner: "primaryForeground",
   },
   soft: {
     container: "bg-secondary",
     text: "font-display text-secondary-foreground",
-    spinner: colors.foreground,
+    spinner: "foreground",
   },
   outline: {
     container: "border border-border bg-card",
     text: "font-display text-foreground",
-    spinner: colors.foreground,
+    spinner: "foreground",
   },
   ghost: {
     container: "bg-transparent",
     text: "font-body-semibold text-secondary-foreground",
-    spinner: colors.foreground,
+    spinner: "foreground",
   },
   destructive: {
     container: "bg-destructive",
     text: "font-display text-destructive-foreground",
-    spinner: colors.primaryForeground,
+    spinner: "primaryForeground",
   },
 };
 
@@ -78,6 +78,7 @@ export function Button({
 }: ButtonProps) {
   const isDisabled = disabled || loading;
   const v = variants[variant];
+  const colors = useThemeColors();
 
   return (
     <TouchableOpacity
@@ -90,7 +91,7 @@ export function Button({
       {...props}
     >
       {loading && (
-        <ActivityIndicator size="small" color={v.spinner} style={{ marginRight: 8 }} />
+        <ActivityIndicator size="small" color={colors[v.spinner]} style={{ marginRight: 8 }} />
       )}
       {leftIcon && !loading && <View className="mr-2">{leftIcon}</View>}
       <Text className={`${textSizes[size]} text-center ${v.text} ${textClassName}`}>

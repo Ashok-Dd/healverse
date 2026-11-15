@@ -1,6 +1,6 @@
 // components/chat/MessageInput.tsx
 import { images } from "@/constants";
-import { colors as themeColors } from "@/constants/theme";
+import { useThemeColors, type ThemeColors } from "@/constants/theme";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import React, { useCallback, useMemo, useRef, useState } from "react";
 import {
@@ -37,18 +37,19 @@ interface MessageInputProps {
 }
 
 // Constants
-const COLORS = {
-  background: themeColors.card,
-  inputBackground: themeColors.background,
-  border: themeColors.border,
-  text: themeColors.foreground,
-  placeholder: themeColors.mutedForeground,
-  sendEnabled: themeColors.primary,
-  sendDisabled: themeColors.border,
-  buttonBackground: themeColors.muted,
-  buttonBackgroundPressed: themeColors.secondary,
-  recording: themeColors.destructive,
-};
+const createPalette = (theme: ThemeColors) => ({
+  background: theme.card,
+  inputBackground: theme.background,
+  border: theme.border,
+  text: theme.foreground,
+  placeholder: theme.mutedForeground,
+  sendEnabled: theme.primary,
+  sendDisabled: theme.border,
+  buttonBackground: theme.muted,
+  buttonBackgroundPressed: theme.secondary,
+  recording: theme.destructive,
+  sendIcon: theme.primaryForeground,
+});
 
 const MIN_INPUT_HEIGHT = 20;
 const MAX_INPUT_HEIGHT = 120;
@@ -69,6 +70,8 @@ export const MessageInput: React.FC<MessageInputProps> = ({
   showAttachmentButton = false,
   messagesLength,
 }) => {
+  const theme = useThemeColors();
+  const COLORS = useMemo(() => createPalette(theme), [theme]);
   const [message, setMessage] = useState("");
   const [inputHeight, setInputHeight] = useState(MIN_INPUT_HEIGHT);
   const [isFocused, setIsFocused] = useState(false);
@@ -202,7 +205,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({
         />
       </TouchableOpacity>
     ),
-    [disabled]
+    [COLORS, disabled]
   );
 
   const renderWaveButton = useCallback(() => {
@@ -231,7 +234,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({
         />
       </TouchableOpacity>
     )
-  }, [showVoiceButton, disabled, handleSpeechPress]);
+  }, [showVoiceButton, disabled, handleSpeechPress, COLORS.buttonBackground]);
 
   const renderSendButton = useCallback(
     () => (
@@ -254,11 +257,11 @@ export const MessageInput: React.FC<MessageInputProps> = ({
         <Ionicons
           name={isLoading ? "hourglass-outline" : "arrow-up"}
           size={20}
-          color="#FFFFFF"
+          className="text-primary-foreground"
         />
       </TouchableOpacity>
     ),
-    [handleSend, canSend, isLoading]
+    [handleSend, canSend, isLoading, COLORS]
   );
 
   return (

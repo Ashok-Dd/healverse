@@ -1,4 +1,3 @@
-import { colors } from "@/constants/theme";
 import { Ionicons } from "@expo/vector-icons";
 import React, { memo } from "react";
 import { Image, ImageSourcePropType, Pressable, Text, View } from "react-native";
@@ -55,7 +54,7 @@ export const ChoiceCard = memo(function ChoiceCard({
       <Ionicons
         name={selected ? "checkmark-circle" : "ellipse-outline"}
         size={24}
-        color={selected ? colors.primary : colors.border}
+        className={selected ? "text-primary" : "text-border"}
       />
     </Pressable>
   );

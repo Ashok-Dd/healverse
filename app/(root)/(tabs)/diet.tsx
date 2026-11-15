@@ -1,3 +1,4 @@
+import { ThemedStatusBar } from "@/components/ui/ThemedStatusBar";
 import ErrorCard from "@/components/cards/ErrorCard";
 import DaySelector from "@/components/DaySelector";
 import GlobalHeader from "@/components/headers/GlobalHeader";
@@ -9,18 +10,19 @@ import { Button } from "@/components/ui/Button";
 import GuidanceButton from "@/components/ui/GuidanceButton";
 import IconButton from "@/components/ui/IconButton";
 import { INFO_ABOUT_DIET_PLAN } from "@/constants";
-import { colors } from "@/constants/theme";
+import { useThemeColors } from "@/constants/theme";
 import { showToast } from "@/lib/toast";
 import { useDietPlanManager } from "@/store/dietPlan";
 import type { Meal, MealType } from "@/types/type";
 import React, { useCallback } from "react";
-import { FlatList, RefreshControl, StatusBar, Text, View } from "react-native";
+import { FlatList, RefreshControl, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 // Index is part of the key on purpose: generated meals can arrive without an id, or with a repeated one.
 const keyExtractor = (meal: Meal, index: number) => `${meal.mealType}-${meal.id ?? "new"}-${index}`;
 
 export default function Diet() {
+  const colors = useThemeColors();
   const {
     selectedDate,
     handleDateChange,
@@ -138,7 +140,7 @@ export default function Diet() {
 
   return (
     <>
-      <StatusBar barStyle="dark-content" backgroundColor={colors.background} />
+      <ThemedStatusBar />
       <SafeAreaView className="flex-1 bg-background px-3" edges={["top"]}>
         <GlobalHeader />
         <DaySelector

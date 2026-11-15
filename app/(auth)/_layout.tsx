@@ -1,9 +1,10 @@
-import { colors } from "@/constants/theme";
+import { useThemeColors } from "@/constants/theme";
 import { useAuthStore } from "@/store/authStore";
 import { router, Stack } from "expo-router";
 import { useEffect } from "react";
 
 export default function AuthLayout() {
+  const colors = useThemeColors();
   // Already signed in (e.g. the token check finished after this screen mounted): skip auth.
   useEffect(() => {
     if (useAuthStore.getState().isAuthenticated) {

@@ -1,5 +1,4 @@
 // FoodItemCard.tsx
-import { colors } from "@/constants/theme";
 import React from "react";
 import { View, Text } from "react-native";
 import NutrientBadge from "../ui/NutritionBadge";
@@ -38,32 +37,28 @@ const FoodItemCard: React.FC<FoodItemCardProps> = ({
         <View className="flex-row items-center gap-1">
           <NutrientBadge
             iconName="fire"
-            iconColor={colors.destructive}
             value={calories}
             unit="kcal"
-            textColor="text-destructive"
+            tone="destructive"
           />
           <NutrientBadge
             iconName="food-drumstick"
-            iconColor={colors.info}
             value={protein}
             unit="g"
-            textColor="text-info"
+            tone="info"
           />
           <NutrientBadge
             iconType="Entypo"
             iconName="drop"
-            iconColor={colors.warning}
             value={fats}
             unit="g"
-            textColor="text-warning"
+            tone="warning"
           />
           <NutrientBadge
             iconName="leaf"
-            iconColor={colors.success}
             value={carbs}
             unit="g"
-            textColor="text-success"
+            tone="success"
           />
         </View>
       </View>

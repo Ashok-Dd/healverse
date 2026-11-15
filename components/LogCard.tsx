@@ -1,5 +1,4 @@
 import IconButton from "@/components/ui/IconButton";
-import { colors } from "@/constants/theme";
 import { Ionicons } from "@expo/vector-icons";
 import React from "react";
 import { Pressable, Text, View } from "react-native";
@@ -39,7 +38,7 @@ function LogCard<T>({
       <View className="mb-3 flex-row items-center justify-between">
         <View className="flex-row items-center gap-3">
           <View className="h-10 w-10 items-center justify-center rounded-full bg-accent">
-            <Ionicons name={icon} size={20} color={colors.accentForeground} />
+            <Ionicons name={icon} size={20} className="text-accent-foreground" />
           </View>
           <Text accessibilityRole="header" className="font-display text-lg text-foreground">
             {title}
@@ -53,7 +52,7 @@ function LogCard<T>({
             accessibilityLabel={`See all ${title.toLowerCase()} logs`}
             className="h-11 w-11 items-center justify-center"
           >
-            <Ionicons name="arrow-forward-circle" size={26} color={colors.ring} />
+            <Ionicons name="arrow-forward-circle" size={26} className="text-ring" />
           </Pressable>
         )}
       </View>

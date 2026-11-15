@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/Button";
-import { colors } from "@/constants/theme";
+import { useThemeColors } from "@/constants/theme";
 import type { Message } from "@/types/type";
 import React, { useCallback, useMemo } from "react";
 import { ActivityIndicator, FlatList, RefreshControl, Text, View } from "react-native";
@@ -21,7 +21,9 @@ const formatTime = (timestamp: string) =>
 
 const keyExtractor = (item: Message, index: number) => String(item.id ?? index);
 
-const ThinkingBubble = () => (
+const ThinkingBubble = () => {
+  const colors = useThemeColors();
+  return (
   <View
     accessible
     accessibilityLabel="The dietitian is thinking"
@@ -31,7 +33,8 @@ const ThinkingBubble = () => (
     <ActivityIndicator size="small" color={colors.ring} />
     <Text className="font-body text-sm text-muted-foreground">Thinking...</Text>
   </View>
-);
+  );
+};
 
 export const ChatMessages = ({
   messages,
@@ -42,6 +45,7 @@ export const ChatMessages = ({
   flatListRef,
   isSending = false,
 }: ChatMessagesProps) => {
+  const colors = useThemeColors();
   const renderItem = useCallback(
     ({ item }: { item: Message }) => (
       <MessageBubble

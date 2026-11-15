@@ -1,5 +1,5 @@
+import { ThemedStatusBar } from "@/components/ui/ThemedStatusBar";
 import { Button } from "@/components/ui/Button";
-import { colors } from "@/constants/theme";
 import { ONBOARDING_TOTAL_STEPS, onboardingPath } from "@/constants/onboarding";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
@@ -9,7 +9,6 @@ import {
   Platform,
   Pressable,
   ScrollView,
-  StatusBar,
   Text,
   View,
 } from "react-native";
@@ -69,7 +68,7 @@ export function OnboardingScreen({
 
   return (
     <>
-      <StatusBar barStyle="dark-content" backgroundColor={colors.background} />
+      <ThemedStatusBar />
       <SafeAreaView className="flex-1 bg-background">
         <KeyboardAvoidingView
           className="flex-1"
@@ -83,7 +82,7 @@ export function OnboardingScreen({
               accessibilityLabel="Go back"
               className="h-11 w-11 items-center justify-center rounded-full border border-border bg-card"
             >
-              <Ionicons name="chevron-back" size={22} color={colors.foreground} />
+              <Ionicons name="chevron-back" size={22} className="text-foreground" />
             </Pressable>
             <StepProgress step={step} total={ONBOARDING_TOTAL_STEPS} />
           </View>

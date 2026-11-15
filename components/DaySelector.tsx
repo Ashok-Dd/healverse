@@ -3,7 +3,6 @@ import { generateWeekDates } from "@/lib/utils";
 import React, { memo, useCallback, useMemo, useState } from "react";
 import { Pressable, Text, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { colors } from "@/constants/theme";
 
 interface DaySelectorProps {
   selectedDate: string | null | undefined;
@@ -53,7 +52,7 @@ const DaySelector = memo(function DaySelector({
           accessibilityLabel="Previous week"
           className="h-11 w-9 items-center justify-center"
         >
-          <Ionicons name="chevron-back" size={20} color={colors.mutedForeground} />
+          <Ionicons name="chevron-back" size={20} className="text-muted-foreground" />
         </Pressable>
       )}
 
@@ -108,7 +107,7 @@ const DaySelector = memo(function DaySelector({
           accessibilityLabel="Next week"
           className="h-11 w-9 items-center justify-center"
         >
-          <Ionicons name="chevron-forward" size={20} color={colors.mutedForeground} />
+          <Ionicons name="chevron-forward" size={20} className="text-muted-foreground" />
         </Pressable>
       )}
     </View>

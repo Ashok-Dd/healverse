@@ -1,4 +1,4 @@
-import { colors } from "@/constants/theme";
+import { useThemeColors } from "@/constants/theme";
 import { Ionicons } from "@expo/vector-icons";
 import React, { forwardRef, useState } from "react";
 import { Pressable, Text, TextInput, TextInputProps, View } from "react-native";
@@ -15,6 +15,7 @@ interface InputProps extends TextInputProps {
 
 export const Input = forwardRef<TextInput, InputProps>(
   ({ label, error, hint, icon, containerClassName = "", ...props }, ref) => {
+    const colors = useThemeColors();
     const [focused, setFocused] = useState(false);
     const [revealed, setRevealed] = useState(false);
     const isPassword = !!props.secureTextEntry;
@@ -66,7 +67,7 @@ export const Input = forwardRef<TextInput, InputProps>(
               <Ionicons
                 name={revealed ? "eye-off-outline" : "eye-outline"}
                 size={20}
-                color={colors.mutedForeground}
+                className="text-muted-foreground"
               />
             </Pressable>
           )}

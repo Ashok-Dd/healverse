@@ -15,9 +15,10 @@ import {
 // Optional: global styles for tailwind or other CSS-in-JS
 import ErrorBoundary from "@/components/providers/ErrorBoundary";
 import { Button } from "@/components/ui/Button";
-import { colors } from "@/constants/theme";
+import { useThemeColors } from "@/constants/theme";
 import { images } from "@/constants";
 import { NotificationProvider } from "@/context/NotificationContext";
+import "@/lib/icons";
 import "./globals.css";
 // Configure Reanimated logs (optional)
 configureReanimatedLogger({
@@ -29,6 +30,7 @@ configureReanimatedLogger({
 SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
+  const colors = useThemeColors();
   const [fontsLoaded, fontError] = useFonts({
     "Fredoka-SemiBold": Fredoka_600SemiBold,
     "Fredoka-Bold": Fredoka_700Bold,

@@ -1,4 +1,3 @@
-import { colors } from "@/constants/theme";
 import type { ExerciseLog, FoodItem, FoodLog, WaterLog } from "@/types/type";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { router } from "expo-router";
@@ -10,7 +9,7 @@ export const ExerciseLogHolder = ({ log }: { log: ExerciseLog }) => (
   <View className="flex-row items-center justify-between rounded-2xl bg-muted p-3">
     <View className="flex-row items-center gap-3">
       <View className="h-10 w-10 items-center justify-center rounded-full bg-accent">
-        <MaterialCommunityIcons name="dumbbell" size={20} color={colors.accentForeground} />
+        <MaterialCommunityIcons name="dumbbell" size={20} className="text-accent-foreground" />
       </View>
       <View>
         <Text className="font-body-bold text-sm text-foreground">{log.exerciseName}</Text>
@@ -20,7 +19,7 @@ export const ExerciseLogHolder = ({ log }: { log: ExerciseLog }) => (
       </View>
     </View>
     <View className="flex-row items-center gap-1">
-      <MaterialCommunityIcons name="fire" size={16} color={colors.destructive} />
+      <MaterialCommunityIcons name="fire" size={16} className="text-destructive" />
       <Text className="font-body-semibold text-xs text-destructive">
         {log.caloriesBurned} kcal
       </Text>
@@ -31,7 +30,7 @@ export const ExerciseLogHolder = ({ log }: { log: ExerciseLog }) => (
 export const WaterLogHolder = ({ log }: { log: WaterLog }) => (
   <View className="flex-row items-center gap-3 rounded-2xl bg-muted p-3">
     <View className="h-10 w-10 items-center justify-center rounded-full bg-secondary">
-      <MaterialCommunityIcons name="cup-water" size={20} color={colors.info} />
+      <MaterialCommunityIcons name="cup-water" size={20} className="text-info" />
     </View>
     <View className="flex-1">
       <Text className="font-body-bold text-base text-foreground">{log.amountMl} mL</Text>
