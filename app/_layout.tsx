@@ -6,7 +6,7 @@ import { Nunito_400Regular, Nunito_600SemiBold, Nunito_700Bold } from "@expo-goo
 import { useFonts } from "expo-font";
 import { router, Slot, SplashScreen } from "expo-router";
 import { useEffect } from "react";
-import { ActivityIndicator, Image, ImageSourcePropType, Text, TouchableOpacity, View } from "react-native";
+import { ActivityIndicator, Image, ImageSourcePropType, Text, View } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import {
   configureReanimatedLogger,
@@ -14,6 +14,8 @@ import {
 } from "react-native-reanimated";
 // Optional: global styles for tailwind or other CSS-in-JS
 import ErrorBoundary from "@/components/providers/ErrorBoundary";
+import { Button } from "@/components/ui/Button";
+import { colors } from "@/constants/theme";
 import { images } from "@/constants";
 import { NotificationProvider } from "@/context/NotificationContext";
 import "./globals.css";
@@ -73,44 +75,35 @@ export default function RootLayout() {
   // instead of logging the user out.
   if (appReady && serverUnreachable) {
     return (
-      <View className="flex-1 items-center justify-center bg-white px-8">
-        <Text className="text-xl font-jakarta-bold text-secondary-800 mb-2 text-center">
+      <View className="flex-1 items-center justify-center bg-background px-8">
+        <Text className="mb-2 text-center font-display-bold text-2xl text-foreground">
           Can&apos;t reach the server
         </Text>
-        <Text className="text-base font-jakarta-regular text-secondary-600 text-center mb-6">
+        <Text className="mb-6 text-center font-body text-base text-muted-foreground">
           Check your internet connection and try again. You&apos;re still signed in.
         </Text>
-        <TouchableOpacity
-          className="bg-primary-500 py-4 px-10 rounded-3xl"
+        <Button
+          title="Try again"
           onPress={() => {
             useAuthStore.setState({ isInitializing: true });
             checkAuth();
           }}
-        >
-          <Text className="text-white text-base font-jakarta-semi-bold">Try again</Text>
-        </TouchableOpacity>
+        />
       </View>
     );
   }
 
   if (!appReady) {
-    // Matches app.json's expo-splash-screen backgroundColor, so there's no
-    // color-mismatch flash in the gap between hideAsync() and Slot mounting —
-    // but still shows the brand + a spinner so it doesn't read as frozen.
+    // Same colour as the native splash (app.json), so there is no flash in the gap between
+    // hideAsync() and the first screen. No text: the custom fonts are not loaded yet.
     return (
-      <View style={{ flex: 1, backgroundColor: "#0B8714" }} className="items-center justify-center">
+      <View className="flex-1 items-center justify-center bg-background">
         <Image
           source={images.logo as ImageSourcePropType}
-          className="w-24 h-24 mb-4"
+          className="mb-6 h-24 w-24"
           resizeMode="contain"
         />
-        <Text className="text-2xl font-jakarta-bold text-white mb-6">
-          Heal<Text className="text-primary-100">Verse</Text>
-        </Text>
-        <ActivityIndicator size="small" color="#ffffff" />
-        <Text className="text-sm font-jakarta-medium text-primary-100 mt-3">
-          Setting up your wellness journey...
-        </Text>
+        <ActivityIndicator size="small" color={colors.primary} />
       </View>
     );
   }
@@ -120,7 +113,7 @@ export default function RootLayout() {
       <ErrorBoundary>
         <QueryClientProvider client={getQueryClient()}>
           <NotificationProvider>
-            <View className={"flex-1 bg-white"}>
+            <View className="flex-1 bg-background">
               <Slot />
             </View>
           </NotificationProvider>

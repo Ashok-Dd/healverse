@@ -1,5 +1,6 @@
 import React from "react";
-import { Text, TouchableOpacity, View } from "react-native";
+import { Button } from "@/components/ui/Button";
+import { Text, View } from "react-native";
 
 interface ErrorBoundaryProps {
   children: React.ReactNode;
@@ -27,19 +28,14 @@ class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundarySta
   render() {
     if (this.state.error) {
       return (
-        <View className="flex-1 items-center justify-center bg-white px-6">
-          <Text className="text-lg font-semibold text-gray-800 mb-2 text-center">
+        <View className="flex-1 items-center justify-center bg-background px-6">
+          <Text className="mb-2 text-center font-display text-xl text-foreground">
             Something went wrong
           </Text>
-          <Text className="text-sm text-gray-500 mb-6 text-center">
+          <Text className="mb-6 text-center font-body text-sm text-muted-foreground">
             {this.state.error.message || "An unexpected error occurred."}
           </Text>
-          <TouchableOpacity
-            className="px-5 py-3 bg-green-500 rounded-lg"
-            onPress={this.reset}
-          >
-            <Text className="text-white font-semibold">Try Again</Text>
-          </TouchableOpacity>
+          <Button title="Try again" onPress={this.reset} />
         </View>
       );
     }
