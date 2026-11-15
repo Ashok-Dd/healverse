@@ -1,3 +1,4 @@
+import { TAB_BAR_BASE_HEIGHT } from "@/constants/layout";
 import { useThemeColors } from "@/constants/theme";
 import { usePrefetchHome } from "@/hooks/usePrefetchHome";
 import { Ionicons } from "@expo/vector-icons";
@@ -35,7 +36,7 @@ export default function TabLayout() {
           borderTopColor: colors.border,
           borderTopWidth: 1,
           elevation: 0,
-          height: 60 + insets.bottom,
+          height: TAB_BAR_BASE_HEIGHT + insets.bottom,
           paddingTop: 6,
           paddingBottom: insets.bottom + 6,
         },

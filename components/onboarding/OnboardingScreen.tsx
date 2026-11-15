@@ -12,7 +12,7 @@ import {
   Text,
   View,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { StepProgress } from "./StepProgress";
 
 interface OnboardingScreenProps {
@@ -43,7 +43,8 @@ export function OnboardingScreen({
   continueLabel = "Continue",
   scrollable = true,
 }: OnboardingScreenProps) {
-  const keyboard = useKeyboardInset();
+  const insets = useSafeAreaInsets();
+  const keyboard = useKeyboardInset({ bottomOffset: insets.bottom });
   const isLast = step === ONBOARDING_TOTAL_STEPS;
 
   const handleContinue = () => {
@@ -71,7 +72,7 @@ export function OnboardingScreen({
     <>
       <ThemedStatusBar />
       <SafeAreaView className="flex-1 bg-background">
-        <Animated.View ref={keyboard.ref} className="flex-1" style={keyboard.style}>
+        <Animated.View ref={keyboard.ref} style={keyboard.style}>
           <View className="flex-row items-center gap-4 px-6 pb-2 pt-3">
             <Pressable
               onPress={handleBack}

@@ -16,7 +16,7 @@ import {
   TextInput,
   View,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 
 interface UserFormData {
   username: string;
@@ -24,7 +24,8 @@ interface UserFormData {
 }
 
 const Login: React.FC = () => {
-  const keyboard = useKeyboardInset();
+  const insets = useSafeAreaInsets();
+  const keyboard = useKeyboardInset({ bottomOffset: insets.bottom });
   const { login, isLoading, sessionExpired, clearSessionExpired } =
     useAuthStore();
 
@@ -107,7 +108,7 @@ const Login: React.FC = () => {
     <>
       <ThemedStatusBar />
       <SafeAreaView className="flex-1 bg-background">
-        <Animated.View ref={keyboard.ref} className="flex-1" style={keyboard.style}>
+        <Animated.View ref={keyboard.ref} style={keyboard.style}>
           <ScrollView
             contentContainerClassName="flex-grow px-6 pt-6 pb-6"
             showsVerticalScrollIndicator={false}
