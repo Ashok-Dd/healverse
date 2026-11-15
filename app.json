@@ -1,11 +1,11 @@
 {
   "expo": {
-    "name": "R-N",
-    "slug": "R-N",
+    "name": "HealVerse",
+    "slug": "healverse",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/adaptive-icon.png",
-    "scheme": "rn",
+    "icon": "./assets/images/icon.png",
+    "scheme": "healverse",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
@@ -14,11 +14,26 @@
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
-        "backgroundColor": "#2e7d32"
+        "backgroundColor": "#0B8714",
+        "monochromeImage": "./assets/images/adaptive-icon-monochrome.png"
       },
       "edgeToEdgeEnabled": true,
       "googleServicesFile": "./google-services.json",
-      "package": "com.anonymous.RN"
+      "package": "com.bytehealers.healverse",
+      "blockedPermissions": [
+        "android.permission.READ_CALENDAR",
+        "android.permission.WRITE_CALENDAR",
+        "android.permission.SYSTEM_ALERT_WINDOW",
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.WRITE_EXTERNAL_STORAGE",
+        "android.permission.RECEIVE_BOOT_COMPLETED",
+        "android.permission.RECORD_AUDIO",
+        "android.permission.MODIFY_AUDIO_SETTINGS"
+      ],
+      "permissions": [
+        "android.permission.ACCESS_COARSE_LOCATION",
+        "android.permission.ACCESS_FINE_LOCATION"
+      ]
     },
     "web": {
       "bundler": "metro",
@@ -30,27 +45,20 @@
       [
         "expo-splash-screen",
         {
-          "image": "./assets/images/adaptive-icon.png",
+          "image": "./assets/images/splash-icon.png",
           "imageWidth": 220,
           "resizeMode": "contain",
-          "backgroundColor": "#2e7d32"
+          "backgroundColor": "#0B8714"
         }
       ],
       "expo-secure-store",
-      [
-        "expo-speech-recognition",
-        {
-          "microphonePermission": "Allow $(PRODUCT_NAME) to access the microphone.",
-          "speechRecognitionPermission": "Allow $(PRODUCT_NAME) to use speech recognition."
-        }
-      ],
-      "expo-audio",
       [
         "expo-location",
         {
           "locationAlwaysAndWhenInUsePermission": "Allow app to use your location."
         }
-      ]
+      ],
+      "./plugins/withReleaseAndroid"
     ],
     "experiments": {
       "typedRoutes": true
@@ -58,8 +66,9 @@
     "extra": {
       "router": {},
       "eas": {
-        "projectId": "a23c9751-6710-41d0-b8fa-97b0c8438652"
+        "projectId": "b6c5edb4-1c1f-4ce6-bd9d-bffaf650430a"
       }
-    }
+    },
+    "owner": "srikar-tech"
   }
 }

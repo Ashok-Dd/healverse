@@ -1,4 +1,4 @@
-package com.anonymous.RN
+package com.bytehealers.healverse
 import expo.modules.splashscreen.SplashScreenManager
 
 import android.os.Build
