@@ -17,7 +17,8 @@ import React, { useCallback } from "react";
 import { FlatList, RefreshControl, StatusBar, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-const keyExtractor = (meal: Meal) => String(meal.id);
+// Index is part of the key on purpose: generated meals can arrive without an id, or with a repeated one.
+const keyExtractor = (meal: Meal, index: number) => `${meal.mealType}-${meal.id ?? "new"}-${index}`;
 
 export default function Diet() {
   const {

@@ -75,8 +75,8 @@ const CompactInsights = ({ type, maxItems = 3 }: CompactInsightsProps) => {
     <View className="my-5">
       <Header type={type} />
       <View className="gap-3 rounded-2xl bg-muted p-4">
-        {shown.map((insight) => (
-          <View key={insight.content} className="flex-row items-start">
+        {shown.map((insight, index) => (
+          <View key={`${index}-${insight.content}`} className="flex-row items-start">
             <View className="mr-3 mt-2 h-2 w-2 rounded-full bg-ring" />
             <Text className="flex-1 font-body text-sm text-foreground">{insight.content}</Text>
           </View>

@@ -65,8 +65,8 @@ const MealCard = ({ meal, isToday, isReplacing, onReplace }: MealCardProps) => {
         <Macro label="g carbs" value={meal.carbs} text="text-success" />
       </View>
 
-      {(meal.ingredients ?? []).map((ingredient) => (
-        <View key={ingredient} className="mb-1 flex-row items-start">
+      {(meal.ingredients ?? []).map((ingredient, index) => (
+        <View key={`${index}-${ingredient}`} className="mb-1 flex-row items-start">
           <View className="mr-3 mt-2 h-1.5 w-1.5 rounded-full bg-ring" />
           <Text className="flex-1 font-body text-sm text-foreground">{ingredient}</Text>
         </View>
