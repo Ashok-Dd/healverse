@@ -27,6 +27,11 @@ const ChatScreen = ({ conversationId, isExistingConversation = false }: ChatScre
   } = useChat(conversationId, { isExistingConversation });
 
   // Lift the input above the keyboard and keep the latest message in view.
+  // Only a loaded, empty chat offers suggestions; a past chat that is still loading (or failed
+  // to load) must not look like a new one.
+  const showSuggestions =
+    !isMessagesLoading && !errorLoadingMessages && messages.length === 0 && !isSendingMessage;
+
   const insets = useSafeAreaInsets();
   const keyboard = useKeyboardInset({
     // Tab screen: the tab bar sits below the chat. Pushed screen: only the bottom inset does.
@@ -62,7 +67,9 @@ const ChatScreen = ({ conversationId, isExistingConversation = false }: ChatScre
           placeholder="Ask any question"
           // Voice assistant is switched off on the server (410 Gone). Re-enable together with VoiceModel.
           showVoiceButton={false}
-          messagesLength={messages.length}
+          // Image input is not built yet (the button had no handler). Show it again once it is.
+          showImageButton={false}
+          showSuggestions={showSuggestions}
         />
       </Animated.View>
     </SafeAreaView>
