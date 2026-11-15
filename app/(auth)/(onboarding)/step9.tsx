@@ -1,40 +1,51 @@
-import OnboardingWrapper from "@/components/OnboardingWrapper";
-import OptionsCard from "@/components/OptionsCard";
+import { OnboardingScreen } from "@/components/onboarding/OnboardingScreen";
+import { ChoiceCard } from "@/components/ui/ChoiceCard";
+import { Input } from "@/components/ui/Input";
 import { healthConditions } from "@/constants/data";
-import { FlatList, Text, View } from "react-native";
-import {useUserProfileStore} from "@/store/userProfile";
-import {useShallow} from "zustand/react/shallow";
+import { useUserProfileStore } from "@/store/userProfile";
+import React from "react";
+import { View } from "react-native";
 
-const Step9 = () => {
-    const {healthCondition , setHealthCondition} = useUserProfileStore(
-        useShallow((state) => ({
-            healthCondition: state.healthCondition,
-            setHealthCondition: state.setHealthCondition,
-        }))
-    );
+export default function Step9() {
+  const healthCondition = useUserProfileStore((s) => s.healthCondition);
+  const note = useUserProfileStore((s) => s.otherHealthConditionDescription ?? "");
+  const setHealthCondition = useUserProfileStore((s) => s.setHealthCondition);
+  const setNote = useUserProfileStore((s) => s.setOtherHealthConditionDescription);
 
-    return (
-        <OnboardingWrapper>
-            <View className="flex-1 p-4">
-                <Text className="text-2xl font-semibold text-center mb-4 text-gray-800">
-                    Do you have any Health Contions ?
-                </Text>
+  const isOther = healthCondition === "OTHER";
 
-                <FlatList
-                    data={healthConditions}
-                    keyExtractor={(item) => item.value}
-                    ItemSeparatorComponent={() => <View className="h-3" />}
-                    renderItem={({ item }) => (
-                        <OptionsCard
-                            {...item}
-                            isSelected={healthCondition === item.value}
-                            onPress={() => setHealthCondition(item.value)}
-                        />
-                    )}
-                />
-            </View>
-        </OnboardingWrapper>
-    );
-};
+  return (
+    <OnboardingScreen
+      step={9}
+      title="Any health conditions?"
+      subtitle="This helps us avoid foods that don't suit you."
+      canContinue={!isOther || note.trim().length >= 3}
+    >
+      <View accessibilityRole="radiogroup">
+        {healthConditions.map((option) => (
+          <ChoiceCard
+            key={option.value}
+            label={option.name}
+            description={option.info ?? undefined}
+            icon={option.icon}
+            selected={healthCondition === option.value}
+            onPress={() => setHealthCondition(option.value)}
+          />
+        ))}
+      </View>
 
-export default Step9;
+      {isOther && (
+        <Input
+          label="Tell us about it"
+          value={note}
+          onChangeText={setNote}
+          placeholder="e.g. Celiac disease"
+          maxLength={120}
+          autoCapitalize="sentences"
+          returnKeyType="done"
+          containerClassName="mt-2"
+        />
+      )}
+    </OnboardingScreen>
+  );
+}

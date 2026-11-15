@@ -1,95 +1,62 @@
-import { images } from "@/constants";
+import { Button } from "@/components/ui/Button";
+import { FormError } from "@/components/ui/FormError";
+import { ACTIVITY_LABELS } from "@/constants/onboarding";
+import { colors } from "@/constants/theme";
+import { useLocation, type RegionData } from "@/hooks/useLocation";
+import { formatFeetInches } from "@/lib/body";
 import { useAuthStore } from "@/store/authStore";
 import { useUserProfileStore } from "@/store/userProfile";
-import React, { useEffect } from "react";
-import {
-  ActivityIndicator,
-  Alert,
-  Image,
-  ImageSourcePropType,
-  ScrollView,
-  StatusBar,
-  Text,
-  View
-} from "react-native";
+import type { ApiError } from "@/types/type";
+import { Ionicons } from "@expo/vector-icons";
+import { router } from "expo-router";
+import React, { useEffect, useState } from "react";
+import { ActivityIndicator, Pressable, ScrollView, StatusBar, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useShallow } from "zustand/react/shallow";
 
-import { Button } from "@/components/ui/Button";
-import { useLocation } from "@/hooks/useLocation";
-import {
-  FontAwesome5,
-  MaterialCommunityIcons,
-  MaterialIcons,
-} from "@expo/vector-icons";
-import { useRouter } from "expo-router";
+const titleCase = (value: string) =>
+  value
+    .replace(/_/g, " ")
+    .toLowerCase()
+    .replace(/^\w/, (c) => c.toUpperCase());
 
-const Register = () => {
-  const router = useRouter();
+const formatAddress = (region: RegionData | null) =>
+  region
+    ? [region.street, region.name, region.city, region.region, region.postalCode, region.country]
+        .filter(Boolean)
+        .join(", ")
+    : "";
 
-  const {
-    location,
-    region,
-    isLoading: locationLoading,
-    error: locationError,
-    getLocation,
-    clearError
-  } = useLocation();
+/** Flattens the server's per-field 400 errors into readable lines. */
+const fieldErrorLines = (errors?: Record<string, string[]>) =>
+  errors ? Object.values(errors).flat() : undefined;
 
-  const profile = useUserProfileStore(
-    useShallow((state) => ({
-      username: state.username,
-      password: state.password,
-      gender: state.gender,
-      age: state.age,
-      heightCm: state.heightCm,
-      currentWeightKg: state.currentWeightKg,
-      targetWeightKg: state.targetWeightKg,
-      activityLevel: state.activityLevel,
-      goal: state.goal,
-      weightLossSpeed: state.weightLossSpeed,
-      dietaryRestriction: state.dietaryRestriction,
-      healthCondition: state.healthCondition,
-      otherHealthConditionDescription: state.otherHealthConditionDescription,
-    }))
-  );
-  const { register, error, isLoading } = useAuthStore();
+const Row = ({ label, value }: { label: string; value: string }) => (
+  <View className="flex-row items-center justify-between gap-4 border-b border-border py-3">
+    <Text className="font-body text-base text-muted-foreground">{label}</Text>
+    <Text className="flex-1 text-right font-body-semibold text-base text-foreground">{value}</Text>
+  </View>
+);
 
-  // Get location when component mounts
+export default function Register() {
+  const profile = useUserProfileStore();
+  const clearProfile = useUserProfileStore((s) => s.clearProfile);
+  const register = useAuthStore((s) => s.register);
+  const isSubmitting = useAuthStore((s) => s.isLoading);
+  const { region, isLoading: locating, error: locationError, getLocation } = useLocation();
+
+  const [formError, setFormError] = useState<{ message: string; details?: string[] } | null>(null);
+
   useEffect(() => {
     getLocation();
-  }, []);
+  }, [getLocation]);
 
-  // Helper function to build address string
-  const buildAddress = () => {
-    if (!region) return "Location not available";
-    
-    const parts = [
-      region.street,
-      region.name,
-      region.city,
-      region.region,
-      region.postalCode,
-      region.country,
-    ].filter(Boolean); // Remove null/undefined values
-    
-    return parts.join(", ");
-  };
-
-  const handleSignUp = async () => {
-    // Check if location is available
-    if (!region) {
-      Alert.alert("Location Required", "Please wait for location to load or try getting location again.");
-      return;
-    }
+  const handleSubmit = async () => {
+    setFormError(null);
+    const address = formatAddress(region);
 
     try {
-      clearError(); // Clear any existing errors
       await register({
-        user: {
-          username: profile.username,
-          password: profile.password,
-        },
+        user: { username: profile.username, password: profile.password },
         profile: {
           gender: profile.gender,
           age: profile.age,
@@ -101,230 +68,115 @@ const Register = () => {
           weightLossSpeed: profile.weightLossSpeed,
           dietaryRestriction: profile.dietaryRestriction,
           healthCondition: profile.healthCondition,
-          otherHealthConditionDescription:
-            profile.otherHealthConditionDescription,
-          address: buildAddress(),
+          otherHealthConditionDescription: profile.otherHealthConditionDescription,
+          ...(address ? { address } : {}),
         },
       });
 
-      router.push("/(root)/(tabs)/tracker" as any);
+      // The password must not linger in memory once the account exists.
+      clearProfile();
+      router.replace("/(root)/(tabs)/tracker" as any);
     } catch (e) {
-      console.log(e);
-      Alert.alert(
-        "Registration Failed",
-        error || "Something went wrong during registration. Please try again."
-      );
+      const apiError = e as Partial<ApiError>;
+      setFormError({
+        message: apiError.message || "We couldn't create your account. Please try again.",
+        details: fieldErrorLines(apiError.errors),
+      });
     }
   };
 
   return (
     <>
-      <StatusBar barStyle="dark-content" backgroundColor="#ffffff" />
-      <SafeAreaView className="flex-1 bg-white">
+      <StatusBar barStyle="dark-content" backgroundColor={colors.background} />
+      <SafeAreaView className="flex-1 bg-background">
         <ScrollView
           className="flex-1"
-          contentContainerStyle={{ flexGrow: 1 }}
+          contentContainerClassName="flex-grow px-6 pb-6 pt-3"
           showsVerticalScrollIndicator={false}
         >
-          <View className="flex-1 px-6 py-8">
-            {/* Logo Section */}
-            <View className="items-center mb-8 mt-4">
-              <View className="mb-6">
-                <Image
-                  source={images.logo as ImageSourcePropType}
-                  className="w-24 h-24"
-                  resizeMode="contain"
-                />
-              </View>
-              <Text className="text-3xl font-jakarta-bold text-primary-600">
-                Heal<Text className="text-secondary-900">Verse</Text>
-              </Text>
-              <Text className="text-center font-jakarta-medium text-sm text-gray-600 mt-2">
-                🌿 Your personalized wellness companion
-              </Text>
-            </View>
+          <Pressable
+            onPress={() => router.back()}
+            hitSlop={8}
+            accessibilityRole="button"
+            accessibilityLabel="Go back"
+            className="h-11 w-11 items-center justify-center rounded-full border border-border bg-card"
+          >
+            <Ionicons name="chevron-back" size={22} color={colors.foreground} />
+          </Pressable>
 
-            {/* Title Section */}
-            <View className="mb-6">
-              <Text className="text-2xl font-jakarta-bold text-center text-secondary-800 mb-2">
-                Complete Your Profile
-              </Text>
-              <Text className="text-base font-jakarta-regular text-center text-secondary-600">
-                Review your information and confirm registration
-              </Text>
-            </View>
+          <Text
+            accessibilityRole="header"
+            className="mt-6 font-display-bold text-3xl text-foreground"
+          >
+            Looks good, {profile.username}?
+          </Text>
+          <Text className="mb-6 mt-2 font-body text-base text-muted-foreground">
+            Check your details, then create your account.
+          </Text>
 
-            {/* Profile Image */}
-            <View className="items-center mb-6">
-              <View className="bg-primary-50 rounded-full p-4 mb-2">
-                <Image
-                  source={images.onboarding5 as ImageSourcePropType}
-                  className="h-20 w-16"
-                  resizeMode="contain"
-                />
-              </View>
-              <Text className="text-sm font-jakarta-medium text-gray-600">
-                Welcome, {profile.username}!
-              </Text>
-            </View>
+          <View className="rounded-3xl border border-border bg-card px-5 py-1">
+            <Row label="Gender" value={titleCase(profile.gender)} />
+            <Row label="Age" value={`${profile.age} years`} />
+            <Row
+              label="Height"
+              value={`${profile.heightCm} cm (${formatFeetInches(profile.heightCm)})`}
+            />
+            <Row label="Current weight" value={`${profile.currentWeightKg} kg`} />
+            <Row label="Target weight" value={`${profile.targetWeightKg} kg`} />
+            <Row label="Goal" value={titleCase(profile.goal)} />
+            <Row label="Activity" value={ACTIVITY_LABELS[profile.activityLevel]} />
+            <Row label="Diet" value={titleCase(profile.dietaryRestriction)} />
+            <Row
+              label="Health"
+              value={
+                profile.healthCondition === "OTHER" && profile.otherHealthConditionDescription
+                  ? profile.otherHealthConditionDescription
+                  : titleCase(profile.healthCondition)
+              }
+            />
+          </View>
 
-            {/* Profile Information Card */}
-            <View className="bg-gray-50 rounded-2xl p-6 mb-6 space-y-2">
-              <InfoRow
-                icon={<FontAwesome5 name="user" size={16} color="#16a34a" />}
-                label="Gender"
-                value={profile.gender === "MALE" ? "Male" : "Female"}
-              />
-              <InfoRow
-                icon={<MaterialIcons name="height" size={16} color="#16a34a" />}
-                label="Height"
-                value={`${profile.heightCm} cm`}
-              />
-              <InfoRow
-                icon={<FontAwesome5 name="birthday-cake" size={16} color="#16a34a" />}
-                label="Age"
-                value={`${profile.age} years`}
-              />
-              <InfoRow
-                icon={<FontAwesome5 name="weight" size={16} color="#16a34a" />}
-                label="Current Weight"
-                value={`${profile.currentWeightKg} kg`}
-              />
-              <InfoRow
-                icon={<FontAwesome5 name="bullseye" size={16} color="#16a34a" />}
-                label="Target Weight"
-                value={`${profile.targetWeightKg} kg`}
-              />
-              <InfoRow
-                icon={<FontAwesome5 name="running" size={16} color="#16a34a" />}
-                label="Activity Level"
-                value={profile.activityLevel.replace("_", " ").toLowerCase()}
-              />
-              <InfoRow
-                icon={<FontAwesome5 name="flag-checkered" size={16} color="#16a34a" />}
-                label="Goal"
-                value={profile.goal.replace("_", " ").toLowerCase()}
-              />
-              <InfoRow
-                icon={<FontAwesome5 name="tachometer-alt" size={16} color="#16a34a" />}
-                label="Weight Loss Speed"
-                value={profile.weightLossSpeed.toLowerCase()}
-              />
-              <InfoRow
-                icon={<MaterialCommunityIcons name="food-apple" size={16} color="#16a34a" />}
-                label="Dietary Restriction"
-                value={profile.dietaryRestriction.toLowerCase()}
-              />
-              <InfoRow
-                icon={<FontAwesome5 name="heartbeat" size={16} color="#16a34a" />}
-                label="Health Condition"
-                value={profile.healthCondition.toLowerCase()}
-              />
-              {profile.healthCondition === "OTHER" &&
-                profile.otherHealthConditionDescription && (
-                  <InfoRow
-                    icon={<FontAwesome5 name="sticky-note" size={16} color="#16a34a" />}
-                    label="Other Condition"
-                    value={profile.otherHealthConditionDescription}
-                  />
-                )}
-
-              {/* Location Info */}
-              {locationLoading && (
-                <View className="flex-row items-center justify-center py-6 gap-3">
-                  <ActivityIndicator size="small" color="#16a34a" />
-                  <Text className="text-secondary-600 font-jakarta-medium text-sm">
-                    Getting your location...
-                  </Text>
-                </View>
-              )}
-
-              {region && !locationLoading && (
-                <InfoRow
-                  icon={<MaterialIcons name="location-on" size={16} color="#16a34a" />}
-                  label="Location"
-                  value={buildAddress()}
-                />
-              )}
-
-              {locationError && (
-                <View className="py-3">
-                  <View className="bg-red-50 border border-red-200 rounded-xl p-3 mb-3">
-                    <Text className="text-red-600 text-sm font-jakarta-medium text-center">
-                      {locationError}
-                    </Text>
-                  </View>
-                  <Button
-                    title="Retry Location"
-                    onPress={getLocation}
-                    variant="secondary"
-                    className="bg-primary-50 border border-primary-200"
-                    textClassName="text-primary-600 font-jakarta-medium"
-                  />
-                </View>
-              )}
-            </View>
-
-            {/* Error Messages */}
-            {error && (
-              <View className="bg-red-50 border border-red-200 rounded-xl p-4 mb-6">
-                <Text className="text-red-600 text-sm font-jakarta-medium text-center">
-                  {error}
+          <View className="mt-4 rounded-3xl border border-border bg-card px-5 py-4">
+            <Text className="font-body-semibold text-sm text-secondary-foreground">
+              Location (optional)
+            </Text>
+            {locating ? (
+              <View className="mt-2 flex-row items-center gap-3">
+                <ActivityIndicator size="small" color={colors.ring} />
+                <Text className="font-body text-base text-muted-foreground">
+                  Finding your location...
                 </Text>
               </View>
-            )}
-
-            {/* Action Button */}
-            <View className="mt-6 mb-8">
-              <Button
-                disabled={isLoading || locationLoading || !region}
-                title={
-                  locationLoading
-                    ? "Getting Location..."
-                    : isLoading
-                    ? "Creating Account..."
-                    : "Complete Registration"
-                }
-                onPress={handleSignUp}
-                variant="primary"
-                className="bg-primary-500 py-4 shadow-medium"
-                textClassName="text-white font-jakarta-semi-bold text-lg"
-              />
-            </View>
-
-            {/* Footer */}
-            <View className="mb-4">
-              <Text className="text-center text-gray-500 font-jakarta-regular text-xs">
-                By registering, you agree to start your wellness journey 🌱
+            ) : region ? (
+              <Text className="mt-1 font-body text-base text-foreground">
+                {formatAddress(region)}
               </Text>
-            </View>
+            ) : (
+              <View className="mt-1">
+                <Text className="font-body text-base text-muted-foreground">
+                  {locationError ?? "No location found."} You can still continue without it.
+                </Text>
+                <Button
+                  title="Try again"
+                  variant="soft"
+                  size="sm"
+                  onPress={getLocation}
+                  className="mt-3 self-start"
+                />
+              </View>
+            )}
+          </View>
+
+          <View className="mt-6">
+            <FormError message={formError?.message} details={formError?.details} />
+            <Button
+              title={isSubmitting ? "Creating account..." : "Create account"}
+              onPress={handleSubmit}
+              loading={isSubmitting}
+            />
           </View>
         </ScrollView>
       </SafeAreaView>
     </>
   );
-};
-
-const InfoRow = ({
-  icon,
-  label,
-  value,
-}: {
-  icon: React.ReactNode;
-  label: string;
-  value: string;
-}) => (
-  <View className="flex-row items-center justify-between py-3 px-1 border-b border-gray-100">
-    <View className="flex-row items-center gap-3 flex-1">
-      <View className="w-8 h-8 bg-primary-50 rounded-full flex items-center justify-center">
-        {icon}
-      </View>
-      <Text className="text-secondary-700 font-jakarta-medium text-sm flex-1">{label}</Text>
-    </View>
-    <Text className="text-secondary-900 font-jakarta-semi-bold text-sm max-w-[50%] text-right">
-      {value}
-    </Text>
-  </View>
-);
-
-export default Register;
+}

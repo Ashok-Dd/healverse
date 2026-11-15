@@ -22,64 +22,61 @@ type UserProfileActions = {
     setDietaryRestriction: (restriction: UserProfileData['dietaryRestriction']) => void;
     setHealthCondition: (condition: UserProfileData['healthCondition']) => void;
     setOtherHealthConditionDescription: (description: string) => void;
-    updateProfile: (updates: Partial<UserProfileData>) => void;
+    /** Reset everything to the onboarding defaults (call after a successful registration). */
     clearProfile: () => void;
 }
 
-// Combined state type
-export type UserProfileState = UserProfileData & UserProfileActions;
+// Combined state type. `targetWeightTouched` is UI state, not part of the API payload.
+export type UserProfileState = UserProfileData &
+    UserProfileActions & { targetWeightTouched: boolean };
 
-
-export const useUserProfileStore = create<UserProfileState>((set, get) => ({
-    username : '',
-    password : '',
-    gender: 'MALE' as const,
-    age: 20,
+/** Defaults shown when onboarding starts. Every value sits inside its picker's range. */
+const INITIAL_PROFILE: UserProfileData = {
+    username: '',
+    password: '',
+    gender: 'MALE',
+    age: 25,
     heightCm: 170,
-    currentWeightKg: 50,
-    targetWeightKg: 50,
-    activityLevel: 'SEDENTARY' as const,
-    goal: 'MAINTAIN_WEIGHT' as const,
-    weightLossSpeed: 'MODERATE' as const,
-    dietaryRestriction: 'NONE' as const,
-    healthCondition: 'NONE' as const,
+    currentWeightKg: 65,
+    targetWeightKg: 65,
+    activityLevel: 'SEDENTARY',
+    goal: 'MAINTAIN_WEIGHT',
+    weightLossSpeed: 'MODERATE',
+    dietaryRestriction: 'NONE',
+    healthCondition: 'NONE',
     otherHealthConditionDescription: '',
+};
 
-    // Individual field setters
 
-    setUsername : (username) => set({ username }),
-    setPassword : (password) => set({ password }),
+export const useUserProfileStore = create<UserProfileState>((set) => ({
+    ...INITIAL_PROFILE,
+    targetWeightTouched: false,
+
+    setUsername: (username) => set({ username }),
+    setPassword: (password) => set({ password }),
     setGender: (gender) => set({ gender }),
     setAge: (age) => set({ age }),
-    setHeightCm: (height) => set({ heightCm: height }),
-    setCurrentWeightKg: (weight) => set({ currentWeightKg: weight }),
-    setTargetWeightKg: (weight) => set({ targetWeightKg: weight }),
-    setActivityLevel: (level) => set({ activityLevel: level }),
+    setHeightCm: (heightCm) => set({ heightCm }),
+    // Until the user sets a target themselves, it follows the current weight.
+    setCurrentWeightKg: (currentWeightKg) =>
+        set((state) => ({
+            currentWeightKg,
+            targetWeightKg: state.targetWeightTouched ? state.targetWeightKg : currentWeightKg,
+        })),
+    setTargetWeightKg: (targetWeightKg) => set({ targetWeightKg, targetWeightTouched: true }),
+    setActivityLevel: (activityLevel) => set({ activityLevel }),
     setGoal: (goal) => set({ goal }),
-    setWeightLossSpeed: (speed) => set({ weightLossSpeed: speed }),
-    setDietaryRestriction: (restriction) => set({ dietaryRestriction: restriction }),
-    setHealthCondition: (condition) => set({ healthCondition: condition }),
-    setOtherHealthConditionDescription: (description) => set({ otherHealthConditionDescription: description }),
+    setWeightLossSpeed: (weightLossSpeed) => set({ weightLossSpeed }),
+    setDietaryRestriction: (dietaryRestriction) => set({ dietaryRestriction }),
+    setHealthCondition: (healthCondition) =>
+        set((state) => ({
+            healthCondition,
+            // The free-text note only applies to "Other".
+            otherHealthConditionDescription:
+                healthCondition === 'OTHER' ? state.otherHealthConditionDescription : '',
+        })),
+    setOtherHealthConditionDescription: (otherHealthConditionDescription) =>
+        set({ otherHealthConditionDescription }),
 
-    // Bulk update function
-    updateProfile: (updates) => set((state) => ({ ...state, ...updates })),
-
-    // Clear all data (set to empty/zero values)
-    clearProfile: () => set({
-        username: '',
-        password: '',
-        gender: 'MALE',
-        age: 0,
-        heightCm: 0,
-        currentWeightKg: 0,
-        targetWeightKg: 0,
-        activityLevel: 'SEDENTARY',
-        goal: 'MAINTAIN_WEIGHT',
-        weightLossSpeed: 'MODERATE',
-        dietaryRestriction: 'NONE',
-        healthCondition: 'NONE',
-        otherHealthConditionDescription: '',
-    }),
-
-    // Reset to default values (same as clear in this case)
+    clearProfile: () => set({ ...INITIAL_PROFILE, targetWeightTouched: false }),
 }));

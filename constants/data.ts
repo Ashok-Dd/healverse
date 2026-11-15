@@ -10,7 +10,6 @@ import {
   Meal,
   OptionsCardProps,
   Question,
-  User,
 } from "@/types/type";
 
 export const questions: Question[] = [
@@ -234,100 +233,82 @@ export const DIET_GIRL_OPTIONS: {
   },
 ];
 
-export const THANKS_BOY_OPTIONS = [
-  {
-    label: "Thanks, I'm all set",
-    image: require("@/assets/images/Thanks-boy.png"),
-    value: "all_set",
-    icon: "",
-  },
-];
-
-export const THANKS_GIRL_OPTIONS = [
-  {
-    label: "Thanks, I'm all set",
-    image: require("@/assets/images/Thanks-girl.png"),
-    value: "all_set",
-    icon: "",
-  },
-];
-
 export const dietaryLimitations: OptionsCardProps<DietaryRestriction>[] = [
   {
     id: 1,
     name: "Vegetarian",
     icon: "🥦",
-    info: "/info/vegetarian",
+    info: null,
     value: "VEGETARIAN",
   },
   {
     id: 2,
     name: "Vegan",
     icon: "🌱",
-    info: "/info/vegan",
+    info: null,
     value: "VEGAN",
   },
   {
     id: 3,
     name: "Non-Vegetarian",
     icon: "🍗",
-    info: "/info/non-vegetarian",
+    info: null,
     value: "NON_VEGETARIAN",
   },
   {
     id: 4,
     name: "Pescatarian",
     icon: "🐟",
-    info: "/info/pescatarian",
+    info: null,
     value: "PESCATARIAN",
   },
   {
     id: 5,
     name: "Ketogenic",
     icon: "🥩",
-    info: "/info/keto",
+    info: null,
     value: "KETO",
   },
   {
     id: 6,
     name: "Paleo",
     icon: "🍖",
-    info: "/info/paleo",
+    info: null,
     value: "PALEO",
   },
   {
     id: 7,
     name: "Mediterranean",
     icon: "🍅",
-    info: "/info/mediterranean",
+    info: null,
     value: "MEDITERRANEAN",
   },
   {
     id: 8,
     name: "Gluten-Free",
     icon: "🚫🌾",
-    info: "/info/gluten-free",
+    info: null,
     value: "GLUTEN_FREE",
   },
   {
     id: 9,
     name: "Dairy-Free",
     icon: "🥛❌",
-    info: "/info/dairy-free",
+    info: null,
     value: "DAIRY_FREE",
   },
   {
     id: 10,
     name: "Low Carb",
     icon: "⬇️🍞",
-    info: "/info/low-carb",
+    info: null,
     value: "LOW_CARB",
   },
   {
     id: 11,
     name: "Low Fat",
     icon: "⬇️🥓",
-    info: "/info/low-fat",
+    info: null,
     value: "LOW_FAT",
   },
 ];
@@ -350,56 +331,56 @@ export const healthConditions: OptionsCardProps<HealthCondition>[] = [
   {
     id: 3,
     name: "High Blood Pressure",
-    info: "/info/high-blood-pressure",
+    info: null,
     icon: "🎗️",
     value: "HYPERTENSION",
   },
   {
     id: 4,
     name: "Heart Disease",
-    info: "/info/heart-disease",
+    info: null,
     icon: "❤️",
     value: "HEART_DISEASE",
   },
   {
     id: 5,
     name: "Thyroid Issues",
-    info: "/info/thyroid",
+    info: null,
     icon: "🧠",
     value: "THYROID",
   },
   {
     id: 6,
     name: "PCOS",
-    info: "/info/pcos",
+    info: null,
     icon: "👩‍⚕️",
     value: "PCOS",
   },
   {
     id: 7,
     name: "Arthritis",
-    info: "/info/arthritis",
+    info: null,
     icon: "🦴",
     value: "ARTHRITIS",
   },
   {
     id: 8,
     name: "Digestive Issues",
-    info: "/info/digestive-issues",
+    info: null,
     icon: "🍽️",
     value: "DIGESTIVE_ISSUES",
   },
   {
     id: 9,
     name: "Food Allergies",
-    info: "/info/allergies",
+    info: null,
     icon: "🌰",
     value: "ALLERGIES",
   },
   {
     id: 10,
     name: "Other",
-    info: "/info/other-health",
+    info: null,
     icon: "❓",
     value: "OTHER",
   },
