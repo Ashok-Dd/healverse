@@ -10,13 +10,12 @@ import IconButton from "@/components/ui/IconButton";
 import { INFO_ABOUT_DIET_PLAN } from "@/constants";
 import { showToast } from "@/lib/toast";
 import { useDietPlanManager } from "@/store/dietPlan";
-import { DietPlan, Meal, MealType } from "@/types/type";
+import { Meal, MealType } from "@/types/type";
 import React from "react";
 import {
   RefreshControl,
   ScrollView,
   StatusBar,
-  StyleSheet,
   Text,
   TouchableOpacity,
   View,
@@ -45,58 +44,17 @@ const Profile = () => {
     isToday,
   } = useDietPlanManager();
 
-  const handleGenerateNewPlan = async () => {
-    try {
-      console.log("Generating new plan for date:", selectedDate);
-      if (dietPlan) {
-        await handleReGenerate((dietPlan as unknown as DietPlan)?.id);
-      }
-
-      // Optionally, you can add any post-generation logic here
-    } catch (error) {
-      console.error("Failed to generate new plan:", error);
-    }
+  // Failed requests are reported by the global mutation error toast.
+  const handleGenerateNewPlan = () => {
+    if (dietPlan) handleReGenerate(dietPlan.id).catch(() => {});
   };
 
-  // const handleRefreshPlan = async () => {
-  //   try {
-  //     console.log("Refreshing plan for date:", selectedDate);
-  //     await handleRefresh();
-  //   } catch (error) {
-  //     console.error("Failed to refresh plan:", error);
-  //   }
-  // };
-
-  const handleReplaceMeal = async (mealType: MealType) => {
-    try {
-      console.log("Replacing meal:", mealType);
-      // Call the API or perform the necessary action to replace the meal
-      await replaceMeal.mutateAsync(
-        {
-          mealType,
-          dietPlanId: dietPlan?.id!,
-        },
-        {
-          onSuccess: () => {
-            showToast("Meal replaced successfully");
-          },
-          onError: (error) => {
-            showToast("Error replacing meal:");
-          },
-        }
-      );
-    } catch (error) {
-      console.error("Failed to replace meal:", error);
-    }
-  };
-
-  const handleDateChangeWrapper = (date: string) => {
-    try {
-      console.log("Date changed to:", date);
-      handleDateChange(date);
-    } catch (error) {
-      console.error("Error handling date change:", error);
-    }
+  const handleReplaceMeal = (mealType: MealType) => {
+    if (!dietPlan) return;
+    replaceMeal.mutate(
+      { mealType, dietPlanId: dietPlan.id },
+      { onSuccess: () => showToast("Meal replaced") }
+    );
   };
 
   return (
@@ -111,7 +69,7 @@ const Profile = () => {
       {/* Always show Date Selector */}
       <DaySelector
         selectedDate={selectedDate}
-        handleDateChange={handleDateChangeWrapper}
+        handleDateChange={handleDateChange}
         showDate={false}
         showButton={false}
       />
@@ -120,7 +78,10 @@ const Profile = () => {
       {isLoading || isRegenerating ? (
         <MealPlanSkeleton />
       ) : error && !dietPlan ? (
-        <ErrorCard message={error} onPress={handleRefresh} />
+        <ErrorCard
+          message={error instanceof Error ? error.message : String(error)}
+          onPress={handleRefresh}
+        />
       ) : !isValidDate ? (
         <PlaceHolder message="You're on invalid date ...!" />
       ) : !dietPlan ? (
@@ -293,22 +254,3 @@ const MealPlanSkeleton = () => {
     </ScrollView>
   );
 };
-
-const styles = StyleSheet.create({
-  container: {
-    paddingVertical: 12,
-    paddingHorizontal: 24,
-    borderRadius: 12,
-    overflow: "hidden",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  image: {
-    borderRadius: 12,
-  },
-  text: {
-    color: "white",
-    fontWeight: "600",
-    fontSize: 16,
-  },
-});
