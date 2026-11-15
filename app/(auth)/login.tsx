@@ -1,3 +1,4 @@
+import { useKeyboardInset } from "@/hooks/useKeyboardInset";
 import { ThemedStatusBar } from "@/components/ui/ThemedStatusBar";
 import { Button } from "@/components/ui/Button";
 import { FormError } from "@/components/ui/FormError";
@@ -8,8 +9,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import React, { useEffect, useRef, useState } from "react";
 import {
-  KeyboardAvoidingView,
-  Platform,
+  Animated,
   Pressable,
   ScrollView,
   Text,
@@ -24,6 +24,7 @@ interface UserFormData {
 }
 
 const Login: React.FC = () => {
+  const keyboard = useKeyboardInset();
   const { login, isLoading, sessionExpired, clearSessionExpired } =
     useAuthStore();
 
@@ -106,10 +107,7 @@ const Login: React.FC = () => {
     <>
       <ThemedStatusBar />
       <SafeAreaView className="flex-1 bg-background">
-        <KeyboardAvoidingView
-          className="flex-1"
-          behavior={Platform.OS === "ios" ? "padding" : "height"}
-        >
+        <Animated.View ref={keyboard.ref} className="flex-1" style={keyboard.style}>
           <ScrollView
             contentContainerClassName="flex-grow px-6 pt-6 pb-6"
             showsVerticalScrollIndicator={false}
@@ -205,7 +203,7 @@ const Login: React.FC = () => {
               </Pressable>
             </View>
           </ScrollView>
-        </KeyboardAvoidingView>
+        </Animated.View>
       </SafeAreaView>
     </>
   );

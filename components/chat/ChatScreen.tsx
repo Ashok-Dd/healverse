@@ -1,7 +1,8 @@
 import { useChat } from "@/hooks/useChat";
+import { useKeyboardInset } from "@/hooks/useKeyboardInset";
 import { router } from "expo-router";
 import React from "react";
-import { KeyboardAvoidingView, Platform } from "react-native";
+import { Animated } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { ChatHeader } from "./ChatHeader";
 import { ChatMessages } from "./ChatMessages";
@@ -24,16 +25,16 @@ const ChatScreen = ({ conversationId, isExistingConversation = false }: ChatScre
     flatListRef,
   } = useChat(conversationId, { isExistingConversation });
 
+  // Lift the input above the keyboard and keep the latest message in view.
+  const keyboard = useKeyboardInset(() => flatListRef.current?.scrollToEnd({ animated: true }));
+
   return (
     <SafeAreaView
       className="flex-1 bg-background"
       // The tab bar already covers the bottom inset on the Dietitian tab.
       edges={isExistingConversation ? ["top", "bottom"] : ["top"]}
     >
-      <KeyboardAvoidingView
-        className="flex-1"
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
-      >
+      <Animated.View ref={keyboard.ref} className="flex-1" style={keyboard.style}>
         <ChatHeader
           title="DietAI"
           onBackPress={isExistingConversation ? () => router.back() : undefined}
@@ -57,7 +58,7 @@ const ChatScreen = ({ conversationId, isExistingConversation = false }: ChatScre
           showVoiceButton={false}
           messagesLength={messages.length}
         />
-      </KeyboardAvoidingView>
+      </Animated.View>
     </SafeAreaView>
   );
 };

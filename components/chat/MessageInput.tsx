@@ -265,10 +265,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({
   );
 
   return (
-    <View
-    //   behavior={Platform.OS === "ios" ? "padding" : "height"}
-    //   keyboardVerticalOffset={Platform.OS === "ios" ? 90 : 0}
-    >
+    <View>
       {messagesLength === 0 && (
         <HealthQueriesHorizontalScroll handleQuerySelect={handleQuerySelect} />
       )}

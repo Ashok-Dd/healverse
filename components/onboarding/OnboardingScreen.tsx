@@ -1,3 +1,4 @@
+import { useKeyboardInset } from "@/hooks/useKeyboardInset";
 import { ThemedStatusBar } from "@/components/ui/ThemedStatusBar";
 import { Button } from "@/components/ui/Button";
 import { ONBOARDING_TOTAL_STEPS, onboardingPath } from "@/constants/onboarding";
@@ -5,8 +6,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import React from "react";
 import {
-  KeyboardAvoidingView,
-  Platform,
+  Animated,
   Pressable,
   ScrollView,
   Text,
@@ -43,6 +43,7 @@ export function OnboardingScreen({
   continueLabel = "Continue",
   scrollable = true,
 }: OnboardingScreenProps) {
+  const keyboard = useKeyboardInset();
   const isLast = step === ONBOARDING_TOTAL_STEPS;
 
   const handleContinue = () => {
@@ -70,10 +71,7 @@ export function OnboardingScreen({
     <>
       <ThemedStatusBar />
       <SafeAreaView className="flex-1 bg-background">
-        <KeyboardAvoidingView
-          className="flex-1"
-          behavior={Platform.OS === "ios" ? "padding" : undefined}
-        >
+        <Animated.View ref={keyboard.ref} className="flex-1" style={keyboard.style}>
           <View className="flex-row items-center gap-4 px-6 pb-2 pt-3">
             <Pressable
               onPress={handleBack}
@@ -111,7 +109,7 @@ export function OnboardingScreen({
               disabled={!canContinue}
             />
           </View>
-        </KeyboardAvoidingView>
+        </Animated.View>
       </SafeAreaView>
     </>
   );
