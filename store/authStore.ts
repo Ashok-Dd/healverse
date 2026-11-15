@@ -1,5 +1,6 @@
 import { appTokenCache } from "@/lib/auth";
 import { fetchApi, setUnauthorizedHandler } from "@/lib/fetchApi";
+import { clearLocalSessionData } from "@/lib/session";
 import type {
   ApiError,
   AuthResponse,
@@ -152,6 +153,7 @@ export const useAuthStore = create<AuthState>()(
         // 5xx and 429 are temporary: keep the token and let the user retry.
         if (status === 401 || status === 403) {
           await clearTokenStorage();
+          await clearLocalSessionData();
           set({
             user: null,
             isAuthenticated: false,
@@ -212,7 +214,7 @@ export const useAuthStore = create<AuthState>()(
 // parallel 401s only trigger one redirect.
 setUnauthorizedHandler(() => {
   if (!useAuthStore.getState().isAuthenticated) return;
-  void clearTokenStorage().finally(() => {
+  void Promise.all([clearTokenStorage(), clearLocalSessionData()]).finally(() => {
     useAuthStore.setState({
       user: null,
       isAuthenticated: false,
