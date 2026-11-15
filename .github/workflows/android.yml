@@ -1,0 +1,102 @@
+name: Android APK
+
+# Builds the APK on EAS (Expo cloud) and publishes it as a GitHub Release.
+# Trigger: push a tag like v1.0.1, or run manually from the Actions tab.
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+concurrency:
+  group: android-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+env:
+  EAS_CLI_VERSION: "27.10.0"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    permissions:
+      contents: write # create the GitHub Release
+    env:
+      EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+    steps:
+      - name: Check out
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Set up Node
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Require EXPO_TOKEN
+        run: |
+          if [ -z "$EXPO_TOKEN" ]; then
+            echo "::error::Repository secret EXPO_TOKEN is not set"
+            exit 1
+          fi
+
+      - name: Tag must match app.json version
+        if: startsWith(github.ref, 'refs/tags/v')
+        env:
+          TAG: ${{ github.ref_name }}
+        run: |
+          APP_VERSION="$(node -p "require('./app.json').expo.version")"
+          if [ "${TAG#v}" != "$APP_VERSION" ]; then
+            echo "::error::Tag $TAG does not match app.json version $APP_VERSION"
+            exit 1
+          fi
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Type-check
+        run: npm run typecheck
+
+      - name: Lint
+        # Existing lint errors (react/no-unescaped-entities etc.) predate this workflow; report, do not block.
+        continue-on-error: true
+        run: npm run lint
+
+      - name: Build APK on EAS (waits for the result)
+        run: >
+          npx --yes eas-cli@"$EAS_CLI_VERSION" build
+          --platform android --profile preview
+          --non-interactive --wait --json > build.json
+
+      - name: Download the APK
+        run: |
+          URL="$(jq -r '.[0].artifacts.buildUrl // empty' build.json)"
+          if [ -z "$URL" ]; then
+            echo "::error::No artifact URL in EAS build output"
+            jq 'del(.. | .metadata?)' build.json || true
+            exit 1
+          fi
+          curl -fL --retry 3 -o healverse.apk "$URL"
+          ls -l healverse.apk
+
+      - name: Upload APK as workflow artifact
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: healverse-apk
+          path: healverse.apk
+          if-no-files-found: error
+
+      - name: Publish GitHub Release
+        if: startsWith(github.ref, 'refs/tags/v')
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          gh release create "$TAG" healverse.apk \
+            --repo "$GITHUB_REPOSITORY" \
+            --title "HealVerse $TAG" \
+            --generate-notes
