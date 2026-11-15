@@ -13,32 +13,32 @@ import {
 
 const GamificationSkeleton = () => (
     <View className="mx-6 mb-6">
-        <View className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
+        <View className="bg-card rounded-2xl p-4  border border-border">
             {/* Stats Row Skeleton */}
             <View className="flex-row justify-between mb-4">
                 <View className="flex-1 mr-2">
-                    <View className="bg-gray-50 rounded-xl p-4">
-                        <View className="w-20 h-8 bg-gray-200 rounded mb-1" />
+                    <View className="bg-muted rounded-xl p-4">
+                        <View className="w-20 h-8 bg-muted rounded mb-1" />
                         <View className="w-16 h-4 bg-gray-150 rounded" />
                     </View>
                 </View>
                 <View className="flex-1 mx-1">
-                    <View className="bg-gray-50 rounded-xl p-4">
-                        <View className="w-20 h-8 bg-gray-200 rounded mb-1" />
+                    <View className="bg-muted rounded-xl p-4">
+                        <View className="w-20 h-8 bg-muted rounded mb-1" />
                         <View className="w-16 h-4 bg-gray-150 rounded" />
                     </View>
                 </View>
                 <View className="flex-1 ml-2">
-                    <View className="bg-gray-50 rounded-xl p-4">
-                        <View className="w-20 h-8 bg-gray-200 rounded mb-1" />
+                    <View className="bg-muted rounded-xl p-4">
+                        <View className="w-20 h-8 bg-muted rounded mb-1" />
                         <View className="w-16 h-4 bg-gray-150 rounded" />
                     </View>
                 </View>
             </View>
 
             {/* Today Points Skeleton */}
-            <View className="bg-gray-50 rounded-xl p-4">
-                <View className="w-24 h-6 bg-gray-200 rounded" />
+            <View className="bg-muted rounded-xl p-4">
+                <View className="w-24 h-6 bg-muted rounded" />
             </View>
         </View>
     </View>
@@ -58,7 +58,7 @@ const StatItem = ({
     bgColor: string;
 }) => (
     <View className="flex-1">
-        <View className="bg-gray-50 rounded-xl p-4 items-center">
+        <View className="bg-muted rounded-xl p-4 items-center">
             <View 
                 className="w-10 h-10 rounded-full items-center justify-center mb-2"
                 style={{ backgroundColor: bgColor }}
@@ -136,7 +136,7 @@ const ActivityItem = ({ activity }: { activity: GamificationActivity }) => {
     };
 
     return (
-        <View className="flex-row items-center p-3 bg-gray-50 rounded-lg border border-gray-100 mb-3">
+        <View className="flex-row items-center p-3 bg-muted rounded-lg border border-border mb-3">
             <View
                 className="w-10 h-10 items-center justify-center mr-3 rounded-full"
                 style={{ backgroundColor: `${getActivityColor(activity.reason)}15` }}
@@ -185,17 +185,17 @@ const ActivityModal = ({
                 onPress={onClose}
             >
                 <Pressable 
-                    className="bg-white rounded-t-3xl max-h-[80%]"
+                    className="bg-card rounded-t-3xl max-h-[80%]"
                     onPress={(e) => e.stopPropagation()}
                 >
                     {/* Header */}
-                    <View className="flex-row items-center justify-between p-6 border-b border-gray-100">
+                    <View className="flex-row items-center justify-between p-6 border-b border-border">
                         <Text className="text-xl font-jakarta-bold text-secondary-800">
                             Recent Activity
                         </Text>
                         <TouchableOpacity
                             onPress={onClose}
-                            className="w-8 h-8 bg-gray-100 rounded-full items-center justify-center"
+                            className="w-8 h-8 bg-muted rounded-full items-center justify-center"
                         >
                             <Ionicons name="close" size={20} color="#6B7280" />
                         </TouchableOpacity>
@@ -237,13 +237,13 @@ const GamificationSection = () => {
     if (error) {
         return (
             <View className="mx-6 mb-6">
-                <View className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 items-center">
+                <View className="bg-card rounded-2xl p-6  border border-border items-center">
                     <Ionicons name="alert-circle-outline" size={48} color="#EF4444" />
                     <Text className="text-secondary-800 font-jakarta-semi-bold text-lg mt-4 mb-2">
                         Unable to Load Progress
                     </Text>
                     <Text className="text-secondary-500 font-jakarta-regular text-sm text-center mb-4">
-                        We couldn't fetch your wellness progress data right now.
+                        We could not fetch your wellness progress right now.
                     </Text>
                     <TouchableOpacity
                         onPress={() => refetch()}
@@ -262,7 +262,7 @@ const GamificationSection = () => {
 
     return (
         <View className="mx-6 mb-6">
-            <View className="bg-white rounded-2xl  shadow-sm border border-gray-100">
+            <View className="bg-card rounded-2xl   border border-border">
                 {/* Stats Row */}
                 <View className="flex-row justify-between mb-4">
                     <StatItem
@@ -290,12 +290,12 @@ const GamificationSection = () => {
                     />
                 </View>
 
-                {/* Today's Points Card */}
+                {/* Points today Card */}
                 <View className="bg-blue-50 rounded-xl p-4 border border-primary-100">
                     <View className="flex-row items-center justify-between">
                         <View>
                             <Text className="text-secondary-600 font-jakarta-regular text-sm mb-1">
-                                Today's Points
+                                Points today
                             </Text>
                             <Text className="text-blue-600 font-jakarta-bold text-3xl">
                                 {gamification.todayPoints}
