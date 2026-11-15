@@ -17,7 +17,7 @@ const DashboardSkeleton = () => {
                 </View>
             </View>
 
-            <View className="bg-gray-100 rounded-lg p-4 mx-4 mb-4 shadow-sm">
+            <View className="bg-muted rounded-lg p-4 mx-4 mb-4 ">
                 <Skeleton height={80} radius={8} />
             </View>
 
@@ -35,7 +35,7 @@ const DashboardSkeleton = () => {
 
 export const SkeletonLogCard = () => {
     return (
-        <View className="bg-gray-100 rounded-xl p-4 m-4 shadow-sm">
+        <View className="bg-muted rounded-xl p-4 m-4 ">
             {/* Header */}
             <View className="flex-row items-center mb-3">
                 <Skeleton width={32} height={32} radius={16} className="mr-3" />

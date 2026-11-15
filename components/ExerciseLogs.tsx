@@ -1,44 +1,30 @@
 import { useExerciseLogs } from "@/store/healthStore";
-import { ExerciseLog } from "@/types/type";
 import { router } from "expo-router";
+import React from "react";
 import ErrorCard from "./cards/ErrorCard";
 import LogCard from "./LogCard";
 import { ExerciseLogHolder } from "./LogHolders";
 import { SkeletonLogCard } from "./skeleton/LoggingSkeleton";
 
-interface ExerciseLogsProps {
-    date: string;
-}
+const ExerciseLogs = ({ date }: { date: string }) => {
+  const { data, isLoading, error, refetch } = useExerciseLogs.ByDate(date);
 
-const ExerciseLogs = ({ date }: ExerciseLogsProps) => {
+  if (isLoading) return <SkeletonLogCard />;
+  if (error) return <ErrorCard message={error.message} onPress={() => refetch()} className="mx-0" />;
 
-    const {
-        data: exerciseLogs,
-        isLoading,
-        error
-    } = useExerciseLogs.ByDate(date);
-
-
-    return isLoading ? (
-        <SkeletonLogCard/>
-    ) : error ? (
-        <ErrorCard message={error.message} />
-    ) : (
-        <LogCard<ExerciseLog>
-            icon="🏃"
-            title="Exercise"
-            description="Move more, feel better!"
-            buttonText="+ Log Exercise"
-            Link={() => router.push("/(root)/add-exercise-log")}
-            showArrow={true}
-            emojiIcon="👥"
-            backgroundStyle="bg-green-50"
-            items={exerciseLogs as ExerciseLog[]}
-            component={ExerciseLogHolder}
-            moveTo={() => router.push("/(root)/all-logs/exercise" as any)}
-        />
-    );
+  return (
+    <LogCard
+      icon="barbell-outline"
+      title="Exercise"
+      description="Nothing logged yet. Move a little and add it here."
+      actionLabel="Log exercise"
+      onAction={() => router.push("/(root)/add-exercise-log")}
+      onSeeAll={() => router.push("/(root)/all-logs/exercise" as any)}
+      items={data ?? []}
+      getKey={(log) => log.id}
+      renderItem={(log) => <ExerciseLogHolder log={log} />}
+    />
+  );
 };
 
-
-export default ExerciseLogs;
+export default React.memo(ExerciseLogs);

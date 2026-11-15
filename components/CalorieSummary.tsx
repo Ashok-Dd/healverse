@@ -1,71 +1,42 @@
-// components/CalorieSummary.tsx
 import React from "react";
 import { Text, View } from "react-native";
-import CalorieStatItem from "./CalorieStatItem";
 
-interface HealthSummary {
+interface CalorieSummaryProps {
   targetCalories: number;
   caloriesBurned: number;
   consumedCalories: number;
   remainingCalories: number;
 }
 
-interface StatItem {
-  label?: string;
-  value?: number | string;
-  color?: string;
-  icon?: boolean;
-  symbol?: string;
-}
+const Stat = ({ label, value, text }: { label: string; value: number; text: string }) => (
+  <View accessible accessibilityLabel={`${label} ${value} kilocalories`} className="items-center">
+    <Text className={`font-display text-lg ${text}`}>{Math.round(value)}</Text>
+    <Text className="font-body text-xs text-muted-foreground">{label}</Text>
+  </View>
+);
 
-const CalorieSummary: React.FC<HealthSummary> = ({ targetCalories, caloriesBurned, consumedCalories, remainingCalories }) => {
+const Operator = ({ symbol }: { symbol: string }) => (
+  <Text importantForAccessibility="no" className="font-body text-xl text-muted-foreground">
+    {symbol}
+  </Text>
+);
 
-  const calorieStats: StatItem[] = [
-    {
-      label: "Target",
-      value: targetCalories,
-      color: "text-gray-800",
-      icon: true,
-    },
-    { symbol: "+" },
-    {
-      label: "Exercise",
-      value: caloriesBurned,
-      color: "text-teal-500",
-    },
-    { symbol: "−" },
-    {
-      label: "Food",
-      value: consumedCalories || 0,
-      color: "text-orange-500",
-    },
-    { symbol: "=" },
-    {
-      label: "Remaining",
-      value: remainingCalories || 0,
-      color: "text-red-500",
-    },
-  ];
+/** Target + exercise - food = remaining, in kcal. */
+const CalorieSummary = ({
+  targetCalories,
+  caloriesBurned,
+  consumedCalories,
+  remainingCalories,
+}: CalorieSummaryProps) => (
+  <View className="flex-row items-center justify-between">
+    <Stat label="Target" value={targetCalories} text="text-foreground" />
+    <Operator symbol="+" />
+    <Stat label="Exercise" value={caloriesBurned} text="text-success" />
+    <Operator symbol="−" />
+    <Stat label="Food" value={consumedCalories} text="text-warning" />
+    <Operator symbol="=" />
+    <Stat label="Remaining" value={remainingCalories} text="text-primary" />
+  </View>
+);
 
-  return (
-    <View className="flex-row items-center justify-between">
-      {calorieStats.map((item, index) =>
-        item.symbol ? (
-          <Text key={index} className="text-xl font-light text-gray-400">
-            {item.symbol}
-          </Text>
-        ) : (
-          <CalorieStatItem
-            key={index}
-            value={item.value}
-            label={item.label!}
-            color={item.color!}
-            icon={item.icon}
-          />
-        )
-      )}
-    </View>
-  );
-};
-
-export default CalorieSummary;
+export default React.memo(CalorieSummary);

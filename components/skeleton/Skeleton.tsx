@@ -18,7 +18,7 @@ const Skeleton = ({
 }: SkeletonProps) => {
   return (
     <View
-      className={`bg-gray-300 animate-pulse ${className}`}
+      className={`bg-border animate-pulse ${className}`}
       style={[{ width, height, borderRadius: radius } as ViewStyle, style]}
     />
   );

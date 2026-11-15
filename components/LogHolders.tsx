@@ -1,85 +1,68 @@
-import { ExerciseLog, FoodItem, FoodLog, WaterLog } from "@/types/type";
+import { colors } from "@/constants/theme";
+import type { ExerciseLog, FoodItem, FoodLog, WaterLog } from "@/types/type";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import React from "react";
-import { Text, TouchableOpacity, View } from "react-native";
+import { Pressable, Text, View } from "react-native";
 import FoodItemCard from "./cards/FoodItemCard";
 
-export const ExerciseLogHolder = (log: ExerciseLog) => {
-  return (
-    <View className="bg-green-50 border border-green-200 rounded-xl p-2 mb-2 flex-row items-center justify-between">
-      {/* Left Section */}
-      <View className="flex-row items-center">
-        <View className="bg-green-100 p-3 rounded-full mr-3">
-          <MaterialCommunityIcons name="dumbbell" size={22} color="#15803d" />
-        </View>
-        <View>
-          <Text className="text-sm font-bold text-green-900">
-            {log.exerciseName}
-          </Text>
-          <Text className="text-xs text-gray-600">
-            {log.durationMinutes} min
-          </Text>
-        </View>
+export const ExerciseLogHolder = ({ log }: { log: ExerciseLog }) => (
+  <View className="flex-row items-center justify-between rounded-2xl bg-muted p-3">
+    <View className="flex-row items-center gap-3">
+      <View className="h-10 w-10 items-center justify-center rounded-full bg-accent">
+        <MaterialCommunityIcons name="dumbbell" size={20} color={colors.accentForeground} />
       </View>
-
-      {/* Calories Section */}
-      <View className="flex-row items-center">
-        <MaterialCommunityIcons name="fire" size={16} color="#dc2626" />
-        <Text className="text-xs font-semibold text-red-600 ml-1">
-          {log.caloriesBurned} kcal
+      <View>
+        <Text className="font-body-bold text-sm text-foreground">{log.exerciseName}</Text>
+        <Text className="font-body text-xs text-muted-foreground">
+          {log.durationMinutes} min
         </Text>
       </View>
     </View>
-  );
-};
-
-export const WaterLogHolder = (log: WaterLog) => {
-  return (
-    <View className="bg-blue-50 border border-blue-200 rounded-xl p-2 mb-2 flex-row items-center">
-      {/* Icon */}
-      <View className="bg-blue-100 p-3 rounded-full mr-3">
-        <MaterialCommunityIcons name="cup-water" size={24} color="#2563eb" />
-      </View>
-
-      {/* Text info */}
-      <View className="flex-1">
-        <Text className="text-base font-bold text-blue-800">
-          {log.amountMl} mL
-        </Text>
-        <Text className="text-xs text-gray-500">
-          {new Date(log.createdAt).toLocaleTimeString([], {
-            hour: "2-digit",
-            minute: "2-digit",
-          })}
-        </Text>
-      </View>
+    <View className="flex-row items-center gap-1">
+      <MaterialCommunityIcons name="fire" size={16} color={colors.destructive} />
+      <Text className="font-body-semibold text-xs text-destructive">
+        {log.caloriesBurned} kcal
+      </Text>
     </View>
-  );
-};
+  </View>
+);
 
-export const FoodLogHolder = (log: FoodLog) => {
-  return (
-    <View className="flex flex-col gap-2">
-      {log.items.map((item: FoodItem) => (
-        <TouchableOpacity
-          key={`${log.id}-${item.id}`}
-          onPress={() => {
-            router.push(`/(root)/food-log/${log.id}`);
-          }}
-        >
-          <FoodItemCard
-            id={item.id}
-            name={item.name}
-            quantity={item.quantity}
-            unit={item.unit}
-            calories={item.calories}
-            protein={item.protein}
-            fats={item.fats}
-            carbs={item.carbs}
-          />
-        </TouchableOpacity>
-      ))}
+export const WaterLogHolder = ({ log }: { log: WaterLog }) => (
+  <View className="flex-row items-center gap-3 rounded-2xl bg-muted p-3">
+    <View className="h-10 w-10 items-center justify-center rounded-full bg-secondary">
+      <MaterialCommunityIcons name="cup-water" size={20} color={colors.info} />
     </View>
-  );
-};
+    <View className="flex-1">
+      <Text className="font-body-bold text-base text-foreground">{log.amountMl} mL</Text>
+      <Text className="font-body text-xs text-muted-foreground">
+        {new Date(log.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+      </Text>
+    </View>
+  </View>
+);
+
+export const FoodLogHolder = ({ log }: { log: FoodLog }) => (
+  <View className="gap-2">
+    {log.items.map((item: FoodItem) => (
+      <Pressable
+        key={`${log.id}-${item.id}`}
+        onPress={() => router.push(`/(root)/food-log/${log.id}`)}
+        accessibilityRole="button"
+        accessibilityLabel={`${item.name}, open details`}
+        className="active:opacity-80"
+      >
+        <FoodItemCard
+          id={item.id}
+          name={item.name}
+          quantity={item.quantity}
+          unit={item.unit}
+          calories={item.calories}
+          protein={item.protein}
+          fats={item.fats}
+          carbs={item.carbs}
+        />
+      </Pressable>
+    ))}
+  </View>
+);
