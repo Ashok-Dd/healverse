@@ -648,7 +648,6 @@ const styles = StyleSheet.create({
     padding: 20,
     marginHorizontal: 20,
     maxWidth: width * 0.8,
-    backdropFilter: "blur(10px)",
   },
   transcriptUser: {
     color: "rgba(255, 255, 255, 0.8)",
