@@ -1,123 +1,45 @@
-import { APP_GUIDANCE, getGuidanceContent } from '@/constants/appGuidance';
-import { useAppGuidance } from '@/hooks/useAppGuidance';
-import { Feather } from '@expo/vector-icons';
-import React from 'react';
-import { Text, TouchableOpacity } from 'react-native';
+import { APP_GUIDANCE, getGuidanceContent } from "@/constants/appGuidance";
+import { useAppGuidance } from "@/hooks/useAppGuidance";
+import { Feather } from "@expo/vector-icons";
+import React from "react";
+import { Pressable } from "react-native";
 
 interface GuidanceButtonProps {
+  /** Predefined help text from constants/appGuidance. */
   guidanceKey?: keyof typeof APP_GUIDANCE;
+  /** Or provide the text directly. */
   title?: string;
   content?: string;
-  type?: 'info' | 'tip' | 'warning' | 'feature';
-  buttonText?: string;
-  variant?: 'primary' | 'secondary' | 'icon-only';
-  size?: 'small' | 'medium' | 'large';
-  className?: string;
+  type?: "info" | "tip" | "warning" | "feature";
 }
 
-const GuidanceButton: React.FC<GuidanceButtonProps> = ({
-  guidanceKey,
-  title,
-  content,
-  type = 'info',
-  buttonText = 'Help',
-  variant = 'secondary',
-  size = 'medium',
-  className = ''
-}) => {
+/** Small "?" button that opens the shared guidance sheet. */
+const GuidanceButton = ({ guidanceKey, title, content, type = "info" }: GuidanceButtonProps) => {
   const { showGuidance } = useAppGuidance();
 
   const handlePress = () => {
     if (guidanceKey) {
-      const guidanceContent = getGuidanceContent(guidanceKey);
+      const guidance = getGuidanceContent(guidanceKey);
       showGuidance({
-        title: guidanceContent.title,
-        content: guidanceContent.content,
-        type: guidanceContent.type as any,
+        title: guidance.title,
+        content: guidance.content,
+        type: guidance.type as GuidanceButtonProps["type"],
       });
     } else if (content) {
-      showGuidance({
-        title: title || 'App Guidance',
-        content,
-        type,
-      });
+      showGuidance({ title: title || "Help", content, type });
     }
   };
-
-  const getSizeStyles = () => {
-    switch (size) {
-      case 'small':
-        return {
-          container: 'p-0',
-          text: 'text-xs',
-          icon: 15
-        };
-      case 'large':
-        return {
-          container: 'px-6 py-3',
-          text: 'text-base',
-          icon: 20
-        };
-      default: // medium
-        return {
-          container: 'px-4 py-2',
-          text: 'text-sm',
-          icon: 16
-        };
-    }
-  };
-
-  const getVariantStyles = () => {
-    switch (variant) {
-      case 'primary':
-        return 'bg-blue-500 border border-blue-500';
-      case 'icon-only':
-        return 'bg-gray-100  rounded-full flex-center';
-      default: // secondary
-        return 'bg-gray-100 border border-gray-300';
-    }
-  };
-
-  const getTextColor = () => {
-    return variant === 'primary' ? 'text-white' : 'text-gray-700';
-  };
-
-  const sizeStyles = getSizeStyles();
-  const variantStyles = getVariantStyles();
-  const textColor = getTextColor();
-
-  if (variant === 'icon-only') {
-    return (
-      <TouchableOpacity
-        onPress={handlePress}
-        className={`${variantStyles} ${className} mx-2`}
-        activeOpacity={0.7}
-      >
-        <Feather 
-          name="help-circle" 
-          size={sizeStyles.icon} 
-          color="#6B7280"
-        />
-      </TouchableOpacity>
-    );
-  }
 
   return (
-    <TouchableOpacity
+    <Pressable
       onPress={handlePress}
-      className={`${variantStyles} ${sizeStyles.container} rounded-lg flex-row items-center justify-center ${className}`}
-      activeOpacity={0.7}
+      hitSlop={8}
+      accessibilityRole="button"
+      accessibilityLabel={title ? `About: ${title}` : "Help"}
+      className="h-11 w-11 items-center justify-center"
     >
-      <Feather 
-        name="help-circle" 
-        size={sizeStyles.icon} 
-        color={variant === 'primary' ? '#FFFFFF' : '#6B7280'} 
-        style={{ marginRight: 6 }}
-      />
-      <Text className={`${sizeStyles.text} ${textColor} font-medium`}>
-        {buttonText}
-      </Text>
-    </TouchableOpacity>
+      <Feather name="help-circle" size={18} className="text-muted-foreground" />
+    </Pressable>
   );
 };
 

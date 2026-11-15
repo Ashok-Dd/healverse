@@ -32,7 +32,8 @@ yarn-error.*
 .DS_Store
 *.pem
 
-# local env files
+# local env files (EXPO_PUBLIC_API_URL comes from eas.json per profile, not a committed .env)
+.env
 .env*.local
 
 # typescript

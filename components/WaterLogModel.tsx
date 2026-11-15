@@ -9,7 +9,7 @@ import {
     TouchableOpacity,
     View, ViewStyle,
 } from "react-native";
-import {useWaterLogMutations, useWaterLogs} from "@/store/healthStore";
+import {useWaterLogMutations} from "@/store/healthStore";
 import {CreateWaterLogData} from "@/types/type";
 
 interface WaterLogModalProps {
@@ -101,16 +101,16 @@ const WaterLogModal: React.FC<WaterLogModalProps> = ({
       onRequestClose={handleClose}
     >
       <View className="flex-1 justify-center items-center bg-black/50">
-        <View className="w-11/12 max-w-md bg-white rounded-2xl shadow-xl">
+        <View className="w-11/12 max-w-md bg-card rounded-2xl shadow-xl">
           {/* Header */}
-          <View className="items-center p-6 border-b border-gray-100">
-            <View className="w-12 h-12 bg-blue-50 rounded-full items-center justify-center mb-3">
+          <View className="items-center p-6 border-b border-border">
+            <View className="w-12 h-12 bg-secondary rounded-full items-center justify-center mb-3">
               <Text className="text-2xl">💧</Text>
             </View>
-            <Text className="text-xl font-bold text-gray-800 mb-2">
+            <Text className="text-xl font-body-bold text-foreground mb-2">
               Log Water Intake
             </Text>
-            <Text className="text-sm text-gray-600 text-center">
+            <Text className="text-sm text-muted-foreground text-center">
               Stay hydrated for better health and energy
             </Text>
           </View>
@@ -120,23 +120,23 @@ const WaterLogModal: React.FC<WaterLogModalProps> = ({
             {/* Current Progress */}
             <View className="mb-6">
               <View className="flex-row justify-between items-center mb-2">
-                <Text className="text-sm font-medium text-gray-700">
+                <Text className="text-sm font-body-semibold text-foreground">
                   Daily Progress
                 </Text>
-                <Text className="text-sm text-blue-600 font-semibold">
+                <Text className="text-sm text-primary font-body-semibold">
                   {currentIntake}mL / {dailyGoal}mL
                 </Text>
               </View>
 
               {/* Progress Bar */}
-              <View className="w-full bg-gray-200 rounded-full h-2 mb-2">
+              <View className="w-full bg-muted rounded-full h-2 mb-2">
                 <View
-                  className="bg-blue-500 h-2 rounded-full transition-all duration-300"
+                  className="bg-primary h-2 rounded-full transition-all duration-300"
                   style={{ width: `${progressPercentage}%` } as ViewStyle}
                 />
               </View>
 
-              <Text className="text-xs text-gray-500 text-center">
+              <Text className="text-xs text-muted-foreground text-center">
                 {remainingAmount > 0
                   ? `${remainingAmount}mL remaining to reach your goal`
                   : "🎉 Daily goal achieved!"}
@@ -145,7 +145,7 @@ const WaterLogModal: React.FC<WaterLogModalProps> = ({
 
             {/* Quick Presets */}
             <View className="mb-6">
-              <Text className="text-sm font-medium text-gray-700 mb-3">
+              <Text className="text-sm font-body-semibold text-foreground mb-3">
                 Quick Add
               </Text>
               <View className="flex-row flex-wrap gap-2">
@@ -154,18 +154,18 @@ const WaterLogModal: React.FC<WaterLogModalProps> = ({
                     key={preset.amount}
                     className={`flex-1 min-w-0 p-3 rounded-xl border ${
                       selectedPreset === preset.amount
-                        ? "bg-blue-50 border-blue-500"
-                        : "bg-gray-50 border-gray-200"
+                        ? "bg-secondary border-border"
+                        : "bg-background border-border"
                     }`}
                     onPress={() => handlePresetSelect(preset.amount)}
                   >
                     <Text className="text-center text-lg mb-1">
                       {preset.icon}
                     </Text>
-                    <Text className="text-xs font-medium text-gray-800 text-center">
+                    <Text className="text-xs font-body-semibold text-foreground text-center">
                       {preset.label}
                     </Text>
-                    <Text className="text-xs text-gray-600 text-center">
+                    <Text className="text-xs text-muted-foreground text-center">
                       {preset.amount}mL
                     </Text>
                   </TouchableOpacity>
@@ -175,12 +175,12 @@ const WaterLogModal: React.FC<WaterLogModalProps> = ({
 
             {/* Custom Amount Input */}
             <View className="mb-6">
-              <Text className="text-sm font-medium text-gray-700 mb-3">
+              <Text className="text-sm font-body-semibold text-foreground mb-3">
                 Custom Amount
               </Text>
               <View className="flex-row items-center">
                 <TextInput
-                  className="flex-1 border border-gray-300 rounded-xl px-4 py-3 text-lg text-center"
+                  className="flex-1 border border-border rounded-xl px-4 py-3 text-lg text-center"
                   placeholder="Enter amount"
                   value={waterAmount}
                   onChangeText={(text) => {
@@ -190,19 +190,19 @@ const WaterLogModal: React.FC<WaterLogModalProps> = ({
                   keyboardType="numeric"
                   maxLength={4}
                 />
-                <Text className="ml-3 text-gray-600 font-medium">mL</Text>
+                <Text className="ml-3 text-muted-foreground font-body-semibold">mL</Text>
               </View>
             </View>
 
             {/* Hydration Tips */}
-            <View className="mb-4 p-3 bg-blue-50 rounded-xl">
+            <View className="mb-4 p-3 bg-secondary rounded-xl">
               <View className="flex-row items-center mb-2">
-                <Ionicons name="bulb" size={16} color="#3b82f6" />
-                <Text className="text-sm font-medium text-blue-800 ml-2">
+                <Ionicons name="bulb" size={16} className="text-primary" />
+                <Text className="text-sm font-body-semibold text-secondary-foreground ml-2">
                   Hydration Tip
                 </Text>
               </View>
-              <Text className="text-xs text-blue-700">
+              <Text className="text-xs text-primary">
                 Drink water consistently throughout the day rather than large
                 amounts at once for better absorption.
               </Text>
@@ -210,18 +210,18 @@ const WaterLogModal: React.FC<WaterLogModalProps> = ({
           </View>
 
           {/* Footer */}
-          <View className="flex-row p-6 border-t border-gray-100 gap-3">
+          <View className="flex-row p-6 border-t border-border gap-3">
             <TouchableOpacity
-              className="flex-1 bg-gray-200 py-4 rounded-xl items-center"
+              className="flex-1 bg-muted py-4 rounded-xl items-center"
               onPress={handleClose}
             >
-              <Text className="text-gray-700 font-semibold text-lg">
+              <Text className="text-foreground font-body-semibold text-lg">
                 Cancel
               </Text>
             </TouchableOpacity>
               <TouchableOpacity
                   className={`flex-1 py-4 rounded-xl items-center ${
-                      waterAmount && !addWaterLog.isPending ? "bg-blue-500" : "bg-gray-300"
+                      waterAmount && !addWaterLog.isPending ? "bg-primary" : "bg-muted"
                   }`}
                   onPress={handleSave}
                   disabled={!waterAmount || addWaterLog.isPending}
@@ -234,10 +234,10 @@ const WaterLogModal: React.FC<WaterLogModalProps> = ({
                               <Ionicons
                                   name="add"
                                   size={20}
-                                  color="white"
+                                  className="text-primary-foreground"
                                   style={{ marginRight: 8 } as any}
                               />
-                              <Text className="text-white font-semibold text-lg">
+                              <Text className="text-primary-foreground font-body-semibold text-lg">
                                   Log Water
                               </Text>
                           </>

@@ -1,5 +1,5 @@
-// components/chat/MessageBubble.tsx
-import React from "react";
+import { useThemeColors, type ThemeColors } from "@/constants/theme";
+import React, { memo, useMemo } from "react";
 import { Text, View } from "react-native";
 import Markdown, { MarkdownProps } from "react-native-markdown-display";
 
@@ -7,174 +7,113 @@ interface MessageBubbleProps {
   message: string;
   isUser: boolean;
   timestamp?: string;
-  isLoading?: boolean;
-  avatar?: string;
 }
 
-const markdownStyles = {
-  body: {
+const createMarkdownStyles = (colors: ThemeColors): MarkdownProps["style"] => {
+  const body = {
+    fontFamily: "Nunito-Regular",
     fontSize: 16,
     lineHeight: 24,
-    color: "#374151", // gray-700
-    fontFamily: "System",
-  },
-  heading1: {
-    fontSize: 24,
-    fontWeight: "700",
-    color: "#111827", // gray-900
-    marginTop: 16,
-    marginBottom: 8,
-  },
-  heading2: {
-    fontSize: 20,
-    fontWeight: "600",
-    color: "#111827",
-    marginTop: 14,
-    marginBottom: 6,
-  },
-  heading3: {
-    fontSize: 18,
-    fontWeight: "600",
-    color: "#111827",
-    marginTop: 12,
-    marginBottom: 4,
-  },
-  paragraph: {
-    marginBottom: 12,
-    fontSize: 16,
-    lineHeight: 24,
-    color: "#374151",
-  },
-  strong: {
-    fontWeight: "600",
-    color: "#111827",
-  },
-  em: {
-    fontStyle: "italic",
-    color: "#4B5563", // gray-600
-  },
-  code_inline: {
-    backgroundColor: "#F3F4F6", // gray-100
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 4,
-    fontSize: 14,
-    fontFamily: "Menlo, Monaco, Consolas, monospace",
-    color: "#DC2626", // red-600
-  },
-  code_block: {
-    backgroundColor: "#1F2937", // gray-800
-    padding: 16,
-    borderRadius: 8,
-    marginVertical: 8,
-  },
-  fence: {
-    backgroundColor: "#1F2937",
-    padding: 16,
-    borderRadius: 8,
-    marginVertical: 8,
-  },
-  table: {
-    borderWidth: 1,
-    borderColor: "#E5E7EB", // gray-200
-    borderRadius: 6,
-    marginVertical: 8,
-  },
-  thead: {
-    backgroundColor: "#F9FAFB", // gray-50
-  },
-  tbody: {},
-  th: {
-    padding: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: "#E5E7EB",
-    fontWeight: "600",
-    color: "#111827",
-  },
-  td: {
-    padding: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: "#F3F4F6",
-    color: "#374151",
-  },
-  list_item: {
-    marginBottom: 6,
-    fontSize: 16,
-    color: "#374151",
-  },
-  bullet_list: {
-    marginVertical: 8,
-  },
-  ordered_list: {
-    marginVertical: 8,
-  },
-  blockquote: {
-    backgroundColor: "#F9FAFB",
-    borderLeftWidth: 4,
-    borderLeftColor: "#6B7280", // gray-500
-    paddingLeft: 16,
-    paddingVertical: 8,
-    marginVertical: 8,
-    fontStyle: "italic",
-  },
-  hr: {
-    backgroundColor: "#E5E7EB",
-    height: 1,
-    marginVertical: 16,
-  },
-  link: {
-    color: "#2563EB", // blue-600
-    textDecorationLine: "underline",
-  },
+    color: colors.foreground,
+  };
+
+  return {
+    body,
+    paragraph: { ...body, marginTop: 0, marginBottom: 12 },
+    heading1: {
+      fontFamily: "Fredoka-Bold",
+      fontSize: 24,
+      color: colors.foreground,
+      marginTop: 16,
+      marginBottom: 8,
+    },
+    heading2: {
+      fontFamily: "Fredoka-SemiBold",
+      fontSize: 20,
+      color: colors.foreground,
+      marginTop: 14,
+      marginBottom: 6,
+    },
+    heading3: {
+      fontFamily: "Fredoka-SemiBold",
+      fontSize: 18,
+      color: colors.foreground,
+      marginTop: 12,
+      marginBottom: 4,
+    },
+    strong: { fontFamily: "Nunito-Bold", color: colors.foreground },
+    em: { fontStyle: "italic" },
+    list_item: { ...body, marginBottom: 6 },
+    bullet_list: { marginVertical: 8 },
+    ordered_list: { marginVertical: 8 },
+    code_inline: {
+      backgroundColor: colors.muted,
+      paddingHorizontal: 6,
+      borderRadius: 4,
+      fontSize: 14,
+      color: colors.destructive,
+    },
+    fence: { backgroundColor: colors.foreground, padding: 16, borderRadius: 12, marginVertical: 8 },
+    code_block: {
+      backgroundColor: colors.foreground,
+      padding: 16,
+      borderRadius: 12,
+      marginVertical: 8,
+    },
+    table: { borderWidth: 1, borderColor: colors.border, borderRadius: 8, marginVertical: 8 },
+    th: {
+      padding: 10,
+      borderBottomWidth: 1,
+      borderBottomColor: colors.border,
+      fontFamily: "Nunito-Bold",
+    },
+    td: { padding: 10, borderBottomWidth: 1, borderBottomColor: colors.border },
+    blockquote: {
+      backgroundColor: colors.muted,
+      borderLeftWidth: 4,
+      borderLeftColor: colors.ring,
+      paddingLeft: 16,
+      paddingVertical: 8,
+      marginVertical: 8,
+    },
+    hr: { backgroundColor: colors.border, height: 1, marginVertical: 16 },
+    link: { color: colors.ring, textDecorationLine: "underline" },
+  };
 };
 
-export const MessageBubble: React.FC<MessageBubbleProps> = ({
+/**
+ * One chat message. Memoised: rendering markdown is the most expensive part of the chat, and
+ * a new message should not re-render every earlier bubble.
+ */
+export const MessageBubble = memo(function MessageBubble({
   message,
   isUser,
   timestamp,
-  isLoading = false,
-  avatar,
-}) => {
-  // Markdown styles for bot messages
+}: MessageBubbleProps) {
+  const colors = useThemeColors();
+  const markdownStyles = useMemo(() => createMarkdownStyles(colors), [colors]);
 
   if (isUser) {
-    // Simple user message bubble (ChatGPT style)
     return (
-      <View className="flex-row justify-end py-2 px-2">
-        <View className="max-w-[80%]  bg-green-500 rounded-2xl  px-4 py-3  ">
-          <Text className="text-white text-base leading-6 font-light break-words">
-            {message}
-          </Text>
+      <View className="items-end px-2 py-2">
+        <View className="max-w-[80%] rounded-3xl rounded-br-md bg-primary px-4 py-3">
+          <Text className="font-body text-base text-primary-foreground">{message}</Text>
         </View>
+        {timestamp ? (
+          <Text className="mt-1 font-body text-xs text-muted-foreground">{timestamp}</Text>
+        ) : null}
       </View>
     );
   }
 
-  // Bot message with markdown rendering
   return (
-    <View className="flex-row justify-start">
-      {/* Bot Message Content */}
-      <View className="flex-1">
-        {isLoading ? (
-          // Loading state
-          <View className="bg-white rounded-2xl rounded-tl-md px-4 py-3 shadow-sm border border-gray-100">
-            <View className="flex-row items-center">
-              <View className="w-2 h-2 bg-gray-400 rounded-full mr-1 opacity-60" />
-              <View className="w-2 h-2 bg-gray-400 rounded-full mr-1 opacity-60" />
-              <View className="w-2 h-2 bg-gray-400 rounded-full opacity-60" />
-            </View>
-          </View>
-        ) : (
-          // Message content with markdown
-          <View className={"border-t border-gray-200"}>
-            <View>
-              <Markdown style={markdownStyles as MarkdownProps["style"]}>
-                {message}
-              </Markdown>
-            </View>
-          </View>
-        )}
+    <View className="px-2 py-2">
+      <View className="rounded-3xl rounded-tl-md border border-border bg-card px-4 pt-3">
+        <Markdown style={markdownStyles}>{message}</Markdown>
       </View>
+      {timestamp ? (
+        <Text className="mt-1 font-body text-xs text-muted-foreground">{timestamp}</Text>
+      ) : null}
     </View>
   );
-};
+});

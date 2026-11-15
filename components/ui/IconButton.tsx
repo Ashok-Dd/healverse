@@ -1,62 +1,65 @@
+import { useThemeColors, type ThemeColors } from "@/constants/theme";
+import { Feather } from "@expo/vector-icons";
 import React from "react";
-import { GestureResponderEvent, TouchableOpacity, View, Text } from "react-native";
-import Feather from "react-native-vector-icons/Feather";
-import MaterialIcons from "react-native-vector-icons/MaterialIcons";
+import { ActivityIndicator, Pressable, Text } from "react-native";
 
-type IconType = "Feather" | "MaterialIcons";
+type FeatherName = React.ComponentProps<typeof Feather>["name"];
 
 interface IconButtonProps {
-    iconType?: IconType;
-    iconName: string;
-    loadingIconName?: string;
-    label: string;
-    loadingLabel?: string;
-    loading?: boolean;
-    onPress: (event: GestureResponderEvent) => void;
-    disabled?: boolean;
-    bgClass?: string;
-    textClass?: string;
-    iconColor?: string;
-    iconSize?: number;
-    textSize?: string;
-    rounded?: string;
+  iconName: FeatherName;
+  label: string;
+  /** Label shown while `loading`. */
+  loadingLabel?: string;
+  loading?: boolean;
+  disabled?: boolean;
+  variant?: "soft" | "accent";
+  onPress: () => void;
 }
 
-const IconButton = ({
-        iconType = "Feather",
-        iconName,
-        loadingIconName = "loader",
-        label,
-        loadingLabel = "Loading...",
-        loading = false,
-        onPress,
-        disabled = false,
-        bgClass = "bg-blue-100",
-        textClass = "text-blue-700",
-        iconColor = "#1D4ED8",
-        iconSize = 12,
-        textSize = "text-xs",
-        rounded = "rounded-full"} : IconButtonProps) => {
-    const IconComponent = iconType === "MaterialIcons" ? MaterialIcons : Feather;
+const variants: Record<
+  NonNullable<IconButtonProps["variant"]>,
+  { container: string; text: string; icon: string; spinner: keyof ThemeColors }
+> = {
+  soft: { container: "bg-secondary", text: "text-secondary-foreground", icon: "text-foreground", spinner: "foreground" },
+  accent: { container: "bg-accent", text: "text-accent-foreground", icon: "text-accent-foreground", spinner: "accentForeground" },
+};
 
-    return (
-        <TouchableOpacity
-            className={`${bgClass} px-2 py-1 ${rounded}`}
-            onPress={onPress}
-            disabled={disabled || loading}
-        >
-            <View className="flex-row items-center gap-1">
-                <IconComponent
-                    name={loading ? loadingIconName : iconName}
-                    size={iconSize}
-                    color={iconColor}
-                />
-                <Text className={`${textClass} ${textSize}`}>
-                    {loading ? loadingLabel : label}
-                </Text>
-            </View>
-        </TouchableOpacity>
-    );
+/** Compact pill action with an icon, used inside cards and section headers. */
+const IconButton = ({
+  iconName,
+  label,
+  loadingLabel = "Working...",
+  loading = false,
+  disabled = false,
+  variant = "soft",
+  onPress,
+}: IconButtonProps) => {
+  const v = variants[variant];
+  const colors = useThemeColors();
+  const isDisabled = disabled || loading;
+
+  return (
+    <Pressable
+      onPress={onPress}
+      disabled={isDisabled}
+      hitSlop={6}
+      accessibilityRole="button"
+      accessibilityLabel={label}
+      accessibilityState={{ disabled: isDisabled, busy: loading }}
+      className={`min-h-[44px] flex-row items-center justify-center gap-2 rounded-full px-4 active:opacity-80 ${v.container} ${
+        isDisabled ? "opacity-60" : ""
+      }`}
+    >
+      {loading ? (
+        <ActivityIndicator size="small" color={colors[v.spinner]} />
+      ) : (
+        <Feather name={iconName} size={16} className={v.icon} />
+      )}
+      <Text className={`font-body-semibold text-sm ${v.text}`}>
+        {loading ? loadingLabel : label}
+      </Text>
+    </Pressable>
+  );
 };
 
 export default IconButton;

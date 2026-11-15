@@ -45,20 +45,20 @@ export const ExerciseModal: React.FC<ExerciseModalProps> = ({
             onRequestClose={onCancel}
         >
             <View className="flex-1 justify-center items-center bg-black/50">
-                <View className="w-11/12 max-w-md bg-white rounded-2xl shadow-xl">
+                <View className="w-11/12 max-w-md bg-card rounded-2xl shadow-xl">
                     {/* Modal Header */}
-                    <View className="items-center p-6 border-b border-gray-100">
-                        <View className="w-12 h-12 bg-blue-50 rounded-full items-center justify-center mb-3">
+                    <View className="items-center p-6 border-b border-border">
+                        <View className="w-12 h-12 bg-secondary rounded-full items-center justify-center mb-3">
                             <Ionicons
                                 name={EXERCISE_ICONS[exercise.exerciseName.toLowerCase()]}
                                 size={24}
-                                color="#3b82f6"
+                                className="text-primary"
                             />
                         </View>
-                        <Text className="text-xl font-bold text-gray-800 mb-2">
+                        <Text className="text-xl font-body-bold text-foreground mb-2">
                             {exercise.exerciseName}
                         </Text>
-                        <Text className="text-sm text-gray-600 text-center leading-5">
+                        <Text className="text-sm text-muted-foreground text-center leading-5">
                             {getExerciseDescription(exercise.exerciseName)}
                         </Text>
                     </View>
@@ -67,7 +67,7 @@ export const ExerciseModal: React.FC<ExerciseModalProps> = ({
                     <View className="p-6">
                         {/* Exercise Details */}
                         <View className="mb-6">
-                            <Text className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">
+                            <Text className="text-xs font-body-semibold text-muted-foreground uppercase tracking-wider mb-3">
                                 Intensity Levels
                             </Text>
                             <View className="space-y-2">
@@ -77,7 +77,7 @@ export const ExerciseModal: React.FC<ExerciseModalProps> = ({
                                             className="w-1.5 h-1.5 rounded-full mr-3"
                                             style={{ backgroundColor: level.color }}
                                         />
-                                        <Text className="text-xs text-gray-600">
+                                        <Text className="text-xs text-muted-foreground">
                                             {level.label}:{" "}
                                             {level.level === "LOW"
                                                 ? "Light effort, comfortable pace"
@@ -92,10 +92,10 @@ export const ExerciseModal: React.FC<ExerciseModalProps> = ({
 
                         {/* Calories Display */}
                         <View className="items-center mb-6">
-                            <Text className="text-4xl font-bold text-gray-800">
+                            <Text className="text-4xl font-body-bold text-foreground">
                                 {calculatedCalories}
                             </Text>
-                            <Text className="text-gray-500 text-lg">kcal</Text>
+                            <Text className="text-muted-foreground text-lg">kcal</Text>
                         </View>
 
                         {/* Smooth Pickers Side by Side */}
@@ -123,28 +123,28 @@ export const ExerciseModal: React.FC<ExerciseModalProps> = ({
                     </View>
 
                     {/* Modal Footer */}
-                    <View className="flex-row p-6 border-t border-gray-100 gap-3">
+                    <View className="flex-row p-6 border-t border-border gap-3">
                         <TouchableOpacity
-                            className="flex-1 bg-gray-200 py-4 rounded-xl items-center"
+                            className="flex-1 bg-muted py-4 rounded-xl items-center"
                             onPress={onCancel}
                         >
-                            <Text className="text-gray-700 font-semibold text-lg">
+                            <Text className="text-foreground font-body-semibold text-lg">
                                 Cancel
                             </Text>
                         </TouchableOpacity>
 
                         <TouchableOpacity
-                            className="flex-1 bg-green-500 py-4 rounded-xl items-center"
+                            className="flex-1 bg-primary py-4 rounded-xl items-center"
                             onPress={onSave}
                         >
                             <View className="flex-row items-center">
                                 <Ionicons
                                     name="checkmark"
                                     size={20}
-                                    color="white"
+                                    className="text-primary-foreground"
                                     style={{ marginRight: 8 } as any}
                                 />
-                                <Text className="text-white font-semibold text-lg">
+                                <Text className="text-primary-foreground font-body-semibold text-lg">
                                     Save
                                 </Text>
                             </View>

@@ -1,116 +1,89 @@
 import { useInsights } from "@/lib/tanstack";
-import { Insight } from "@/types/type";
-import { Feather, Ionicons } from "@expo/vector-icons";
+import type { Insight } from "@/types/type";
+import { Ionicons } from "@expo/vector-icons";
 import React from "react";
-import { ActivityIndicator, Text, TouchableOpacity, View } from "react-native";
+import { Pressable, Text, View } from "react-native";
+
+type InsightType = "health" | "diet";
 
 interface CompactInsightsProps {
-  type: "health" | "diet";
+  type: InsightType;
   maxItems?: number;
-  onPress?: () => void;
 }
 
-const CompactInsights: React.FC<CompactInsightsProps> = ({ 
-  type, 
-  maxItems = 3,
-  onPress
-}) => {
-  const { data, isLoading, error } = useInsights();
+const CONFIG: Record<InsightType, { icon: React.ComponentProps<typeof Ionicons>["name"]; title: string }> = {
+  health: { icon: "heart-outline", title: "AI health insights" },
+  diet: { icon: "restaurant-outline", title: "AI diet insights" },
+};
 
-  // Get insights based on type
-  const getInsights = (): Insight[] => {
-    if (!data) return [];
-    
-    switch (type) {
-      case "health":
-        return data.healthInsights || [];
-      case "diet":
-        return data.dietInsights || [];
-      default:
-        return [];
-    }
-  };
+const Header = ({ type }: { type: InsightType }) => (
+  <View className="mb-2 flex-row items-center gap-2">
+    <Ionicons name={CONFIG[type].icon} size={18} className="text-foreground" />
+    <Text accessibilityRole="header" className="font-display text-base text-foreground">
+      {CONFIG[type].title}
+    </Text>
+  </View>
+);
 
-  // Get icon and colors based on type
-  const getTypeConfig = () => {
-    switch (type) {
-      case "health":
-        return {
-          icon: "heart-outline" as keyof typeof Ionicons.glyphMap,
-          title: "AI Health Insights"
-        };
-      case "diet":
-        return {
-          icon: "restaurant" as keyof typeof Ionicons.glyphMap,
-          title: "AI Diet Insights"
-        };
-      default:
-        return {
-          icon: "bulb" as keyof typeof Ionicons.glyphMap,
-          title: "AI Insights"
-        };
-    }
-  };
+/** AI insights card. Never blocks the screen: shows a skeleton while loading and a retry if it fails. */
+const CompactInsights = ({ type, maxItems = 3 }: CompactInsightsProps) => {
+  const { data, isLoading, isError, refetch } = useInsights();
 
-  const insights = getInsights().slice(0, maxItems);
-  const typeConfig = getTypeConfig();
-
-  // If loading, show skeleton matching tracker style
   if (isLoading) {
     return (
-      <View>
-        <View className="flex flex-row gap-1 items-center mb-2">
-          <View className="w-4 h-4 bg-gray-200 rounded-full" />
-          <View className="w-32 h-4 bg-gray-200 rounded" />
-        </View>
-        <View className="bg-gray-100 rounded-xl p-4">
-          <ActivityIndicator size="small" color="#9CA3AF" />
+      <View className="my-5" accessible accessibilityLabel="Loading insights">
+        <Header type={type} />
+        <View className="gap-3 rounded-2xl bg-muted p-4">
+          <View className="h-3 w-full animate-pulse rounded bg-border" />
+          <View className="h-3 w-5/6 animate-pulse rounded bg-border" />
+          <View className="h-3 w-2/3 animate-pulse rounded bg-border" />
         </View>
       </View>
     );
   }
 
-  // If no insights, don't render anything (clean like tracker)
-  if (error || insights.length === 0) {
-    return null;
+  if (isError) {
+    return (
+      <View className="my-5">
+        <Header type={type} />
+        <View className="flex-row items-center justify-between rounded-2xl bg-muted p-4">
+          <Text className="flex-1 font-body text-sm text-muted-foreground">
+            Insights are not available right now.
+          </Text>
+          <Pressable
+            onPress={() => refetch()}
+            hitSlop={8}
+            accessibilityRole="button"
+            accessibilityLabel="Retry loading insights"
+            className="min-h-[44px] justify-center pl-4"
+          >
+            <Text className="font-body-bold text-sm text-primary">Retry</Text>
+          </Pressable>
+        </View>
+      </View>
+    );
   }
+
+  const all: Insight[] = (type === "health" ? data?.healthInsights : data?.dietInsights) ?? [];
+  if (all.length === 0) return null;
+
+  const shown = all.slice(0, maxItems);
+  const hidden = all.length - shown.length;
 
   return (
     <View className="my-5">
-      {/* Header matching tracker style */}
-      <View className="flex flex-row justify-between items-center mb-2">
-        <View className="flex flex-row gap-1 items-center">
-          <Ionicons name={typeConfig.icon} size={16} />
-          <Text className="text-font-semibold">{typeConfig.title}</Text>
-        </View>
-        {onPress && (
-          <TouchableOpacity onPress={onPress}>
-            <Feather name="arrow-right-circle" size={20} color={"skyblue"} />
-          </TouchableOpacity>
-        )}
-      </View>
-
-      {/* Content in tracker style container */}
-      <View className="bg-gray-100 rounded-xl p-4">
-        {insights.map((insight, index) => (
-          <View 
-            key={index} 
-            className={`flex-row items-start ${index < insights.length - 1 ? 'mb-3' : ''}`}
-          >
-            <View className="w-2 h-2 bg-blue-500 rounded-full mt-2 mr-3" />
-            <Text className="text-sm text-gray-800 leading-relaxed flex-1">
-              {insight.content}
-            </Text>
+      <Header type={type} />
+      <View className="gap-3 rounded-2xl bg-muted p-4">
+        {shown.map((insight, index) => (
+          <View key={`${index}-${insight.content}`} className="flex-row items-start">
+            <View className="mr-3 mt-2 h-2 w-2 rounded-full bg-ring" />
+            <Text className="flex-1 font-body text-sm text-foreground">{insight.content}</Text>
           </View>
         ))}
-        
-        {/* Show count if there are more */}
-        {data && getInsights().length > maxItems && (
-          <View className="mt-3 pt-3 border-t border-gray-200">
-            <Text className="text-xs text-gray-500 text-center">
-              +{getInsights().length - maxItems} more insight{getInsights().length - maxItems !== 1 ? 's' : ''}
-            </Text>
-          </View>
+        {hidden > 0 && (
+          <Text className="border-t border-border pt-3 text-center font-body text-xs text-muted-foreground">
+            +{hidden} more {hidden === 1 ? "insight" : "insights"}
+          </Text>
         )}
       </View>
     </View>

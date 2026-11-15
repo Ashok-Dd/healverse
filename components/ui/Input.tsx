@@ -1,101 +1,88 @@
-import React, { forwardRef } from "react";
-import {
-  TextInput,
-  View,
-  Text,
-  TextInputProps,
-  ViewStyle,
-  TextStyle,
-} from "react-native";
+import { useThemeColors } from "@/constants/theme";
+import { Ionicons } from "@expo/vector-icons";
+import React, { forwardRef, useState } from "react";
+import { Pressable, Text, TextInput, TextInputProps, View } from "react-native";
 
 interface InputProps extends TextInputProps {
   label?: string;
+  /** Inline validation message, shown under the field. */
   error?: string;
+  /** Helper text shown under the field when there is no error. */
+  hint?: string;
   icon?: React.ReactNode;
-  containerStyle?: ViewStyle;
-  inputStyle?: TextStyle;
-  labelStyle?: TextStyle;
-  errorStyle?: TextStyle;
+  containerClassName?: string;
 }
 
 export const Input = forwardRef<TextInput, InputProps>(
-  (
-    {
-      label,
-      error,
-      icon,
-      containerStyle,
-      inputStyle,
-      labelStyle,
-      errorStyle,
-      ...props
-    },
-    ref
-  ) => {
+  ({ label, error, hint, icon, containerClassName = "", ...props }, ref) => {
+    const colors = useThemeColors();
+    const [focused, setFocused] = useState(false);
+    const [revealed, setRevealed] = useState(false);
+    const isPassword = !!props.secureTextEntry;
+
+    const borderClass = error
+      ? "border border-destructive"
+      : focused
+        ? "border-2 border-ring"
+        : "border border-border";
+
     return (
-      <View style={[{ marginBottom: 16 }, containerStyle]}>
+      <View className={`mb-4 ${containerClassName}`}>
         {label && (
-          <Text
-            style={[
-              {
-                fontSize: 16,
-                fontFamily: "Jakarta-Medium",
-                color: "#333333",
-                marginBottom: 8,
-              },
-              labelStyle,
-            ]}
-          >
+          <Text className="mb-2 font-body-semibold text-sm text-secondary-foreground">
             {label}
           </Text>
         )}
 
         <View
-          style={{
-            flexDirection: "row",
-            alignItems: "center",
-            borderWidth: 1,
-            borderColor: error ? "#dc2626" : "#E0E0E0",
-            borderRadius: 12,
-            paddingHorizontal: 16,
-            backgroundColor: "#FFFFFF",
-            minHeight: 48,
-          }}
+          className={`min-h-[56px] flex-row items-center rounded-2xl bg-card px-4 ${borderClass}`}
         >
-          {icon && <View style={{ marginRight: 12 }}>{icon}</View>}
+          {icon && <View className="mr-3">{icon}</View>}
 
           <TextInput
             ref={ref}
-            style={[
-              {
-                flex: 1,
-                fontSize: 16,
-                fontFamily: "Jakarta-Regular",
-                color: "#333333",
-                paddingVertical: 12,
-              },
-              inputStyle,
-            ]}
-            placeholderTextColor="#999999"
+            className="flex-1 py-3 font-body text-base text-foreground"
+            placeholderTextColor={colors.mutedForeground}
+            accessibilityLabel={label}
             {...props}
+            secureTextEntry={isPassword && !revealed}
+            onFocus={(e) => {
+              setFocused(true);
+              props.onFocus?.(e);
+            }}
+            onBlur={(e) => {
+              setFocused(false);
+              props.onBlur?.(e);
+            }}
           />
+
+          {isPassword && (
+            <Pressable
+              onPress={() => setRevealed((v) => !v)}
+              hitSlop={12}
+              accessibilityRole="button"
+              accessibilityLabel={revealed ? "Hide password" : "Show password"}
+              className="min-h-[44px] min-w-[44px] items-center justify-center"
+            >
+              <Ionicons
+                name={revealed ? "eye-off-outline" : "eye-outline"}
+                size={20}
+                className="text-muted-foreground"
+              />
+            </Pressable>
+          )}
         </View>
 
-        {error && (
+        {error ? (
           <Text
-            style={[
-              {
-                fontSize: 14,
-                fontFamily: "Jakarta-Medium",
-                color: "#dc2626",
-                marginTop: 4,
-              },
-              errorStyle,
-            ]}
+            accessibilityRole="alert"
+            className="mt-1 font-body-semibold text-sm text-destructive"
           >
             {error}
           </Text>
-        )}
+        ) : hint ? (
+          <Text className="mt-1 font-body text-sm text-muted-foreground">{hint}</Text>
+        ) : null}
       </View>
     );
   }

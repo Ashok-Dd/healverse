@@ -188,6 +188,13 @@ const useVoiceAssistant = () => {
 
         clearTimeout(timeoutId);
 
+        if (response.status === 410) {
+          // Server has switched the voice assistant off.
+          setError("Voice assistant is coming soon.");
+          addLog("Voice assistant is currently unavailable (410)", "warning");
+          return;
+        }
+
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }

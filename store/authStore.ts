@@ -1,5 +1,5 @@
 import { appTokenCache } from "@/lib/auth";
-import { fetchApi } from "@/lib/fetchApi";
+import { fetchApi, setUnauthorizedHandler } from "@/lib/fetchApi";
 import type {
   ApiError,
   AuthResponse,
@@ -7,6 +7,7 @@ import type {
   RegisterCredentials,
   User,
 } from "@/types/type";
+import { router } from "expo-router";
 import * as SecureStore from "expo-secure-store";
 import { create } from "zustand";
 import { subscribeWithSelector } from "zustand/middleware";
@@ -17,14 +18,18 @@ interface AuthState {
   isAuthenticated: boolean;
   isLoading: boolean;
   isInitializing: boolean;
-  error: string | null;
+  // True when the launch-time auth check could not reach the server (offline, 5xx, 429, timeout).
+  // The token is kept in that case so the user is not logged out by a temporary problem.
+  serverUnreachable: boolean;
+  // Set when a 401 ended the session; the login screen shows a one-off notice and clears it.
+  sessionExpired: boolean;
 
   // Actions
   login: (credentials: LoginCredentials) => Promise<void>;
   register: (credentials: RegisterCredentials) => Promise<void>;
   checkAuth: () => Promise<boolean>;
   logout: () => Promise<void>;
-  clearError: () => void;
+  clearSessionExpired: () => void;
   updateUser: (userData: Partial<User>) => void;
 }
 
@@ -55,19 +60,18 @@ export const useAuthStore = create<AuthState>()(
     isAuthenticated: false,
     isLoading: false,
     isInitializing: true,
-    error: null,
+    serverUnreachable: false,
+    sessionExpired: false,
 
     // Login action
     login: async (credentials: LoginCredentials) => {
-      set({ isLoading: true, error: null });
+      set({ isLoading: true, sessionExpired: false });
 
       try {
         const response = await fetchApi<AuthResponse>("/auth/login", {
           method: "POST",
           body: credentials,
         });
-
-        console.log("Login successful:", response);
 
         // Store only token in secure storage
         await storeToken(response!.token);
@@ -77,21 +81,16 @@ export const useAuthStore = create<AuthState>()(
           user: response!.user,
           isAuthenticated: true,
           isLoading: false,
-          error: null,
         });
       } catch (error) {
-        const apiError = error as ApiError;
-        set({
-          isLoading: false,
-          error: apiError.message || "Login failed",
-        });
+        set({ isLoading: false });
         throw error;
       }
     },
 
     // Register action
     register: async (credentials: RegisterCredentials) => {
-      set({ isLoading: true, error: null });
+      set({ isLoading: true });
 
       try {
         const response = await fetchApi<AuthResponse>("/auth/register", {
@@ -107,20 +106,16 @@ export const useAuthStore = create<AuthState>()(
           user: response!.user,
           isAuthenticated: true,
           isLoading: false,
-          error: null,
         });
       } catch (error) {
-        const apiError = error as ApiError;
-        set({
-          isLoading: false,
-          error: apiError.message || "Registration failed",
-        });
+        set({ isLoading: false });
         throw error;
       }
     },
 
     // Check auth action (replaces refresh token)
     checkAuth: async (): Promise<boolean> => {
+      set({ serverUnreachable: false });
       try {
         const token = await getStoredToken();
 
@@ -151,14 +146,26 @@ export const useAuthStore = create<AuthState>()(
         return true;
       } catch (error) {
         console.warn("Auth check failed:", error);
-        // Clear invalid token and reset state
-        await clearTokenStorage();
-        set({
-          user: null,
-          isAuthenticated: false,
-          isInitializing: false,
-          error: null,
-        });
+        const status = (error as ApiError & { status?: number })?.status;
+
+        // Only an explicit 401/403 means the token is bad. Network errors, timeouts,
+        // 5xx and 429 are temporary: keep the token and let the user retry.
+        if (status === 401 || status === 403) {
+          await clearTokenStorage();
+          set({
+            user: null,
+            isAuthenticated: false,
+            isInitializing: false,
+            serverUnreachable: false,
+          });
+        } else {
+          set({
+            user: null,
+            isAuthenticated: false,
+            isInitializing: false,
+            serverUnreachable: true,
+          });
+        }
         return false;
       }
     },
@@ -184,12 +191,10 @@ export const useAuthStore = create<AuthState>()(
         user: null,
         isAuthenticated: false,
         isLoading: false,
-        error: null,
       });
     },
 
-    // Clear error
-    clearError: () => set({ error: null }),
+    clearSessionExpired: () => set({ sessionExpired: false }),
 
     // Update user data (only in state, not in storage)
     updateUser: (userData: Partial<User>) => {
@@ -201,3 +206,19 @@ export const useAuthStore = create<AuthState>()(
     },
   }))
 );
+
+// Any authenticated request that returns 401 (e.g. the 7-day token expired mid-session)
+// ends the session and sends the user to login. Ignored if already logged out, so several
+// parallel 401s only trigger one redirect.
+setUnauthorizedHandler(() => {
+  if (!useAuthStore.getState().isAuthenticated) return;
+  void clearTokenStorage().finally(() => {
+    useAuthStore.setState({
+      user: null,
+      isAuthenticated: false,
+      isLoading: false,
+      sessionExpired: true,
+    });
+    router.replace("/(auth)/login");
+  });
+});

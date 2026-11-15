@@ -52,8 +52,8 @@ const FoodLogCard = memo(({ foodLog, isLoading = false, imagePreview, mealType }
         }
 
         return (
-            <View className="w-20 h-20 rounded-lg bg-gray-200 items-center justify-center">
-                <Text className="text-gray-500 text-xs">No Image</Text>
+            <View className="w-20 h-20 rounded-lg bg-muted items-center justify-center">
+                <Text className="text-muted-foreground text-xs">No Image</Text>
             </View>
         );
     };
@@ -65,7 +65,7 @@ const FoodLogCard = memo(({ foodLog, isLoading = false, imagePreview, mealType }
             <View className="flex-1 gap-2">
                 {isLoading ? (
                     <>
-                        <Text className="text-black text-base font-semibold">
+                        <Text className="text-foreground text-base font-body-semibold">
                             Logging {mealType}...
                         </Text>
                         <Skeleton />
@@ -73,42 +73,38 @@ const FoodLogCard = memo(({ foodLog, isLoading = false, imagePreview, mealType }
                     </>
                 ) : (
                     <>
-                        <Text className="text-black text-base font-semibold">
+                        <Text className="text-foreground text-base font-body-semibold">
                             {foodLog.mealName || `${foodLog.mealType || 'Meal'}`}
                         </Text>
-                        <Text className="text-xs text-gray-500">
+                        <Text className="text-xs text-muted-foreground">
                             {new Date(foodLog.loggedAt).toLocaleString()}
                         </Text>
 
                         <View className="flex-row items-center gap-1">
                             <NutrientBadge
                                 iconName="fire"
-                                iconColor="red"
                                 value={totals.calories}
                                 unit="kcal"
-                                textColor="text-red-500"
+                                tone="destructive"
                             />
                             <NutrientBadge
                                 iconName="food-drumstick"
-                                iconColor="blue"
                                 value={totals.protein}
                                 unit="g"
-                                textColor="text-blue-600"
+                                tone="info"
                             />
                             <NutrientBadge
                                 iconType="Entypo"
                                 iconName="drop"
-                                iconColor="orange"
                                 value={totals.fats}
                                 unit="g"
-                                textColor="text-orange-400"
+                                tone="warning"
                             />
                             <NutrientBadge
                                 iconName="leaf"
-                                iconColor="green"
                                 value={totals.carbs}
                                 unit="g"
-                                textColor="text-green-600"
+                                tone="success"
                             />
                         </View>
                     </>

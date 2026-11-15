@@ -64,17 +64,17 @@ const WaterLogsComponent: React.FC<WaterLogsComponentProps> = ({
 
     const renderWaterCard = (log: WaterLog): React.ReactElement => (
         <View key={log.id} className="mb-3">
-            <View className="bg-white rounded-xl p-4 shadow-sm">
+            <View className="bg-card rounded-xl p-4 ">
                 <View className="flex-row items-center">
-                    <View className="w-12 h-12 rounded-xl bg-green-100 items-center justify-center mr-3">
+                    <View className="w-12 h-12 rounded-xl bg-accent items-center justify-center mr-3">
                         <Ionicons name="water" size={24} color="#4CAF50" />
                     </View>
                     <View className="flex-1">
-                        <Text className="text-sm text-black mb-1">Water</Text>
-                        <Text className="text-xs text-gray-500 mb-2">{log.loggedAt}</Text>
+                        <Text className="text-sm text-foreground mb-1">Water</Text>
+                        <Text className="text-xs text-muted-foreground mb-2">{log.loggedAt}</Text>
                         <View className="flex-row items-center">
-                            <Ionicons name="water-outline" size={16} color="#2196F3" />
-                            <Text className="text-xs text-blue-500 font-medium ml-1">
+                            <Ionicons name="water-outline" size={16} className="text-primary" />
+                            <Text className="text-xs text-primary font-body-semibold ml-1">
                                 {log.amountMl} mL
                             </Text>
                         </View>
@@ -83,7 +83,7 @@ const WaterLogsComponent: React.FC<WaterLogsComponentProps> = ({
                         className="p-2"
                         onPress={(event) => handleMenuPress(log.id, event)}
                     >
-                        <Ionicons name="ellipsis-vertical" size={20} color="#666" />
+                        <Ionicons name="ellipsis-vertical" size={20} className="text-muted-foreground" />
                     </TouchableOpacity>
                 </View>
             </View>
@@ -95,7 +95,7 @@ const WaterLogsComponent: React.FC<WaterLogsComponentProps> = ({
             return (
                 <View className="flex-1 justify-center items-center mt-10">
                     <ActivityIndicator size="large" color="#4CAF50" />
-                    <Text className="mt-2 text-gray-500">Loading water logs...</Text>
+                    <Text className="mt-2 text-muted-foreground">Loading water logs...</Text>
                 </View>
             );
         }
@@ -103,8 +103,8 @@ const WaterLogsComponent: React.FC<WaterLogsComponentProps> = ({
         if (error) {
             return (
                 <View className="flex-1 justify-center items-center mt-10">
-                    <Ionicons name="alert-circle" size={32} color="red" />
-                    <Text className="mt-2 text-red-500">Failed to load water logs</Text>
+                    <Ionicons name="alert-circle" size={32} className="text-destructive" />
+                    <Text className="mt-2 text-destructive">Failed to load water logs</Text>
                 </View>
             );
         }
@@ -113,8 +113,8 @@ const WaterLogsComponent: React.FC<WaterLogsComponentProps> = ({
         if (!waterLogs?.length) {
             return (
                 <View className="flex-1 justify-center items-center mt-10">
-                    <Ionicons name="water-outline" size={32} color="#2196F3" />
-                    <Text className="mt-2 text-gray-500">No water logs found</Text>
+                    <Ionicons name="water-outline" size={32} className="text-primary" />
+                    <Text className="mt-2 text-muted-foreground">No water logs found</Text>
                 </View>
             );
         }
@@ -133,7 +133,7 @@ const WaterLogsComponent: React.FC<WaterLogsComponentProps> = ({
             <Modal transparent visible={modalVisible} onRequestClose={closeModal}>
                 <Pressable className="flex-1" onPress={closeModal}>
                     <View
-                        className="absolute bg-white rounded-xl w-32 py-1 shadow-2xl border border-gray-100"
+                        className="absolute bg-card rounded-xl w-32 py-1 shadow-2xl border border-border"
                         style={{
                             top: menuPosition.y,
                             right: 20,
@@ -144,25 +144,25 @@ const WaterLogsComponent: React.FC<WaterLogsComponentProps> = ({
                             className="flex-row items-center px-4 py-3"
                             onPress={handleEdit}
                         >
-                            <Text className="text-base text-gray-800 font-normal">Edit</Text>
+                            <Text className="text-base text-foreground font-normal">Edit</Text>
                         </TouchableOpacity>
 
-                        <View className="h-px bg-gray-150" />
+                        <View className="h-px bg-border" />
 
                         <TouchableOpacity
                             className="flex-row items-center px-4 py-3"
                             onPress={handleDelete}
                         >
-                            <Text className="text-base text-gray-800 font-normal">Delete</Text>
+                            <Text className="text-base text-foreground font-normal">Delete</Text>
                         </TouchableOpacity>
 
-                        <View className="h-px bg-gray-150" />
+                        <View className="h-px bg-border" />
 
                         <TouchableOpacity
                             className="flex-row items-center px-4 py-3"
                             onPress={handleCopyFood}
                         >
-                            <Text className="text-base text-gray-800 font-normal">
+                            <Text className="text-base text-foreground font-normal">
                                 Copy Food
                             </Text>
                         </TouchableOpacity>

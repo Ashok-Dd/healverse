@@ -1,6 +1,8 @@
-import { Message } from "@/types/type";
-import React from "react";
-import { FlatList, RefreshControl, Text, View } from "react-native";
+import { Button } from "@/components/ui/Button";
+import { useThemeColors } from "@/constants/theme";
+import type { Message } from "@/types/type";
+import React, { useCallback, useMemo } from "react";
+import { ActivityIndicator, FlatList, RefreshControl, Text, View } from "react-native";
 import EmptyMessageState from "./EmptyMessageState";
 import { MessageBubble } from "./MessageBubble";
 
@@ -14,108 +16,94 @@ interface ChatMessagesProps {
   isSending?: boolean;
 }
 
-export const ChatMessages: React.FC<ChatMessagesProps> = ({
+const formatTime = (timestamp: string) =>
+  new Date(timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+
+const keyExtractor = (item: Message, index: number) => String(item.id ?? index);
+
+const ThinkingBubble = () => {
+  const colors = useThemeColors();
+  return (
+  <View
+    accessible
+    accessibilityLabel="The dietitian is thinking"
+    accessibilityLiveRegion="polite"
+    className="flex-row items-center gap-2 self-start px-2 py-3"
+  >
+    <ActivityIndicator size="small" color={colors.ring} />
+    <Text className="font-body text-sm text-muted-foreground">Thinking...</Text>
+  </View>
+  );
+};
+
+export const ChatMessages = ({
   messages,
   isLoading = false,
   isRefreshing = false,
   onRefresh,
   error,
   flatListRef,
-  isSending
-}) => {
-  const formatTimestamp = (timestamp: string) => {
-    const date = new Date(timestamp);
-    return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
-  };
+  isSending = false,
+}: ChatMessagesProps) => {
+  const colors = useThemeColors();
+  const renderItem = useCallback(
+    ({ item }: { item: Message }) => (
+      <MessageBubble
+        message={item.content}
+        isUser={item.sender === "USER"}
+        timestamp={formatTime(item.createdAt)}
+      />
+    ),
+    []
+  );
 
-  // Create data array that includes messages and thinking indicator
-  const dataWithThinking = React.useMemo(() => {
-    const data = [...messages];
-    if (isSending) {
-      data.push({
-        id: 'thinking-indicator',
-        content: 'Thinking...',
-        sender: 'BOT',
-        createdAt: new Date().toISOString(),
-        isThinking: true
-      } as unknown as Message & { isThinking: boolean });
-    }
-    return data;
-  }, [messages, isSending]);
+  const footer = useMemo(() => (isSending ? <ThinkingBubble /> : null), [isSending]);
 
   if (error) {
     return (
-      <View className="flex-1 items-center justify-center px-4">
-        <Text className="text-red-500 text-center mb-2">
-          Error loading messages
-        </Text>
-        <Text className="text-gray-500 text-center">{error}</Text>
+      <View className="flex-1 items-center justify-center px-6">
+        <Text className="mb-1 font-display text-lg text-foreground">Could not load messages</Text>
+        <Text className="mb-4 text-center font-body text-sm text-muted-foreground">{error}</Text>
+        {onRefresh && <Button title="Try again" variant="soft" size="sm" onPress={onRefresh} />}
       </View>
     );
   }
 
   if (isLoading) {
     return (
-      <View className="flex-1 py-5 gap-3">
-        <View
-          className={"mx-auto bg-gray-300 w-full h-7 rounded-xl animate-pulse max-w-xs"}
-        />
-        <View
-          className={"mx-auto bg-gray-300 w-full h-7 rounded-xl animate-pulse max-w-[80%]"}
-        />
+      <View className="flex-1 gap-3 px-4 py-5" accessible accessibilityLabel="Loading messages">
+        <View className="h-12 w-3/5 animate-pulse self-end rounded-3xl bg-border" />
+        <View className="h-20 w-4/5 animate-pulse rounded-3xl bg-border" />
+        <View className="h-12 w-1/2 animate-pulse self-end rounded-3xl bg-border" />
       </View>
     );
   }
 
-  if (messages.length === 0 && !isSending) {
-    return (
-      <View className="flex-1">
-        <View className="flex-1 justify-center items-center">
-          <EmptyMessageState />
-        </View>
-      </View>
-    );
-  }
+  if (messages.length === 0 && !isSending) return <EmptyMessageState />;
 
   return (
     <FlatList
       ref={flatListRef}
-      className="flex-1 px-4"
-      contentContainerStyle={{ paddingTop: 16, paddingBottom: 16 }}
-      data={dataWithThinking}
-      keyExtractor={(item, index) => `${item.id ?? index}`}
-      renderItem={({ item }) => {
-        const isThinking = (item as any).isThinking;
-        
-        if (isThinking) {
-          return (
-            <View className="flex-row justify-start mb-4">
-              <View className="bg-gray-200 rounded-2xl rounded-bl-md px-4 py-3 max-w-[80%]">
-                <View className="flex-row items-center">
-                  <Text className="text-gray-600 animate-pulse">Thinking</Text>
-                  <View className="ml-1 flex-row">
-                    <Text className="text-gray-600 animate-pulse" style={{ animationDelay: '0ms' }}>.</Text>
-                    <Text className="text-gray-600 animate-pulse" style={{ animationDelay: '200ms' }}>.</Text>
-                    <Text className="text-gray-600 animate-pulse" style={{ animationDelay: '400ms' }}>.</Text>
-                  </View>
-                </View>
-              </View>
-            </View>
-          );
-        }
-
-        return (
-          <MessageBubble
-            message={item.content}
-            isUser={item.sender === "USER"}
-            timestamp={formatTimestamp(item.createdAt)}
-          />
-        );
-      }}
+      className="flex-1 px-2"
+      contentContainerClassName="py-4"
+      data={messages}
+      keyExtractor={keyExtractor}
+      renderItem={renderItem}
+      ListFooterComponent={footer}
+      initialNumToRender={12}
+      maxToRenderPerBatch={8}
+      windowSize={7}
+      removeClippedSubviews
+      keyboardShouldPersistTaps="handled"
       showsVerticalScrollIndicator={false}
       refreshControl={
         onRefresh ? (
-          <RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} />
+          <RefreshControl
+            refreshing={isRefreshing}
+            onRefresh={onRefresh}
+            tintColor={colors.primary}
+            colors={[colors.primary]}
+          />
         ) : undefined
       }
     />

@@ -1,41 +1,35 @@
-import { Text, View } from "react-native";
-import React from "react";
-import OnboardingWrapper from "@/components/OnboardingWrapper";
-import ActiveDailyBasis from "@/components/ActiveDailyBasis";
+import { OnboardingScreen } from "@/components/onboarding/OnboardingScreen";
+import { ChoiceCard } from "@/components/ui/ChoiceCard";
+import { BOY_OPTIONS, GIRL_OPTIONS } from "@/constants/data";
 import { useUserProfileStore } from "@/store/userProfile";
-import { ActivityLevel } from "@/types/type";
-import { useShallow } from "zustand/react/shallow";
+import React from "react";
+import { View } from "react-native";
 
-const Step7 = () => {
+export default function Step7() {
+  const gender = useUserProfileStore((s) => s.gender);
+  const activityLevel = useUserProfileStore((s) => s.activityLevel);
+  const setActivityLevel = useUserProfileStore((s) => s.setActivityLevel);
 
-    const { activityLevel, gender, setActivityLevel } = useUserProfileStore(
-        useShallow((state) => ({
-            activityLevel: state.activityLevel,
-            gender: state.gender,
-            setActivityLevel: state.setActivityLevel,
-        }))
-    );
+  const options = gender === "FEMALE" ? GIRL_OPTIONS : BOY_OPTIONS;
 
-    const handleActivitySelection = (value: ActivityLevel) => {
-        setActivityLevel(value);
-        // You can handle the selection here (e.g., save to state management, API call, etc.)
-        // console.log('Selected activity level:', value);
-    };
-
-    return (
-        <OnboardingWrapper>
-            <View className="flex-1">
-                <Text className="text-2xl font-jakarta-semi-bold text-center mb-8 text-secondary-800">
-                    How active are you on your Daily Basis?
-                </Text>
-                <ActiveDailyBasis
-                    gender={gender}
-                    onSelectionChange={handleActivitySelection}
-                    activityLevel={activityLevel}
-                />
-            </View>
-        </OnboardingWrapper>
-    );
-};
-
-export default Step7;
+  return (
+    <OnboardingScreen
+      step={7}
+      title="How active are you?"
+      subtitle="Think about a typical week, including work and exercise."
+    >
+      <View accessibilityRole="radiogroup">
+        {options.map((option) => (
+          <ChoiceCard
+            key={option.value}
+            label={option.label}
+            icon={option.icon}
+            image={option.image}
+            selected={activityLevel === option.value}
+            onPress={() => setActivityLevel(option.value)}
+          />
+        ))}
+      </View>
+    </OnboardingScreen>
+  );
+}

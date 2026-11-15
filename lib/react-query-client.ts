@@ -15,8 +15,8 @@ export function getQueryClient() {
                     // before ever showing an error, which read as "stuck."
                     retry: (failureCount, error) => {
                         const status = (error as any)?.status;
-                        if (status === 401 || status === 403 || status === 404) {
-                            return false; // retrying with the same bad token/URL is pointless
+                        if (status === 401 || status === 403 || status === 404 || status === 429 || status === 502) {
+                            return false; // same bad token/URL, or rate limit / AI provider failure: retrying only makes it worse
                         }
                         return failureCount < 1;
                     },

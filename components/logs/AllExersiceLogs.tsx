@@ -16,7 +16,7 @@ import {
 
 const AllLoggedExercises: React.FC = () => {
     const { selectedDate } = useDateSelectorForHealthStore();
-    const { isLoading, error, data: loggedExercises } = useExerciseLogs.ByDate(selectedDate);
+    const { isLoading, data: loggedExercises } = useExerciseLogs.ByDate(selectedDate);
 
     const {
         updateExerciseLog,
@@ -92,28 +92,28 @@ const AllLoggedExercises: React.FC = () => {
 
     const renderExerciseItem = (exercise: ExerciseLog) => (
         <View key={exercise.id} className="mb-6">
-            <View className="mx-4 bg-gray-50 rounded-2xl p-4">
+            <View className="mx-4 bg-background rounded-2xl p-4">
                 <View className="flex-row items-center">
-                    <View className="w-12 h-12 bg-green-100 rounded-full items-center justify-center mr-4">
+                    <View className="w-12 h-12 bg-accent rounded-full items-center justify-center mr-4">
                         <Text className="text-2xl">🏋️</Text>
                     </View>
 
                     <View className="flex-1">
-                        <Text className="text-lg font-semibold text-gray-800 mb-1">
+                        <Text className="text-lg font-body-semibold text-foreground mb-1">
                             {exercise.exerciseName} | {exercise.intensity} |{" "}
                             {exercise.durationMinutes} min
                         </Text>
 
                         <View className="flex-row items-center mb-2">
-                            <Ionicons name="walk" size={16} color="#9ca3af" />
-                            <Text className="text-gray-500 ml-2">
+                            <Ionicons name="walk" size={16} className="text-muted-foreground" />
+                            <Text className="text-muted-foreground ml-2">
                                 Exercise {exercise.loggedAt}
                             </Text>
                         </View>
 
                         <View className="flex-row items-center">
                             <Ionicons name="flame" size={16} color="#10b981" />
-                            <Text className="text-green-600 font-medium ml-1">
+                            <Text className="text-accent-foreground font-body-semibold ml-1">
                                 -{exercise.caloriesBurned}kcal
                             </Text>
                         </View>
@@ -123,7 +123,7 @@ const AllLoggedExercises: React.FC = () => {
                         className="p-2"
                         onPress={(event) => handleMenuPress(exercise.id, event)}
                     >
-                        <Ionicons name="ellipsis-vertical" size={20} color="#9ca3af" />
+                        <Ionicons name="ellipsis-vertical" size={20} className="text-muted-foreground" />
                     </TouchableOpacity>
                 </View>
             </View>
@@ -133,7 +133,7 @@ const AllLoggedExercises: React.FC = () => {
     return (
         <View className="">
             {isLoading && (
-                <Text className="text-center text-gray-500">Loading...</Text>
+                <Text className="text-center text-muted-foreground">Loading...</Text>
             )}
 
             {!isLoading && loggedExercises && loggedExercises.length > 0 && (
@@ -144,8 +144,8 @@ const AllLoggedExercises: React.FC = () => {
 
             {!isLoading && loggedExercises && loggedExercises.length === 0 && (
                 <View className="flex-1 justify-center items-center mt-10">
-                    <Ionicons name="fitness" size={32} color="#2196F3" />
-                    <Text className="mt-2 text-gray-500">No exercises logged</Text>
+                    <Ionicons name="fitness" size={32} className="text-primary" />
+                    <Text className="mt-2 text-muted-foreground">No exercises logged</Text>
                 </View>
             )}
 
@@ -158,7 +158,7 @@ const AllLoggedExercises: React.FC = () => {
             >
                 <Pressable className="flex-1" onPress={() => setMenuVisible(false)}>
                     <View
-                        className="absolute bg-white rounded-xl w-32 py-1 shadow-2xl border border-gray-100"
+                        className="absolute bg-card rounded-xl w-32 py-1 shadow-2xl border border-border"
                         style={{
                             top: menuPosition.y,
                             right: 20,
@@ -169,16 +169,16 @@ const AllLoggedExercises: React.FC = () => {
                             className="flex-row items-center px-4 py-3"
                             onPress={handleEdit}
                         >
-                            <Text className="text-base text-gray-800 font-normal">Edit</Text>
+                            <Text className="text-base text-foreground font-normal">Edit</Text>
                         </TouchableOpacity>
 
-                        <View className="h-px bg-gray-150 mx-0" />
+                        <View className="h-px bg-border mx-0" />
 
                         <TouchableOpacity
                             className="flex-row items-center px-4 py-3"
                             onPress={handleDelete}
                         >
-                            <Text className="text-base text-gray-800 font-normal">Delete</Text>
+                            <Text className="text-base text-foreground font-normal">Delete</Text>
                         </TouchableOpacity>
                     </View>
                 </Pressable>
@@ -226,8 +226,8 @@ const AllLoggedExercises: React.FC = () => {
                     className="flex-1 bg-black/40 items-center justify-center"
                     onPress={() => setDeleteModalVisible(false)}
                 >
-                    <View className="bg-white p-6 rounded-xl w-80">
-                        <Text className="text-lg font-semibold mb-4">
+                    <View className="bg-card p-6 rounded-xl w-80">
+                        <Text className="text-lg font-body-semibold mb-4">
                             Delete this exercise?
                         </Text>
                         <View className="flex-row justify-end">
@@ -235,13 +235,13 @@ const AllLoggedExercises: React.FC = () => {
                                 className="px-4 py-2 mr-2"
                                 onPress={() => setDeleteModalVisible(false)}
                             >
-                                <Text className="text-gray-600">Cancel</Text>
+                                <Text className="text-muted-foreground">Cancel</Text>
                             </TouchableOpacity>
                             <TouchableOpacity
-                                className="px-4 py-2 bg-red-500 rounded"
+                                className="px-4 py-2 bg-destructive rounded"
                                 onPress={handleConfirmDelete}
                             >
-                                <Text className="text-white">Delete</Text>
+                                <Text className="text-primary-foreground">Delete</Text>
                             </TouchableOpacity>
                         </View>
                     </View>

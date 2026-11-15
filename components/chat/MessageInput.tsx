@@ -1,5 +1,6 @@
 // components/chat/MessageInput.tsx
 import { images } from "@/constants";
+import { useThemeColors, type ThemeColors } from "@/constants/theme";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import React, { useCallback, useMemo, useRef, useState } from "react";
 import {
@@ -32,39 +33,24 @@ interface MessageInputProps {
   showVoiceButton?: boolean;
   showImageButton?: boolean;
   showAttachmentButton?: boolean;
-  theme?: "light" | "dark";
   messagesLength: number;
 }
 
 // Constants
-const COLORS = {
-  light: {
-    background: "#FFFFFF",
-    inputBackground: "#F7F7F8",
-    border: "#E5E5E7",
-    text: "#000000",
-    placeholder: "black",
-    sendEnabled: "#007AFF",
-    sendDisabled: "#C7C7CC",
-    buttonBackground: "#F2F2F7",
-    buttonBackgroundPressed: "#E5E5EA",
-    recording: "#FF3B30",
-  },
-  dark: {
-    background: "#1C1C1E",
-    inputBackground: "#2C2C2E",
-    border: "#38383A",
-    text: "#FFFFFF",
-    placeholder: "#8E8E93",
-    sendEnabled: "#007AFF",
-    sendDisabled: "#48484A",
-    buttonBackground: "#3A3A3C",
-    buttonBackgroundPressed: "#48484A",
-    recording: "#FF453A",
-  },
-};
+const createPalette = (theme: ThemeColors) => ({
+  background: theme.card,
+  inputBackground: theme.background,
+  border: theme.border,
+  text: theme.foreground,
+  placeholder: theme.mutedForeground,
+  sendEnabled: theme.primary,
+  sendDisabled: theme.border,
+  buttonBackground: theme.muted,
+  buttonBackgroundPressed: theme.secondary,
+  recording: theme.destructive,
+  sendIcon: theme.primaryForeground,
+});
 
-const ANIMATION_DURATION = 250;
 const MIN_INPUT_HEIGHT = 20;
 const MAX_INPUT_HEIGHT = 120;
 const BUTTON_SIZE = 44;
@@ -82,16 +68,16 @@ export const MessageInput: React.FC<MessageInputProps> = ({
   showVoiceButton = true,
   showImageButton = true,
   showAttachmentButton = false,
-  theme = "light",
   messagesLength,
 }) => {
+  const theme = useThemeColors();
+  const COLORS = useMemo(() => createPalette(theme), [theme]);
   const [message, setMessage] = useState("");
   const [inputHeight, setInputHeight] = useState(MIN_INPUT_HEIGHT);
   const [isFocused, setIsFocused] = useState(false);
 
   const textInputRef = useRef<TextInput | null>(null);
 
-  const colors = useMemo(() => COLORS[theme], [theme]);
   const trimmedMessage = useMemo(() => message.trim(), [message]);
   const canSend = useMemo(
     () => trimmedMessage.length > 0 && !isLoading && !disabled,
@@ -205,7 +191,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({
             width: BUTTON_SIZE,
             height: BUTTON_SIZE,
             borderRadius: BUTTON_SIZE / 2,
-            backgroundColor: colors.buttonBackground,
+            backgroundColor: COLORS.buttonBackground,
             alignItems: "center",
             justifyContent: "center",
             opacity: disabled ? 0.5 : 1,
@@ -215,11 +201,11 @@ export const MessageInput: React.FC<MessageInputProps> = ({
         <MaterialCommunityIcons
           name={iconName as any}
           size={20}
-          color={colors.text}
+          color={COLORS.text}
         />
       </TouchableOpacity>
     ),
-    [colors, disabled]
+    [COLORS, disabled]
   );
 
   const renderWaveButton = useCallback(() => {
@@ -233,7 +219,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({
             width: BUTTON_SIZE,
             height: BUTTON_SIZE,
             borderRadius: BUTTON_SIZE / 2,
-            backgroundColor: colors.buttonBackground,
+            backgroundColor: COLORS.buttonBackground,
             alignItems: "center",
             justifyContent: "center",
             opacity: disabled ? 0.5 : 1,
@@ -248,7 +234,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({
         />
       </TouchableOpacity>
     )
-  }, [showVoiceButton, renderActionButton, handleSpeechPress]);
+  }, [showVoiceButton, disabled, handleSpeechPress, COLORS.buttonBackground]);
 
   const renderSendButton = useCallback(
     () => (
@@ -262,7 +248,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({
             width: BUTTON_SIZE,
             height: BUTTON_SIZE,
             borderRadius: BUTTON_SIZE / 2,
-            backgroundColor: canSend ? colors.sendEnabled : colors.sendDisabled,
+            backgroundColor: canSend ? COLORS.sendEnabled : COLORS.sendDisabled,
             alignItems: "center",
             justifyContent: "center",
           } as any
@@ -271,28 +257,25 @@ export const MessageInput: React.FC<MessageInputProps> = ({
         <Ionicons
           name={isLoading ? "hourglass-outline" : "arrow-up"}
           size={20}
-          color="#FFFFFF"
+          className="text-primary-foreground"
         />
       </TouchableOpacity>
     ),
-    [handleSend, canSend, colors, isLoading]
+    [handleSend, canSend, isLoading, COLORS]
   );
 
   return (
-    <View
-    //   behavior={Platform.OS === "ios" ? "padding" : "height"}
-    //   keyboardVerticalOffset={Platform.OS === "ios" ? 90 : 0}
-    >
+    <View>
       {messagesLength === 0 && (
         <HealthQueriesHorizontalScroll handleQuerySelect={handleQuerySelect} />
       )}
       <View
         style={{
-          backgroundColor: colors.background,
+          backgroundColor: COLORS.background,
           paddingHorizontal: 16,
           paddingVertical: 12,
           borderTopWidth: 1,
-          borderTopColor: colors.border,
+          borderTopColor: COLORS.border,
         }}
       >
         <View
@@ -320,10 +303,10 @@ export const MessageInput: React.FC<MessageInputProps> = ({
           <View
             style={{
               flex: 1,
-              backgroundColor: colors.inputBackground,
+              backgroundColor: COLORS.inputBackground,
               borderRadius: 22,
               borderWidth: isFocused ? 2 : 1,
-              borderColor: isFocused ? colors.sendEnabled : colors.border,
+              borderColor: isFocused ? COLORS.sendEnabled : COLORS.border,
               paddingHorizontal: 4,
               minHeight: MIN_INPUT_HEIGHT,
               maxHeight: MAX_INPUT_HEIGHT,
@@ -337,7 +320,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({
               onFocus={handleFocus}
               onBlur={handleBlur}
               placeholder={placeholder}
-              placeholderTextColor={colors.placeholder}
+              placeholderTextColor={COLORS.placeholder}
               multiline
               autoFocus={autoFocus}
               editable={!disabled && !isLoading}
@@ -351,7 +334,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({
                 {
                   fontSize: 16,
                   lineHeight: 20,
-                  color: colors.text,
+                  color: COLORS.text,
                   minHeight: 20,
                   textAlignVertical: "top",
                 } as TextStyle
@@ -380,8 +363,8 @@ export const MessageInput: React.FC<MessageInputProps> = ({
                 borderRadius: 8,
                 backgroundColor:
                   characterCount >= maxLength
-                    ? colors.recording
-                    : colors.buttonBackground,
+                    ? COLORS.recording
+                    : COLORS.buttonBackground,
               }}
             >
               <Text
@@ -389,7 +372,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({
                   {
                     fontSize: 12,
                     color:
-                      characterCount >= maxLength ? "#FFFFFF" : colors.text,
+                      characterCount >= maxLength ? "#FFFFFF" : COLORS.text,
                     fontWeight: "500",
                   } as TextStyle
                 }

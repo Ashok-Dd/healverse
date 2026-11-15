@@ -43,10 +43,10 @@ const FoodLoggingTrackerCard = ({ date }: FoodLoggingTrackerCardProps) => {
         loggedAt: new Date().toISOString()
     }), [result, mealType]);
 
-    // Show empty state if no ongoing mutations and no existing food logs
-    if (!loading && !result && (!foodLogs || foodLogs.length === 0)) {
+    // Only claim "nothing logged" once the request has actually finished.
+    if (!foodLogsLoading && !loading && !result && (!foodLogs || foodLogs.length === 0)) {
         return (
-            <View className="bg-gray-100 rounded-xl px-1 py-1">
+            <View className="bg-muted rounded-xl px-1 py-1">
                 <View className="flex flex-row items-center">
                     <Image
                         source={images.emptyState}
@@ -54,9 +54,8 @@ const FoodLoggingTrackerCard = ({ date }: FoodLoggingTrackerCardProps) => {
                         resizeMode="cover"
                     />
                     <View className="flex-row text-wrap justify-center items-center flex-1">
-                        <Text className="text-xs text-gray-500" style={{ flexShrink: 1 }}>
-                            You haven't logged any foods yet! Start logging foods by clicking
-                            the log button
+                        <Text className="font-body text-sm text-muted-foreground" style={{ flexShrink: 1 }}>
+                            {"You haven't logged any foods yet. Tap the log button to add one."}
                         </Text>
                     </View>
                 </View>
@@ -85,7 +84,7 @@ const FoodLoggingTrackerCard = ({ date }: FoodLoggingTrackerCardProps) => {
 
                 {/* Show existing food logs for the day */}
                 {foodLogs?.map((foodLog: any, index: number) => (
-                    <View key={`existing-${index}`} className="mr-3 bg-gray-100 rounded-xl">
+                    <View key={`existing-${index}`} className="mr-3 bg-muted rounded-xl">
                         <TouchableOpacity onPress={() => router.push(`/(root)/food-log/${foodLog.id}`)}>
                             <FoodLogCard foodLog={foodLog} />
                         </TouchableOpacity>
@@ -93,10 +92,10 @@ const FoodLoggingTrackerCard = ({ date }: FoodLoggingTrackerCardProps) => {
                 ))}
 
                 {/* Show loading skeletons for existing food logs if they're loading */}
-                {foodLogsLoading && !foodLogs && (
+                {foodLogsLoading && (
                     Array.from({ length: 2 }).map((_, index) => (
-                        <View key={`skeleton-${index}`} className="bg-white p-4 rounded-xl min-w-[280px] gap-4 mr-3 flex-row">
-                            <View className="w-28 h-28 rounded-lg bg-gray-200" />
+                        <View key={`skeleton-${index}`} className="bg-card p-4 rounded-xl min-w-[280px] gap-4 mr-3 flex-row">
+                            <View className="w-28 h-28 rounded-lg bg-muted" />
                             <View className="flex-1 gap-2">
                                 <Skeleton />
                                 <Skeleton />

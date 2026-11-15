@@ -1,3 +1,5 @@
+import { useThemeColors } from "@/constants/theme";
+import { ThemedStatusBar } from "@/components/ui/ThemedStatusBar";
 import ExerciseLogsComponent from "@/components/logs/AllExersiceLogs";
 import WaterLogsComponent from "@/components/logs/AllWaterLogs";
 import {Ionicons} from "@expo/vector-icons";
@@ -5,7 +7,6 @@ import BottomSheet, {BottomSheetView} from "@gorhom/bottom-sheet";
 import React, {useCallback, useMemo, useRef, useState} from "react";
 import {
     ScrollView,
-    StatusBar,
     Text,
     TouchableOpacity,
     View,
@@ -41,6 +42,7 @@ const logTypes: LogType[] = [
 ];
 
 const Index = () => {
+  const colors = useThemeColors();
     const {log}: {
         log: LogType["id"];
     } = useLocalSearchParams();
@@ -92,41 +94,41 @@ const Index = () => {
             return (
                 <TouchableOpacity
                     key={logType.id}
-                    className="flex-row items-center py-4 px-6 border-b border-gray-100"
+                    className="flex-row items-center py-4 px-6 border-b border-border"
                     onPress={() => handleCheckboxToggle(logType.id)}
                 >
                     <View
                         className={`w-12 h-12 rounded-xl items-center justify-center mr-4 ${
-                            isSelected ? "bg-blue-100" : "bg-gray-50"
+                            isSelected ? "bg-secondary" : "bg-background"
                         }`}
                     >
                         <Ionicons
                             name={logType.icon as any}
                             size={24}
-                            color={isSelected ? "#3b82f6" : "#9ca3af"}
+                            className={isSelected ? "text-primary" : "text-muted-foreground"}
                         />
                     </View>
                     <View className="flex-1">
                         <Text
-                            className={`text-base font-medium ${
-                                isSelected ? "text-blue-900" : "text-gray-800"
+                            className={`text-base font-body-semibold ${
+                                isSelected ? "text-secondary-foreground" : "text-foreground"
                             }`}
                         >
                             {logType.name}
                         </Text>
-                        <Text className="text-sm text-gray-500 mt-1">
+                        <Text className="text-sm text-muted-foreground mt-1">
                             View and manage your {logType.name.toLowerCase()}
                         </Text>
                     </View>
                     <View
                         className={`w-6 h-6 rounded-full border-2 items-center justify-center ${
                             isSelected
-                                ? "bg-blue-500 border-blue-500"
-                                : "border-gray-300 bg-white"
+                                ? "bg-primary border-border"
+                                : "border-border bg-card"
                         }`}
                     >
                         {isSelected && (
-                            <Ionicons name="checkmark" size={14} color="white"/>
+                            <Ionicons name="checkmark" size={14} className="text-primary-foreground"/>
                         )}
                     </View>
                 </TouchableOpacity>
@@ -145,18 +147,18 @@ const Index = () => {
                         {/* Section Header */}
                         <View className="mx-4 mb-4">
                             <View className="flex-row items-center">
-                                <View className="w-10 h-10 rounded-full bg-gray-100 items-center justify-center mr-3">
+                                <View className="w-10 h-10 rounded-full bg-muted items-center justify-center mr-3">
                                     <Ionicons
                                         name={logType.icon as any}
                                         size={20}
-                                        color="#6b7280"
+                                        className="text-muted-foreground"
                                     />
                                 </View>
-                                <Text className="text-lg font-semibold text-gray-800">
+                                <Text className="text-lg font-body-semibold text-foreground">
                                     {logType.name}
                                 </Text>
                             </View>
-                            <View className="h-px bg-gray-200 mt-3"/>
+                            <View className="h-px bg-muted mt-3"/>
                         </View>
 
                         {/* Component */}
@@ -169,22 +171,22 @@ const Index = () => {
     }, [logTypes, selectedLogs]);
 
     return (
-        <SafeAreaView className="flex-1 bg-gray-100">
-            <StatusBar barStyle="dark-content" backgroundColor="#f3f4f6"/>
+        <SafeAreaView className="flex-1 bg-muted">
+            <ThemedStatusBar />
 
             {/* Header */}
-            <View className="flex-row items-center justify-between px-4 py-3 border-b border-gray-200 bg-white">
+            <View className="flex-row items-center justify-between px-4 py-3 border-b border-border bg-card">
                 {/* Back Button */}
                 <TouchableOpacity className="p-1" onPress={() => router.back()}>
-                    <Ionicons name="arrow-back" size={24} color="#374151"/>
+                    <Ionicons name="arrow-back" size={24} className="text-foreground"/>
                 </TouchableOpacity>
 
                 {/* Title */}
-                <Text className="text-lg font-semibold text-gray-800">All Logs</Text>
+                <Text className="text-lg font-body-semibold text-foreground">All Logs</Text>
 
                 {/* Filter Menu Button */}
                 <TouchableOpacity className="p-1" onPress={openBottomSheet}>
-                    <Ionicons name="filter" size={24} color="#3b82f6"/>
+                    <Ionicons name="filter" size={24} className="text-primary"/>
                 </TouchableOpacity>
             </View>
 
@@ -198,21 +200,21 @@ const Index = () => {
                     renderSelectedComponents()
                 ) : (
                     /* Empty State */
-                    <View className="flex-1 items-center justify-center py-20 mx-4 bg-white rounded-2xl shadow-sm">
-                        <View className="w-20 h-20 bg-gray-100 rounded-full items-center justify-center mb-4">
-                            <Ionicons name="document-text" size={32} color="#9ca3af"/>
+                    <View className="flex-1 items-center justify-center py-20 mx-4 bg-card rounded-2xl ">
+                        <View className="w-20 h-20 bg-muted rounded-full items-center justify-center mb-4">
+                            <Ionicons name="document-text" size={32} className="text-muted-foreground"/>
                         </View>
-                        <Text className="text-xl font-semibold text-gray-600 mb-2">
+                        <Text className="text-xl font-body-semibold text-muted-foreground mb-2">
                             No Logs Selected
                         </Text>
-                        <Text className="text-gray-500 text-center px-8 mb-4">
+                        <Text className="text-muted-foreground text-center px-8 mb-4">
                             Use the filter button to select which logs you want to view
                         </Text>
                         <TouchableOpacity
-                            className="bg-blue-500 px-6 py-3 rounded-lg"
+                            className="bg-primary px-6 py-3 rounded-lg"
                             onPress={openBottomSheet}
                         >
-                            <Text className="text-white font-medium">Select Logs</Text>
+                            <Text className="text-primary-foreground font-body-semibold">Select Logs</Text>
                         </TouchableOpacity>
                     </View>
                 )}
@@ -224,19 +226,19 @@ const Index = () => {
                 snapPoints={snapPoints}
                 index={-1}
                 enablePanDownToClose={true}
-                backgroundStyle={{backgroundColor: "#f8fafc"}}
-                handleIndicatorStyle={{backgroundColor: "#D1D5DB"}}
+                backgroundStyle={{backgroundColor: colors.card}}
+                handleIndicatorStyle={{backgroundColor: colors.border}}
                 onChange={(index) => {
                     // Optional: Handle bottom sheet state changes
                 }}
             >
-                <BottomSheetView className="flex-1 px-6 py-4 bg-slate-50 border-t-2 border-gray-200">
+                <BottomSheetView className="flex-1 px-6 py-4 bg-card border-t-2 border-border">
                     {/* Bottom Sheet Header */}
                     <View className="mb-6">
-                        <Text className="text-xl font-bold text-gray-900 mb-1">
+                        <Text className="text-xl font-body-bold text-foreground mb-1">
                             Filter Logs
                         </Text>
-                        <Text className="text-sm text-gray-600">
+                        <Text className="text-sm text-muted-foreground">
                             Choose which logs to display
                         </Text>
                     </View>
@@ -252,31 +254,31 @@ const Index = () => {
                         <View className="flex-row mb-4 gap-3">
                             <TouchableOpacity
                                 onPress={handleSelectAll}
-                                className="flex-1 py-3 px-4 bg-gray-100 rounded-xl items-center"
+                                className="flex-1 py-3 px-4 bg-muted rounded-xl items-center"
                             >
-                                <Text className="text-gray-700 font-medium">Select All</Text>
+                                <Text className="text-foreground font-body-semibold">Select All</Text>
                             </TouchableOpacity>
                             <TouchableOpacity
                                 onPress={handleClearAll}
-                                className="flex-1 py-3 px-4 bg-gray-100 rounded-xl items-center"
+                                className="flex-1 py-3 px-4 bg-muted rounded-xl items-center"
                             >
-                                <Text className="text-gray-700 font-medium">Clear All</Text>
+                                <Text className="text-foreground font-body-semibold">Clear All</Text>
                             </TouchableOpacity>
                         </View>
 
                         {/* Apply Button */}
                         <TouchableOpacity
                             onPress={handleApplyFilters}
-                            className="w-full py-4 bg-blue-500 rounded-xl items-center"
+                            className="w-full py-4 bg-primary rounded-xl items-center"
                         >
                             <View className="flex-row items-center">
                                 <Ionicons
                                     name="checkmark-circle"
                                     size={20}
-                                    color="white"
+                                    className="text-primary-foreground"
                                     style={{marginRight: 8} as any}
                                 />
-                                <Text className="text-white font-semibold text-base">
+                                <Text className="text-primary-foreground font-body-semibold text-base">
                                     Apply Filters{" "}
                                     {selectedLogs.size > 0 && `(${selectedLogs.size})`}
                                 </Text>

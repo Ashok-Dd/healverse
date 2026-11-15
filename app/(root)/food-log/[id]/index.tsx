@@ -16,7 +16,7 @@ const FoodLogScreen = () => {
     const foodLog = getById(Number(id));
 
     return (
-        <SafeAreaView className="flex-1 bg-white px-2 py-1">
+        <SafeAreaView className="flex-1 bg-background px-2 py-1">
 
             <ScreenHeader
                 title="Food Log"
@@ -29,8 +29,8 @@ const FoodLogScreen = () => {
             {!isLoading && foodLog && (
                 <View className="gap-2">
                     <FoodLogCard foodLog={foodLog} />
-                    <View className="mt-4 border-t border-gray-200 pt-2">
-                        <Text className="text-lg font-semibold">Items</Text>
+                    <View className="mt-4 border-t border-border pt-2">
+                        <Text className="text-lg font-body-semibold">Items</Text>
                         <View className="flex-row flex-wrap">
                             {foodLog.items.map((item: any) => (
                                 // see each item contain calories , carbs , protions , fats

@@ -1,82 +1,60 @@
-import OnboardingWrapper from "@/components/OnboardingWrapper";
+import { OnboardingScreen } from "@/components/onboarding/OnboardingScreen";
 import { images } from "@/constants";
-import {
-  ImageSourcePropType,
-  Text,
-  View,
-} from "react-native";
-import GenderCard from "@/components/GenderCard";
-import {Gender} from "@/types/type";
-import {useUserProfileStore} from "@/store/userProfile";
-import {useShallow} from "zustand/react/shallow";
+import { useUserProfileStore } from "@/store/userProfile";
+import type { Gender } from "@/types/type";
+import React from "react";
+import { Image, Pressable, Text, View } from "react-native";
 
+const OPTIONS: { value: Gender; label: string; image: any }[] = [
+  { value: "MALE", label: "Male", image: images.male },
+  { value: "FEMALE", label: "Female", image: images.female },
+];
 
-const GenderSelectionTitle = () => (
-    <Text className="text-2xl font-jakarta-semi-bold text-center mb-8 text-secondary-800">
-      What is your Gender?
-    </Text>
-);
-
-const GenderDescription = () => (
-    <View className="mt-8 mb-6">
-      <Text className="text-center text-secondary-600 text-xs font-jakarta leading-5 px-2">
-        We use gender to design the best diet plan for you. If you don't
-        identify yourself as any of these options, please select the gender
-        closest to your hormonal profile.
-      </Text>
-    </View>
-);
-
-const GenderOptions = ({
-                         selectedGender,
-                         onGenderSelect
-                       }: {
-  selectedGender: Gender;
-  onGenderSelect: (gender: Gender) => void;
-}) => (
-    <View className="flex flex-row gap-4 flex-1 max-h-80">
-      <GenderCard
-          gender="MALE"
-          image={images.male as ImageSourcePropType}
-          selectedGender={selectedGender}
-          onSelect={onGenderSelect}
-      />
-      <GenderCard
-          gender="FEMALE"
-          image={images.female as ImageSourcePropType}
-          selectedGender={selectedGender}
-          onSelect={onGenderSelect}
-      />
-    </View>
-);
-
-// Main Component
-const Step1 = () => {
-
-    const {gender , setGender} = useUserProfileStore(
-        useShallow((state) => ({ gender: state.gender, setGender: state.setGender }))
-    );
-
-  const handleGenderSelect = (gender: Gender) => {
-    setGender(gender);
-  };
+export default function Step1() {
+  const gender = useUserProfileStore((s) => s.gender);
+  const setGender = useUserProfileStore((s) => s.setGender);
 
   return (
-      <OnboardingWrapper>
-        <View className="flex-1 px-4">
-          <GenderSelectionTitle />
+    <OnboardingScreen
+      step={1}
+      title="What's your gender?"
+      subtitle="We use it to work out the calories and nutrients your body needs."
+    >
+      <View accessibilityRole="radiogroup" className="flex-row gap-4">
+        {OPTIONS.map((option) => {
+          const selected = gender === option.value;
+          return (
+            <Pressable
+              key={option.value}
+              onPress={() => setGender(option.value)}
+              accessibilityRole="radio"
+              accessibilityState={{ selected }}
+              accessibilityLabel={option.label}
+              className={`flex-1 items-center rounded-3xl border-2 px-3 py-5 active:opacity-80 ${
+                selected ? "border-primary bg-primary/5" : "border-border bg-card"
+              }`}
+            >
+              <Image
+                source={option.image}
+                className="h-52 w-full"
+                resizeMode="contain"
+                accessible={false}
+              />
+              <Text
+                className={`mt-3 font-display text-lg ${
+                  selected ? "text-primary" : "text-foreground"
+                }`}
+              >
+                {option.label}
+              </Text>
+            </Pressable>
+          );
+        })}
+      </View>
 
-          <GenderOptions
-              selectedGender={gender}
-              onGenderSelect={handleGenderSelect}
-          />
-
-          <GenderDescription />
-        </View>
-      </OnboardingWrapper>
+      <Text className="mt-6 text-center font-body text-sm text-muted-foreground">
+        If neither fits, choose the one closest to your hormonal profile.
+      </Text>
+    </OnboardingScreen>
   );
-};
-
-export default Step1;
-
-
+}

@@ -1,142 +1,117 @@
 import { dayNames } from "@/constants/data";
 import { generateWeekDates } from "@/lib/utils";
-import React, { memo, useRef, useState } from "react";
-import { ScrollView, Text, TouchableOpacity, View } from "react-native";
+import React, { memo, useCallback, useMemo, useState } from "react";
+import { Pressable, Text, View } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 
 interface DaySelectorProps {
   selectedDate: string | null | undefined;
   handleDateChange: (date: string) => void;
+  /** Show the day number under the weekday. */
   showDate?: boolean;
+  /** Show the previous / next week arrows. */
   showButton?: boolean;
 }
 
-const DaySelector = memo(
-  ({
-    selectedDate,
-    handleDateChange,
-    showDate = true,
-    showButton = true,
-  }: DaySelectorProps) => {
-    const [currentWeekStart, setCurrentWeekStart] = useState<Date>(() => {
-      const today = new Date();
-      const startOfWeek = new Date(today);
-      startOfWeek.setDate(today.getDate() - today.getDay()); // Start from Sunday
-      return startOfWeek;
+// Dates are exchanged as UTC `YYYY-MM-DD` strings; see getCurrentDate in store/dietPlan.ts.
+const toDateString = (date: Date) => date.toISOString().split("T")[0];
+
+const startOfWeek = () => {
+  const today = new Date();
+  const start = new Date(today);
+  start.setDate(today.getDate() - today.getDay()); // Sunday
+  return start;
+};
+
+const DaySelector = memo(function DaySelector({
+  selectedDate,
+  handleDateChange,
+  showDate = true,
+  showButton = true,
+}: DaySelectorProps) {
+  const [weekStart, setWeekStart] = useState<Date>(startOfWeek);
+
+  const todayString = useMemo(() => new Date().toDateString(), []);
+  const weekDates = useMemo(() => generateWeekDates(weekStart), [weekStart]);
+
+  const shiftWeek = useCallback((days: number) => {
+    setWeekStart((current) => {
+      const next = new Date(current);
+      next.setDate(current.getDate() + days);
+      return next;
     });
+  }, []);
 
-    const scrollRef = useRef<ScrollView | null>(null);
-
-    const weekDates = generateWeekDates(currentWeekStart);
-
-    // Navigate to previous week
-    const goToPreviousWeek = (): void => {
-      const newWeekStart = new Date(currentWeekStart);
-      newWeekStart.setDate(currentWeekStart.getDate() - 7);
-      setCurrentWeekStart(newWeekStart);
-    };
-
-    // Navigate to next week
-    const goToNextWeek = (): void => {
-      const newWeekStart = new Date(currentWeekStart);
-      newWeekStart.setDate(currentWeekStart.getDate() + 7);
-      setCurrentWeekStart(newWeekStart);
-    };
-
-    const isToday = (date: Date): boolean => {
-      try {
-        const today = new Date();
-        return date.toDateString() === today.toDateString();
-      } catch (error) {
-        console.error("Error checking if date is today:", error);
-        return false;
-      }
-    };
-
-    const isSelected = (date: Date): boolean => {
-      try {
-        if (!selectedDate || typeof selectedDate !== "string") return false;
-
-        const dateStr = date.toISOString().split("T")[0];
-        return dateStr === selectedDate;
-      } catch (error) {
-        console.error("Error checking if date is selected:", error, {
-          date,
-          selectedDate,
-        });
-        return false;
-      }
-    };
-
-    const handleDatePress = (date: Date): void => {
-      try {
-        const dateString = date.toISOString().split("T")[0];
-        handleDateChange(dateString);
-      } catch (error) {
-        console.error("Error handling date press:", error, { date });
-      }
-    };
-
-    return (
-      <View className="flex-row bg-gray-100 rounded-sm py-1 items-center justify-between">
-        {showButton && (
-          <TouchableOpacity className="p-1" onPress={goToPreviousWeek}>
-            <Text className="text-2xl text-gray-400 ml-2">‹</Text>
-          </TouchableOpacity>
-        )}
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          ref={scrollRef}
-          className="flex-1 mx-2"
+  return (
+    <View className="flex-row items-center rounded-2xl bg-muted px-1 py-1">
+      {showButton && (
+        <Pressable
+          onPress={() => shiftWeek(-7)}
+          hitSlop={8}
+          accessibilityRole="button"
+          accessibilityLabel="Previous week"
+          className="h-11 w-9 items-center justify-center"
         >
-          <View className="flex-row space-x-2">
-            {weekDates.map((date, index) => {
-              const isCurrentDay = isToday(date);
-              const isSelectedDay = isSelected(date);
+          <Ionicons name="chevron-back" size={20} className="text-muted-foreground" />
+        </Pressable>
+      )}
 
-              return (
-                <TouchableOpacity
-                  key={`${date.getTime()}-${index}`}
-                  onPress={() => handleDatePress(date)}
-                  className={`flex items-center px-1 py-1 rounded-lg min-w-[47px] ${
-                    isSelectedDay ? "bg-blue-200" : "bg-transparent"
+      <View className="flex-1 flex-row justify-between">
+        {weekDates.map((date) => {
+          const dateString = toDateString(date);
+          const selected = dateString === selectedDate;
+          const isToday = date.toDateString() === todayString;
+
+          return (
+            <Pressable
+              key={dateString}
+              onPress={() => handleDateChange(dateString)}
+              accessibilityRole="button"
+              accessibilityState={{ selected }}
+              accessibilityLabel={`${dayNames[date.getDay()]} ${date.getDate()}${isToday ? ", today" : ""}`}
+              className={`min-h-[48px] min-w-[40px] flex-1 items-center justify-center rounded-xl ${
+                selected ? "bg-primary" : ""
+              }`}
+            >
+              <Text
+                className={`font-body-semibold text-xs ${
+                  selected ? "text-primary-foreground" : "text-muted-foreground"
+                }`}
+              >
+                {dayNames[date.getDay()]}
+              </Text>
+              {showDate && (
+                <Text
+                  className={`font-display text-base ${
+                    selected ? "text-primary-foreground" : "text-foreground"
                   }`}
                 >
-                  <Text
-                    className={`text-xs ${
-                      isSelectedDay ? "text-blue-500" : "text-gray-600"
-                    }`}
-                  >
-                    {dayNames[date.getDay()] || "N/A"}
-                  </Text>
-                  {showDate && (
-                    <Text
-                      className={`text-xs ${
-                        isSelectedDay ? "text-blue-500" : "text-gray-800"
-                      }`}
-                    >
-                      {date.getDate()}
-                    </Text>
-                  )}
-                  {/* Optional: Show today indicator */}
-                  {isCurrentDay && (
-                    <View className="w-1 h-1 bg-green-500 rounded-full mt-0.5" />
-                  )}
-                </TouchableOpacity>
-              );
-            })}
-          </View>
-        </ScrollView>
-        {showButton && (
-          <TouchableOpacity className="p-1" onPress={goToNextWeek}>
-            <Text className="text-2xl text-gray-400 pr-2">›</Text>
-          </TouchableOpacity>
-        )}
+                  {date.getDate()}
+                </Text>
+              )}
+              <View
+                className={`mt-0.5 h-1 w-1 rounded-full ${
+                  isToday ? (selected ? "bg-primary-foreground" : "bg-primary") : "bg-transparent"
+                }`}
+              />
+            </Pressable>
+          );
+        })}
       </View>
-    );
-  }
-);
 
-DaySelector.displayName = "DaySelector";
+      {showButton && (
+        <Pressable
+          onPress={() => shiftWeek(7)}
+          hitSlop={8}
+          accessibilityRole="button"
+          accessibilityLabel="Next week"
+          className="h-11 w-9 items-center justify-center"
+        >
+          <Ionicons name="chevron-forward" size={20} className="text-muted-foreground" />
+        </Pressable>
+      )}
+    </View>
+  );
+});
 
 export default DaySelector;

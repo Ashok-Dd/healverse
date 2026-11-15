@@ -1,3 +1,4 @@
+import { useThemeColors } from "@/constants/theme";
 import React from "react";
 import { View, Text, StyleProp, TextStyle, ViewStyle } from "react-native";
 import Svg, { Circle, Defs, LinearGradient, Stop } from "react-native-svg";
@@ -22,8 +23,8 @@ export const CircularProgress: React.FC<CircularProgressProps> = ({
   progress,
   size = 120,
   strokeWidth = 8,
-  backgroundColor = "#f3f4f6",
-  progressColor = "#3b82f6",
+  backgroundColor: backgroundColorProp,
+  progressColor: progressColorProp,
   gradient = true,
   label,
   subLabel,
@@ -33,6 +34,9 @@ export const CircularProgress: React.FC<CircularProgressProps> = ({
   showCenterContent = false,
   centerContent,
 }) => {
+  const theme = useThemeColors();
+  const backgroundColor = backgroundColorProp ?? theme.muted;
+  const progressColor = progressColorProp ?? theme.primary;
   const radius = (size - strokeWidth) / 2;
   const circumference = 2 * Math.PI * radius;
   const strokeDashoffset =
@@ -97,14 +101,14 @@ export const CircularProgress: React.FC<CircularProgressProps> = ({
             <>
               {label !== undefined && (
                 <Text
-                  className="text-xl font-bold"
+                  className="text-xl font-body-bold"
                   style={[{ color: progressColor }, labelStyle]}
                 >
                   {label}
                 </Text>
               )}
               {subLabel && (
-                <Text className="text-xs text-gray-500" style={subLabelStyle}>
+                <Text className="text-xs text-muted-foreground" style={subLabelStyle}>
                   {subLabel}
                 </Text>
               )}

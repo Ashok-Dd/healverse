@@ -1,4 +1,3 @@
-import { getDummyDietPlan } from "@/constants/data";
 import { fetchApi } from "@/lib/fetchApi";
 import { dietPlanApi } from "@/services/api";
 import { useAuthStore } from "@/store/authStore";
@@ -16,107 +15,28 @@ export const dietPlanKeys = {
 
 
 // ==================== UTILITY FUNCTIONS ====================
-export const getCurrentDate = (): string => {
-  try {
-    return new Date().toISOString().split("T")[0];
-  } catch (error) {
-    console.error("Error getting current date:", error);
-    return new Date().toLocaleDateString("en-CA"); // Fallback format YYYY-MM-DD
-  }
-};
+/**
+ * "Today" as `YYYY-MM-DD` in UTC. This must match the server: it stores `loggedAt` as a UTC
+ * wall-clock time and fetches a day by that UTC range, so a local date would miss logs made
+ * between local midnight and the UTC day change (e.g. 00:00-05:30 in India).
+ * TODO: switch to the user's local date once the server is told the user's time zone.
+ */
+export const getCurrentDate = (): string => new Date().toISOString().split("T")[0];
 
-export const isValidDateForData = (
-  date: string | undefined | null
-): boolean => {
-  // console.log('🔍 Validating date:', date);
+/**
+ * Data can be shown for dates from the day the account was created up to today.
+ * `YYYY-MM-DD` strings compare correctly as plain strings.
+ */
+export const isValidDateForData = (date: string | undefined | null): boolean => {
+  if (!date || typeof date !== "string") return false;
 
-  if (!date || typeof date !== "string") {
-    console.log("❌ Date validation failed: Invalid date format", {
-      date,
-      type: typeof date,
-    });
-    return false;
-  }
+  const createdAt = useAuthStore.getState().user?.createdAt as string | Date | undefined;
+  if (!createdAt) return false;
 
-  const { user: currentUser } = useAuthStore.getState();
-  // console.log('👤 Current user:', currentUser ? 'exists' : 'null');
+  const createdDate =
+    typeof createdAt === "string" ? createdAt.split("T")[0] : createdAt.toISOString().split("T")[0];
 
-  if (!currentUser) {
-    console.log("❌ Date validation failed: No current user");
-    return false;
-  }
-
-  try {
-    const selectedDateObj = new Date(date);
-    const currentDateObj = new Date(getCurrentDate());
-
-    // console.log('📅 Dates parsed:', {
-    //   selectedDate: date,
-    //   selectedDateObj: selectedDateObj.toISOString(),
-    //   currentDate: getCurrentDate(),
-    //   currentDateObj: currentDateObj.toISOString(),
-    // });
-
-    // Handle createdAt safely
-    const createdAtDate = currentUser.createdAt;
-    // console.log('🎂 User createdAt:', createdAtDate, typeof createdAtDate);
-
-    if (!createdAtDate) {
-      console.log("❌ Date validation failed: No user creation date");
-      return false;
-    }
-
-    const userCreatedDateStr =
-      typeof createdAtDate === "string"
-        ? createdAtDate.split("T")[0]
-        : (createdAtDate as Date).toISOString().split("T")[0];
-
-    const userCreatedDateObj = new Date(userCreatedDateStr);
-
-    // console.log('🎂 User creation date processed:', {
-    //   original: createdAtDate,
-    //   processed: userCreatedDateStr,
-    //   dateObj: userCreatedDateObj.toISOString(),
-    // });
-
-    // Check for invalid dates
-    if (
-      isNaN(selectedDateObj.getTime()) ||
-      isNaN(currentDateObj.getTime()) ||
-      isNaN(userCreatedDateObj.getTime())
-    ) {
-      // console.log('❌ Date validation failed: Invalid date objects', {
-      //   selectedValid: !isNaN(selectedDateObj.getTime()),
-      //   currentValid: !isNaN(currentDateObj.getTime()),
-      //   userCreatedValid: !isNaN(userCreatedDateObj.getTime()),
-      // });
-      return false;
-    }
-
-    // Date should not be in the future
-    if (selectedDateObj > currentDateObj) {
-      // console.log('❌ Date validation failed: Date is in the future', {
-      //   selected: selectedDateObj.toISOString(),
-      //   current: currentDateObj.toISOString(),
-      // });
-      return false;
-    }
-
-    // Date should not be before user creation date
-    if (selectedDateObj < userCreatedDateObj) {
-      // console.log('❌ Date validation failed: Date is before user creation', {
-      //   selected: selectedDateObj.toISOString(),
-      //   userCreated: userCreatedDateObj.toISOString(),
-      // });
-      return false;
-    }
-
-    // console.log('✅ Date validation passed!');
-    return true;
-  } catch (error) {
-    console.error("❌ Error validating date:", error, { date, currentUser });
-    return false;
-  }
+  return date >= createdDate && date <= getCurrentDate();
 };
 
 // ==================== HOOK 1: DIET PLAN QUERY ====================
@@ -139,10 +59,6 @@ export const useDietPlan = (
     enabled: isValidDate && options.enabled !== false,
     staleTime: options.staleTime ?? 5 * 60 * 1000, // 5 minutes
     gcTime: options.gcTime ?? 10 * 60 * 1000, // 10 minutes
-    retry: (failureCount, error: any) => {
-      if (error?.status === 404) return false;
-      return failureCount < 3;
-    },
   });
 
   // Utility functions for working with meals
@@ -277,20 +193,12 @@ export const useDietPlanMutations = () => {
   const queryClient = useQueryClient();
 
   const reGeneratePlan = useMutation({
-    mutationFn: async (dietPlanId: number): Promise<DietPlan> => {
-      try {
-        return await fetchApi<DietPlan>(
-          `/api/diet-plans/${dietPlanId}/regenerate`,
-          {
-            method: "PUT",
-            requiresAuth: true,
-          }
-        );
-      } catch (error) {
-        console.warn("API not available, using dummy data");
-        return getDummyDietPlan();
-      }
-    },
+    // Failures surface through the global mutation error toast; never fake a plan.
+    mutationFn: (dietPlanId: number) =>
+      fetchApi<DietPlan>(`/api/diet-plans/${dietPlanId}/regenerate`, {
+        method: "PUT",
+        requiresAuth: true,
+      }),
     onSuccess: (data, dietPlanId) => {
       const targetDate = data.planDate || getCurrentDate();
 
@@ -308,32 +216,14 @@ export const useDietPlanMutations = () => {
         refetchType: "none",
       });
     },
-    onError: (error) => {
-      console.error("Failed to regenerate diet plan:", error);
-    },
   });
 
   const replaceMeal = useMutation({
-    mutationFn: async ({
-      mealType,
-      dietPlanId,
-    }: {
-      mealType: MealType;
-      dietPlanId: number;
-    }) => {
-      try {
-        return await fetchApi<DietPlan>(
-          `/api/diet-plans/${dietPlanId}/meals/${mealType}/regenerate`,
-          {
-            method: "PUT",
-            requiresAuth: true,
-          }
-        );
-      } catch (error) {
-        console.warn("API not available, using dummy data:", error);
-        return getDummyDietPlan();
-      }
-    },
+    mutationFn: ({ mealType, dietPlanId }: { mealType: MealType; dietPlanId: number }) =>
+      fetchApi<DietPlan>(`/api/diet-plans/${dietPlanId}/meals/${mealType}/regenerate`, {
+        method: "PUT",
+        requiresAuth: true,
+      }),
 
     onSuccess: (data, { mealType, dietPlanId }) => {
       const targetDate = data.planDate || getCurrentDate();
@@ -457,7 +347,7 @@ export const useDietPlanManager = (initialDate?: string) => {
         throw error;
       }
     },
-    [mutations, dateSelector.selectedDate]
+    [mutations]
   );
 
   const handleRefresh = useCallback(async () => {

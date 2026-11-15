@@ -95,10 +95,10 @@ const NutritionProgress: React.FC<NutritionProgressProps> = ({
   const isExceeded = consumed > target;
 
   return (
-    <View className="items-center justify-center bg-white">
+    <View className="items-center justify-center bg-card">
       {showHeader && (
         <Text
-          className="text-sm font-medium mb-2"
+          className="text-sm font-body-semibold mb-2"
           style={{ color: displayColor }}
         >
           {customTitle || title}
@@ -115,7 +115,7 @@ const NutritionProgress: React.FC<NutritionProgressProps> = ({
           <View className="items-center justify-center">
             <View className="flex-row items-center">
               <Text
-                className="text-xl font-bold"
+                className="text-xl font-body-bold"
                 style={{ color: isExceeded ? '#EF4444' : displayColor }}
               >
                 {consumed}
@@ -124,12 +124,12 @@ const NutritionProgress: React.FC<NutritionProgressProps> = ({
                 <Ionicons 
                   name="warning" 
                   size={16} 
-                  color="#EF4444" 
+                  className="text-destructive" 
                   style={{ marginLeft: 4 }} 
                 />
               )}
             </View>
-            <Text className="text-xs text-gray-500">
+            <Text className="text-xs text-muted-foreground">
               /{target}{unit}
             </Text>
           </View>
@@ -137,7 +137,7 @@ const NutritionProgress: React.FC<NutritionProgressProps> = ({
       />
 
       {showBottomStats && (
-        <Text className="mt-2 text-xs text-gray-400">
+        <Text className="mt-2 text-xs text-muted-foreground">
           {target - consumed > 0
             ? `${target - consumed}${unit} left`
             : `${Math.abs(target - consumed)}${unit} over`}
@@ -199,7 +199,7 @@ const NutritionGrid: React.FC<NutritionGridProps> = ({
   );
 
   return (
-    <View className="bg-white py-1">
+    <View className="bg-card py-1">
       <FlatList
         data={types}
         renderItem={renderNutritionItem}

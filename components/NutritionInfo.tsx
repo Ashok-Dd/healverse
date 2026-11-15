@@ -1,125 +1,88 @@
-import { NutritionInfoProps } from "@/types/type";
-import { Entypo, Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
+import React, { memo } from "react";
 import { Text, View } from "react-native";
 
-type NutrientItemProps = {
-  iconLib: "MaterialCommunityIcons" | "Entypo";
-  iconName: string;
-  iconColor: string;
-  value: number;
-  unit: string;
-  valueColor: string;
+import type { NutritionInfoProps } from "@/types/type";
+
+type IconName = React.ComponentProps<typeof MaterialCommunityIcons>["name"];
+
+const ITEMS: {
+  key: "calories" | "protein" | "fat" | "carbs";
+  target: "targetCalories" | "targetProtein" | "targetFat" | "targetCarbs";
   label: string;
-  valueTextSize?: string;
-  target?: number;
-  isExceeded?: boolean;
-};
+  unit: string;
+  icon: IconName;
+  iconClass: string;
+  text: string;
+}[] = [
+  {
+    key: "calories",
+    target: "targetCalories",
+    label: "Calories",
+    unit: "kcal",
+    icon: "fire",
+    iconClass: "text-destructive",
+    text: "text-destructive",
+  },
+  {
+    key: "protein",
+    target: "targetProtein",
+    label: "Protein",
+    unit: "g",
+    icon: "food-drumstick",
+    iconClass: "text-info",
+    text: "text-info",
+  },
+  {
+    key: "fat",
+    target: "targetFat",
+    label: "Fat",
+    unit: "g",
+    icon: "water",
+    iconClass: "text-warning",
+    text: "text-warning",
+  },
+  {
+    key: "carbs",
+    target: "targetCarbs",
+    label: "Carbs",
+    unit: "g",
+    icon: "leaf",
+    iconClass: "text-success",
+    text: "text-success",
+  },
+];
 
-const NutrientItem = ({
-  iconLib,
-  iconName,
-  iconColor,
-  value,
-  unit,
-  valueColor,
-  label,
-  valueTextSize = "text-md",
-  target,
-  isExceeded = false,
-}: NutrientItemProps) => {
-  const IconComp = iconLib === "Entypo" ? Entypo : MaterialCommunityIcons;
-
-  return (
-    <View className="items-center flex flex-row">
-      {isExceeded ? (
-        <Ionicons
-          name="warning"
-          size={16}
-          color="#EF4444"
-          style={{ marginLeft: 4 }}
-        />
-      ) : (
-        <IconComp name={iconName as any} size={20} color={iconColor} />
-
-      )}
-      <View className="flex justify-center items-center ml-1">
-        <View className="flex-row items-center">
-          <Text className={`${valueTextSize} font-bold ${isExceeded ? 'text-red-600' : valueColor}`}>
-            {value.toFixed(1)}
-            {unit}
+/** Four-column macro totals for a day. */
+const NutritionInfo = (props: NutritionInfoProps) => (
+  <View className="flex-row justify-between rounded-3xl border border-border bg-card px-3 py-4">
+    {ITEMS.map((item) => {
+      const target = props[item.target];
+      const exceeded = target ? props[item.key] > target : false;
+      return (
+        <View
+          key={item.key}
+          accessible
+          accessibilityLabel={`${item.label} ${Math.round(props[item.key])} ${item.unit}${exceeded ? ", over target" : ""}`}
+          className="flex-1 items-center"
+        >
+          <MaterialCommunityIcons
+            name={exceeded ? "alert-circle" : item.icon}
+            size={22}
+            className={exceeded ? "text-destructive" : item.iconClass}
+          />
+          <Text
+            className={`mt-1 font-display text-lg ${exceeded ? "text-destructive" : item.text}`}
+          >
+            {Math.round(props[item.key])}
+          </Text>
+          <Text className="font-body text-xs text-muted-foreground">
+            {item.unit === "kcal" ? "kcal" : `${item.label} ${item.unit}`}
           </Text>
         </View>
-        <Text className="text-xs text-gray-500">{label}</Text>
-      </View>
-    </View>
-  );
-};
+      );
+    })}
+  </View>
+);
 
-const NutritionInfo = ({
-  calories,
-  protein,
-  fat,
-  carbs,
-  targetCalories,
-  targetProtein,
-  targetFat,
-  targetCarbs,
-}: NutritionInfoProps) => {
-  // Check if values exceed their targets
-  const isCaloriesExceeded = targetCalories ? calories > targetCalories : false;
-  const isProteinExceeded = targetProtein ? protein > targetProtein : false;
-  const isFatExceeded = targetFat ? fat > targetFat : false;
-  const isCarbsExceeded = targetCarbs ? carbs > targetCarbs : false;
-
-  return (
-    <View className={`flex-row justify-between  bg-gray-100 rounded-xl p-4 mb-4`}>
-      <NutrientItem
-        iconLib="MaterialCommunityIcons"
-        iconName="fire"
-        iconColor="red"
-        value={calories}
-        unit="kcal"
-        valueColor="text-orange-600"
-        label="Calories"
-        target={targetCalories}
-        isExceeded={isCaloriesExceeded}
-      />
-      <NutrientItem
-        iconLib="MaterialCommunityIcons"
-        iconName="food-drumstick"
-        iconColor="blue"
-        value={protein}
-        unit="g"
-        valueColor="text-blue-600"
-        label="Protein"
-        target={targetProtein}
-        isExceeded={isProteinExceeded}
-      />
-      <NutrientItem
-        iconLib="Entypo"
-        iconName="drop"
-        iconColor="orange"
-        value={fat}
-        unit="g"
-        valueColor="text-orange-600"
-        label="Fat"
-        valueTextSize="text-xs"
-        target={targetFat}
-        isExceeded={isFatExceeded}
-      />
-      <NutrientItem
-        iconLib="Entypo"
-        iconName="leaf"
-        iconColor="green"
-        value={carbs}
-        unit="g"
-        valueColor="text-green-600"
-        label="Carbs"
-        target={targetCarbs}
-        isExceeded={isCarbsExceeded}
-      />
-    </View>
-  );
-};
-
-export default NutritionInfo;
+export default memo(NutritionInfo);

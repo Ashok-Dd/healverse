@@ -61,8 +61,8 @@ export function SmoothPicker<T>({
                 <Text
                     className={`${
                         isSelected
-                            ? "text-blue-600 text-sm font-semibold"
-                            : "text-gray-400 text-xs"
+                            ? "text-primary text-sm font-body-semibold"
+                            : "text-muted-foreground text-xs"
                     }`}
                 >
                     {renderLabel(item, isSelected)}
@@ -73,7 +73,7 @@ export function SmoothPicker<T>({
 
     return (
         <View className={containerClassName}>
-            <Text className="text-sm font-medium text-gray-700 mb-3 text-center">
+            <Text className="text-sm font-body-semibold text-foreground mb-3 text-center">
                 {title}
             </Text>
             <View style={{ height: PICKER_HEIGHT }} className="relative">

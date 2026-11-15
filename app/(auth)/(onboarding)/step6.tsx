@@ -1,104 +1,85 @@
-import BMIIndicator from "@/components/BmiIndicator";
-import OnboardingWrapper from "@/components/OnboardingWrapper";
-import UnitToggle from "@/components/UnitToggle";
-import WeightRulerPicker from "@/components/WeightRulerPicker";
-import WeightValidation from "@/components/WeightValidation";
-import { convertWeight } from "@/lib/utils";
+import { BmiCard } from "@/components/onboarding/BmiCard";
+import { OnboardingScreen } from "@/components/onboarding/OnboardingScreen";
+import { WeightRuler } from "@/components/onboarding/WeightRuler";
+import { FormError } from "@/components/ui/FormError";
+import { SegmentedControl } from "@/components/ui/SegmentedControl";
+import {
+  PACE_OPTIONS,
+  WEIGHT_GAIN_GOALS,
+  WEIGHT_LOSS_GOALS,
+  WEIGHT_UNIT_OPTIONS,
+} from "@/constants/onboarding";
+import { calculateBmi, type WeightUnit } from "@/lib/body";
 import { useUserProfileStore } from "@/store/userProfile";
-import React, { memo, useCallback, useEffect, useMemo, useState } from "react";
+import React, { useState } from "react";
 import { Text, View } from "react-native";
-import { useShallow } from "zustand/react/shallow";
 
-const TargetWeightStep = memo(() => {
-  const [selectedUnit, setSelectedUnit] = useState<"kg" | "lbs">("kg");
+export default function Step6() {
+  const currentWeightKg = useUserProfileStore((s) => s.currentWeightKg);
+  const targetWeightKg = useUserProfileStore((s) => s.targetWeightKg);
+  const heightCm = useUserProfileStore((s) => s.heightCm);
+  const goal = useUserProfileStore((s) => s.goal);
+  const pace = useUserProfileStore((s) => s.weightLossSpeed);
+  const setTargetWeightKg = useUserProfileStore((s) => s.setTargetWeightKg);
+  const setPace = useUserProfileStore((s) => s.setWeightLossSpeed);
+  const [unit, setUnit] = useState<WeightUnit>("kg");
 
-  const {
-    targetWeightKg,
-    setTargetWeightKg,
-    heightCm: userHeight,
-  } = useUserProfileStore(
-    useShallow((state) => ({
-      targetWeightKg: state.targetWeightKg,
-      setTargetWeightKg: state.setTargetWeightKg,
-      heightCm: state.heightCm,
-    }))
-  );
+  const diffKg = Math.round((targetWeightKg - currentWeightKg) * 10) / 10;
+  const wantsLoss = WEIGHT_LOSS_GOALS.includes(goal);
+  const wantsGain = WEIGHT_GAIN_GOALS.includes(goal);
 
-  const [targetWeight, setTargetWeight] = useState<number>(targetWeightKg);
+  // The target has to agree with the goal picked on the previous step.
+  const mismatch =
+    wantsLoss && diffKg >= 0
+      ? `You chose to lose weight, so pick a target below your current ${currentWeightKg} kg.`
+      : wantsGain && diffKg <= 0
+        ? `You chose to gain weight, so pick a target above your current ${currentWeightKg} kg.`
+        : null;
 
-  // Memoize unit change handler
-  const handleUnitChange = useCallback(
-    (newUnit: "kg" | "lbs") => {
-      const convertedWeight = convertWeight(
-        targetWeight,
-        selectedUnit,
-        newUnit
-      );
-      setSelectedUnit(newUnit);
-      setTargetWeight(convertedWeight);
-    },
-    [targetWeight, selectedUnit]
-  );
+  const targetBmi = calculateBmi(targetWeightKg, heightCm);
+  const lowTarget = !mismatch && targetBmi < 18.5;
 
-  // Memoize weight change handler
-  const handleWeightChange = useCallback((weight: number) => {
-    setTargetWeight(weight);
-  }, []);
-
-  // Memoize weight range calculation
-  const weightRange = useMemo(() => {
-    return selectedUnit === "kg"
-      ? { min: 30, max: 150, initial: 56 }
-      : { min: 66, max: 330, initial: 123 };
-  }, [selectedUnit]);
-
-  // Memoize weight for BMI calculation
-  const weightForBMI = useMemo(() => {
-    return selectedUnit === "kg"
-      ? targetWeight
-      : convertWeight(targetWeight, "lbs", "kg");
-  }, [targetWeight, selectedUnit]);
-
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setTargetWeightKg(targetWeight);
-    }, 150);
-
-    return () => clearTimeout(timer);
-  }, [targetWeight]);
+  const showPace = (wantsLoss || wantsGain) && !mismatch;
+  const selectedPace = PACE_OPTIONS.find((p) => p.value === pace) ?? PACE_OPTIONS[1];
+  const weeks = Math.max(1, Math.round(Math.abs(diffKg) / selectedPace.kgPerWeek));
 
   return (
-    <OnboardingWrapper>
-      <View className="flex-1 px-4">
-        <Text className="text-2xl font-semibold text-center mb-8 text-gray-800">
-          What is your target weight?
-        </Text>
+    <OnboardingScreen
+      step={6}
+      title="What's your target weight?"
+      subtitle="Pick a weight you'd be happy to reach."
+      canContinue={!mismatch}
+    >
+      <View className="gap-6">
+        <SegmentedControl options={WEIGHT_UNIT_OPTIONS} value={unit} onChange={setUnit} />
+        <WeightRuler unit={unit} valueKg={targetWeightKg} onChangeKg={setTargetWeightKg} />
 
-        <UnitToggle
-          selectedUnit={selectedUnit}
-          onUnitChange={handleUnitChange}
-        />
+        <View>
+          <FormError message={mismatch} />
+          <FormError
+            tone="warning"
+            message={lowTarget ? "This target is below the healthy range for your height." : null}
+          />
+          <BmiCard weightKg={targetWeightKg} heightCm={heightCm} showRange />
+        </View>
 
-        <WeightValidation
-          weight={weightForBMI}
-          height={userHeight}
-          unit={selectedUnit}
-        />
-
-        <BMIIndicator height={userHeight} weight={weightForBMI} />
-
-        <WeightRulerPicker
-          minWeight={weightRange.min}
-          maxWeight={weightRange.max}
-          initialWeight={targetWeight}
-          unit={selectedUnit}
-          onWeightChange={handleWeightChange}
-        />
+        {showPace && (
+          <View>
+            <Text className="mb-2 font-body-semibold text-sm text-secondary-foreground">
+              How fast do you want to get there?
+            </Text>
+            <SegmentedControl
+              options={PACE_OPTIONS.map(({ value, label }) => ({ value, label }))}
+              value={selectedPace.value}
+              onChange={setPace}
+            />
+            <Text className="mt-2 font-body text-sm text-muted-foreground">
+              About {selectedPace.kgPerWeek} kg a week, so roughly {weeks}{" "}
+              {weeks === 1 ? "week" : "weeks"}.
+            </Text>
+          </View>
+        )}
       </View>
-    </OnboardingWrapper>
+    </OnboardingScreen>
   );
-});
-
-TargetWeightStep.displayName = "TargetWeightStep";
-
-export default TargetWeightStep;
+}

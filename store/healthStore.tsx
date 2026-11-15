@@ -68,6 +68,18 @@ export const healthAPIs = {
       requiresAuth: true,
     })) ?? [],
 
+  fetchExerciseLogsByDate: async (date: string): Promise<ExerciseLog[]> =>
+    (await fetchApi<ExerciseLog[]>(`/api/exercise-logs/${date}`, {
+      method: "GET",
+      requiresAuth: true,
+    })) ?? [],
+
+  fetchWaterLogsByDate: async (date: string): Promise<WaterLog[]> =>
+    await fetchApi<WaterLog[]>(`/api/water-logs/${date}`, {
+      method: "GET",
+      requiresAuth: true,
+    }),
+
   fetchTodayFoodLogsByMealType: async (
     mealType: MealType
   ): Promise<FoodLog[]> =>
@@ -216,7 +228,6 @@ export const useFoodLogMutations = (date: string) => {
       });
     },
     onSuccess: (newLog) => {
-      console.log("Food log added successfully:", newLog);
 
       // Check if this log already exists in the cache to prevent duplicates
       const existingLogs =
@@ -275,7 +286,6 @@ export const useFoodLogMutations = (date: string) => {
           }
         );
       } else {
-        console.log("Log already exists in cache, skipping update");
         // If log exists, just invalidate to ensure we have the latest data
         queryClient.invalidateQueries({
           queryKey: healthQueryKeys.foodLogs.byDate(date),
@@ -522,16 +532,7 @@ export const useExerciseLogs = {
   ByDate: (date: string) => {
     return useQuery({
       queryKey: healthQueryKeys.exerciseLogs.byDate(date),
-      queryFn: async (): Promise<ExerciseLog[]> => {
-        const response = await fetchApi<ExerciseLog[]>(
-          `/api/exercise-logs/${date}`,
-          {
-            method: "GET",
-            requiresAuth: true,
-          }
-        );
-        return response ?? [];
-      },
+      queryFn: () => healthAPIs.fetchExerciseLogsByDate(date),
       staleTime: 2 * 60 * 1000,
     });
   },
@@ -610,7 +611,7 @@ export const useExerciseLogMutations = (date: string) => {
 
       queryClient.invalidateQueries({
         queryKey: healthQueryKeys.summary(
-          new Date().toISOString().split("T")[0]
+          getCurrentDate()
         ),
       });
     },
@@ -631,7 +632,7 @@ export const useExerciseLogMutations = (date: string) => {
 
       queryClient.invalidateQueries({
         queryKey: healthQueryKeys.summary(
-          new Date().toISOString().split("T")[0]
+          getCurrentDate()
         ),
       });
     },
@@ -648,31 +649,8 @@ export const useWaterLogs = {
   ByDate: (date: string) => {
     return useQuery({
       queryKey: healthQueryKeys.waterLogs.byDate(date),
-      queryFn: async (): Promise<WaterLog[]> => {
-        const response = await fetchApi<WaterLog[]>(`/api/water-logs/${date}`, {
-          method: "GET",
-          requiresAuth: true,
-        });
-        return response;
-      },
+      queryFn: () => healthAPIs.fetchWaterLogsByDate(date),
       staleTime: 1 * 60 * 1000, // 1 minute
-    });
-  },
-
-  todayTotal: () => {
-    return useQuery({
-      queryKey: healthQueryKeys.waterLogs.todayTotal(),
-      queryFn: async (): Promise<number> => {
-        const response = await fetchApi<{ totalMl: number }>(
-          "/api/water-logs/today/total",
-          {
-            method: "GET",
-            requiresAuth: true,
-          }
-        );
-        return response.totalMl;
-      },
-      staleTime: 1 * 60 * 1000,
     });
   },
 };
@@ -735,7 +713,7 @@ export const useWaterLogMutations = (date: string) => {
         (old = 0) => old + newLog.amountMl
       );
 
-      const today = new Date().toISOString().split("T")[0];
+      const today = getCurrentDate();
       queryClient.setQueryData<DailySummary>(
         healthQueryKeys.summary(today),
         (old) => {
@@ -767,7 +745,7 @@ export const useWaterLogMutations = (date: string) => {
       });
       queryClient.invalidateQueries({
         queryKey: healthQueryKeys.summary(
-          new Date().toISOString().split("T")[0]
+          getCurrentDate()
         ),
       });
     },

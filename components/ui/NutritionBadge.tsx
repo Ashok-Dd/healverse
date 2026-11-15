@@ -1,30 +1,44 @@
-import {Text, View} from "react-native";
 import { Entypo, MaterialCommunityIcons } from "@expo/vector-icons";
-import { ComponentProps } from "react";
+import React, { ComponentProps } from "react";
+import { Text, View } from "react-native";
 
-interface NutrientBadgeProps {
-    iconType?: "Entypo" | "MaterialCommunityIcons";
-    iconName: ComponentProps<typeof Entypo>["name"] | ComponentProps<typeof MaterialCommunityIcons>["name"];
-    iconColor: string;
-    value: number;
-    unit: string;
-    textColor: string;
-}
+type Tone = "destructive" | "info" | "warning" | "success";
 
-const NutrientBadge = ({ iconType = "MaterialCommunityIcons", iconName, iconColor, value, unit, textColor }: NutrientBadgeProps) => {
-    const IconComponent = iconType === "Entypo" ? Entypo : MaterialCommunityIcons;
-
-    return (
-        <View className="flex-row items-center bg-gray-100 rounded-full px-1">
-            <Text className="text-xs">
-                <IconComponent name={iconName as any} color={iconColor} size={12} />
-            </Text>
-            <Text className={`text-xs font-semibold ml-1 ${textColor}`}>
-                {value}
-                {unit}
-            </Text>
-        </View>
-    );
+const TONES: Record<Tone, { icon: string; text: string }> = {
+  destructive: { icon: "text-destructive", text: "text-destructive" },
+  info: { icon: "text-info", text: "text-info" },
+  warning: { icon: "text-warning", text: "text-warning" },
+  success: { icon: "text-success", text: "text-success" },
 };
 
-export default NutrientBadge;
+interface NutrientBadgeProps {
+  iconType?: "Entypo" | "MaterialCommunityIcons";
+  iconName: ComponentProps<typeof Entypo>["name"] | ComponentProps<typeof MaterialCommunityIcons>["name"];
+  value: number;
+  unit: string;
+  tone: Tone;
+}
+
+/** Small pill showing one nutrient value with its icon. */
+const NutrientBadge = ({
+  iconType = "MaterialCommunityIcons",
+  iconName,
+  value,
+  unit,
+  tone,
+}: NutrientBadgeProps) => {
+  const Icon = iconType === "Entypo" ? Entypo : MaterialCommunityIcons;
+  const t = TONES[tone];
+
+  return (
+    <View className="flex-row items-center gap-1 rounded-full bg-muted px-2 py-1">
+      <Icon name={iconName as any} className={t.icon} size={12} />
+      <Text className={`font-body-semibold text-xs ${t.text}`}>
+        {value}
+        {unit}
+      </Text>
+    </View>
+  );
+};
+
+export default React.memo(NutrientBadge);

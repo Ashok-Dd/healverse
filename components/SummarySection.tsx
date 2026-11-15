@@ -1,6 +1,6 @@
 import { INFO_ABOUT_CALORIE_CALCUATION } from "@/constants";
 import { useSummaryData } from "@/hooks/useSummaryData";
-import { DailySummary } from "@/types/type";
+import React from "react";
 import { Text, View } from "react-native";
 import CalorieSummary from "./CalorieSummary";
 import ErrorCard from "./cards/ErrorCard";
@@ -8,77 +8,49 @@ import NutritionInfo from "./NutritionInfo";
 import LoggingSkeleton from "./skeleton/LoggingSkeleton";
 import GuidanceButton from "./ui/GuidanceButton";
 
-interface SummarySectionProps {
-    date: string;
-}
-
-const RenderContent = ({ summary } : { summary: DailySummary }) => (
-        <View className="py-2">
-            {/* Remaining Calorie Section */}
-            <View className="flex-row items-center mb-2 px-5">
-                <Text className="text-md mr-2">🏠</Text>
-                <Text className="text-md font-semibold text-gray-800">
-                    Remaining Calorie
-                </Text>
-
-                <GuidanceButton
-                    title="About Calorie Calculation"
-                    content={INFO_ABOUT_CALORIE_CALCUATION}
-                    variant="icon-only"
-                    size="small"
-                />
-
-            </View>
-
-            <View className="bg-gray-100 rounded-lg p-4 mx-4 mb-4 shadow-sm">
-               <CalorieSummary
-                  targetCalories={summary?.targetCalories || 0}
-                  caloriesBurned={summary?.caloriesBurned || 0}
-                  consumedCalories={summary?.consumedCalories || 0}
-                  remainingCalories={summary?.remainingCalories || 0}
-               />
-            </View>
-
-            {/* Daily Total */}
-            <View className="px-2">
-                <View className="flex-row items-center mb-2 ml-3 ">
-                    <Text className="text-2xl mr-2">≡</Text>
-                    <Text className="text-md font-semibold text-gray-800">
-                        Daily Total
-                    </Text>
-                </View>
-                <NutritionInfo
-                    calories={summary?.consumedCalories || 0}
-                    carbs={summary?.consumedCarbs || 0}
-                    fat={summary?.consumedFat || 0}
-                    protein={summary?.consumedProtein || 0}
-                    targetCalories={summary?.targetCalories}
-                    targetCarbs={summary?.targetCarbs}
-                    targetFat={summary?.targetFat}
-                    targetProtein={summary?.targetProtein}
-                />
-            </View>
-
-        </View>
+const SectionHeader = ({ title, help }: { title: string; help?: string }) => (
+  <View className="mb-2 flex-row items-center justify-between">
+    <Text accessibilityRole="header" className="font-display text-base text-foreground">
+      {title}
+    </Text>
+    {help && <GuidanceButton title={title} content={help} />}
+  </View>
 );
 
-const SummarySection: React.FC<SummarySectionProps> = ({ date }) => {
+/** Remaining calories and macro totals for the selected day. */
+const SummarySection = ({ date }: { date: string }) => {
+  const { data: summary, isLoading, error, refetch } = useSummaryData(date);
 
-    const {
-        data: summary,
-        isLoading,
-        error,
-    } = useSummaryData(date);
+  if (isLoading) return <LoggingSkeleton />;
+  if (error || !summary) {
+    return <ErrorCard message={error?.message} onPress={() => refetch()} className="mx-0" />;
+  }
 
+  return (
+    <View className="mb-3">
+      <SectionHeader title="Remaining calories" help={INFO_ABOUT_CALORIE_CALCUATION} />
+      <View className="mb-4 rounded-3xl border border-border bg-card p-4">
+        <CalorieSummary
+          targetCalories={summary.targetCalories || 0}
+          caloriesBurned={summary.caloriesBurned || 0}
+          consumedCalories={summary.consumedCalories || 0}
+          remainingCalories={summary.remainingCalories || 0}
+        />
+      </View>
 
-    return  isLoading ? (
-        <LoggingSkeleton />
-    ) : error ? (
-        <ErrorCard message={error.message} />
-    ) : (
-        <RenderContent summary={summary as DailySummary} />
-    );
+      <SectionHeader title="Daily total" />
+      <NutritionInfo
+        calories={summary.consumedCalories || 0}
+        carbs={summary.consumedCarbs || 0}
+        fat={summary.consumedFat || 0}
+        protein={summary.consumedProtein || 0}
+        targetCalories={summary.targetCalories}
+        targetCarbs={summary.targetCarbs}
+        targetFat={summary.targetFat}
+        targetProtein={summary.targetProtein}
+      />
+    </View>
+  );
 };
 
-export default SummarySection;
-
+export default React.memo(SummarySection);

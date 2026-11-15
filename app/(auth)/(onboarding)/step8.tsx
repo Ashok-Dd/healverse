@@ -1,40 +1,31 @@
-import OnboardingWrapper from "@/components/OnboardingWrapper";
+import { OnboardingScreen } from "@/components/onboarding/OnboardingScreen";
+import { ChoiceCard } from "@/components/ui/ChoiceCard";
 import { dietaryLimitations } from "@/constants/data";
-import { FlatList, Text, View } from "react-native";
-import {useUserProfileStore} from "@/store/userProfile";
-import OptionsCard from "@/components/OptionsCard";
-import {useShallow} from "zustand/react/shallow";
+import { useUserProfileStore } from "@/store/userProfile";
+import React from "react";
+import { View } from "react-native";
 
-const Step8 = () => {
-    const {dietaryRestriction , setDietaryRestriction} = useUserProfileStore(
-        useShallow((state) => ({
-            dietaryRestriction: state.dietaryRestriction,
-            setDietaryRestriction: state.setDietaryRestriction,
-        }))
-    );
+export default function Step8() {
+  const dietaryRestriction = useUserProfileStore((s) => s.dietaryRestriction);
+  const setDietaryRestriction = useUserProfileStore((s) => s.setDietaryRestriction);
 
-    return (
-        <OnboardingWrapper>
-            <View className="flex-1 p-4">
-                <Text className="text-2xl font-semibold text-center mb-4 text-gray-800">
-                    Do you have any dietary restrictions, allergies, or foods you dislike?
-                </Text>
-
-                <FlatList
-                    data={dietaryLimitations}
-                    keyExtractor={(item) => item.value}
-                    ItemSeparatorComponent={() => <View className="h-3" />}
-                    renderItem={({ item }) => (
-                        <OptionsCard
-                            {...item}
-                            isSelected={dietaryRestriction === item.value}
-                            onPress={() => setDietaryRestriction(item.value)}
-                        />
-                    )}
-                />
-            </View>
-        </OnboardingWrapper>
-    );
-};
-
-export default Step8;
+  return (
+    <OnboardingScreen
+      step={8}
+      title="How do you like to eat?"
+      subtitle="We'll only suggest meals that fit your diet."
+    >
+      <View accessibilityRole="radiogroup">
+        {dietaryLimitations.map((option) => (
+          <ChoiceCard
+            key={option.value}
+            label={option.name}
+            icon={option.icon}
+            selected={dietaryRestriction === option.value}
+            onPress={() => setDietaryRestriction(option.value)}
+          />
+        ))}
+      </View>
+    </OnboardingScreen>
+  );
+}

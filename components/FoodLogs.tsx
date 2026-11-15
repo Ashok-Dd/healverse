@@ -1,68 +1,55 @@
-import LogCard from "@/components/LogCard"; // Adjust path
+import LogCard from "@/components/LogCard";
 import { useFoodLogs } from "@/store/healthStore";
-import { FoodLog, MealType } from "@/types/type"; // Adjust import path to your types
-import { useRouter } from "expo-router";
+import type { MealType } from "@/types/type";
+import { router } from "expo-router";
+import React, { useMemo } from "react";
 import { View } from "react-native";
 import ErrorCard from "./cards/ErrorCard";
 import { FoodLogHolder } from "./LogHolders";
 import { SkeletonLogCard } from "./skeleton/LoggingSkeleton";
 
-interface FoodLogsProps {
-  date: string;
-}
+const MEALS: { type: MealType; title: string; description: string; action: string }[] = [
+  { type: "BREAKFAST", title: "Breakfast", description: "Start your day with a log.", action: "Log breakfast" },
+  { type: "LUNCH", title: "Lunch", description: "Nothing logged for lunch yet.", action: "Log lunch" },
+  { type: "DINNER", title: "Dinner", description: "Nothing logged for dinner yet.", action: "Log dinner" },
+  { type: "SNACK", title: "Snacks", description: "Mindful snacking keeps energy steady.", action: "Log snack" },
+];
 
-const mealTitles: Record<MealType, string> = {
-  BREAKFAST: "Breakfast",
-  LUNCH: "Lunch",
-  DINNER: "Dinner",
-  SNACK: "Snacks",
-};
+const FoodLogs = ({ date }: { date: string }) => {
+  const { data, isLoading, isError, error, refetch } = useFoodLogs.ByDate(date);
 
-const mealEmojis: Record<MealType, string> = {
-  BREAKFAST: "🍽",
-  LUNCH: "🥗",
-  DINNER: "🍝",
-  SNACK: "🍫",
-};
+  // One pass instead of filtering the list four times on every render.
+  const byMeal = useMemo(() => {
+    const groups: Record<MealType, NonNullable<typeof data>> = {
+      BREAKFAST: [],
+      LUNCH: [],
+      DINNER: [],
+      SNACK: [],
+    };
+    data?.forEach((log) => groups[log.mealType]?.push(log));
+    return groups;
+  }, [data]);
 
-export default function FoodLogs({ date }: FoodLogsProps) {
-  const router = useRouter();
-
-  const { data: foodLogs = [], isLoading, isError } = useFoodLogs.ByDate(date);
-
-  if (isLoading) {
-    return <SkeletonLogCard />;
-  }
-
-  if (isError) {
-    return <ErrorCard message="Failed to load food logs." />;
-  }
+  if (isLoading) return <SkeletonLogCard />;
+  if (isError) return <ErrorCard message={error?.message} onPress={() => refetch()} className="mx-0" />;
 
   return (
     <View>
-      {(["BREAKFAST", "LUNCH", "DINNER", "SNACK"] as MealType[]).map(
-        (mealType) => (
-          <LogCard<FoodLog>
-            key={mealType}
-            icon="🍴"
-            title={mealTitles[mealType]}
-            description={
-              mealType === "SNACK"
-                ? "Mindful snacking helps energy!"
-                : "Recommended meal intake"
-            }
-            buttonText={mealType === "SNACK" ? "+ Log Snack" : "+ Log Food"}
-            Link={() =>
-              router.push(`/(root)/calorie-counter/${mealType}` as any)
-            }
-            showArrow={false}
-            emojiIcon={mealEmojis[mealType]}
-            backgroundStyle="bg-orange-50"
-            items={foodLogs.filter((f) => f.mealType === mealType)}
-            component={(item) => <FoodLogHolder {...item} />}
-          />
-        )
-      )}
+      {MEALS.map((meal) => (
+        <LogCard
+          key={meal.type}
+          icon="restaurant-outline"
+          title={meal.title}
+          description={meal.description}
+          actionLabel={meal.action}
+          onAction={() => router.push(`/(root)/calorie-counter/${meal.type}` as any)}
+          items={byMeal[meal.type]}
+          getKey={(log) => log.id}
+          renderItem={(log) => <FoodLogHolder log={log} />}
+        />
+      ))}
     </View>
   );
-}
+};
+
+export default React.memo(FoodLogs);

@@ -1,40 +1,35 @@
-import OnboardingWrapper from "@/components/OnboardingWrapper";
-import {Text, View} from "react-native";
-import {useState} from "react";
-import DietaryGoals from "@/components/DietaryGoals";
-import {useUserProfileStore} from "@/store/userProfile";
-import {DietaryRestriction, Goal} from "@/types/type";
-import {useShallow} from "zustand/react/shallow";
+import { OnboardingScreen } from "@/components/onboarding/OnboardingScreen";
+import { ChoiceCard } from "@/components/ui/ChoiceCard";
+import { DIET_BOY_OPTIONS, DIET_GIRL_OPTIONS } from "@/constants/data";
+import { useUserProfileStore } from "@/store/userProfile";
+import React from "react";
+import { View } from "react-native";
 
-const DietaryHeader = () => (
-    <Text className="text-2xl font-jakarta-semi-bold text-center mb-8 text-secondary-800">
-        What is your main dietary Goals?
-    </Text>
-);
+export default function Step5() {
+  const gender = useUserProfileStore((s) => s.gender);
+  const goal = useUserProfileStore((s) => s.goal);
+  const setGoal = useUserProfileStore((s) => s.setGoal);
 
-const Step5 = () => {
+  const options = gender === "FEMALE" ? DIET_GIRL_OPTIONS : DIET_BOY_OPTIONS;
 
-
-    const {goal, setGoal , gender} = useUserProfileStore(
-        useShallow((state) => ({ goal: state.goal, setGoal: state.setGoal, gender: state.gender }))
-    );
-
-    const handleSelectionDiet = (value: Goal) => {
-        setGoal(value ) ;
-    };
-
-    return (
-        <OnboardingWrapper>
-            <View className="flex-1">
-                <DietaryHeader />
-                <DietaryGoals
-                    gender={gender}
-                    onSelectionChange={handleSelectionDiet}
-                    goal={goal}
-                />
-            </View>
-        </OnboardingWrapper>
-    )
+  return (
+    <OnboardingScreen
+      step={5}
+      title="What's your main goal?"
+      subtitle="Your meal plans are built around this."
+    >
+      <View accessibilityRole="radiogroup">
+        {options.map((option) => (
+          <ChoiceCard
+            key={option.value}
+            label={option.label}
+            icon={option.icon}
+            image={option.image}
+            selected={goal === option.value}
+            onPress={() => setGoal(option.value)}
+          />
+        ))}
+      </View>
+    </OnboardingScreen>
+  );
 }
-
-export default Step5;

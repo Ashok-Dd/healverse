@@ -1,78 +1,30 @@
-import OnboardingWrapper from "@/components/OnboardingWrapper";
-import CustomSmoothPicker from "@/components/CustomSmoothPicker";
+import { OnboardingScreen } from "@/components/onboarding/OnboardingScreen";
+import { WheelPicker } from "@/components/onboarding/WheelPicker";
+import { useUserProfileStore } from "@/store/userProfile";
+import React from "react";
 import { Text, View } from "react-native";
-import React, {useEffect, useRef, useState} from "react";
-import {useUserProfileStore} from "@/store/userProfile";
-import {useShallow} from "zustand/react/shallow";
 
-const AgeSelectionTitle = () => (
-    <View className="items-center mb-12">
+const MIN_AGE = 13;
+const MAX_AGE = 100;
+const AGES = Array.from({ length: MAX_AGE - MIN_AGE + 1 }, (_, i) => MIN_AGE + i);
 
-        <Text className="text-2xl font-jakarta-semi-bold text-center text-secondary-800">
-            What is your age?
+export default function Step2() {
+  const age = useUserProfileStore((s) => s.age);
+  const setAge = useUserProfileStore((s) => s.setAge);
+
+  return (
+    <OnboardingScreen
+      step={2}
+      title="How old are you?"
+      subtitle="Age changes how many calories you burn at rest."
+      scrollable={false}
+    >
+      <View className="flex-1 items-center justify-center">
+        <WheelPicker data={AGES} value={age} onChange={setAge} />
+        <Text className="mt-6 font-body-semibold text-base text-muted-foreground">
+          {age} years old
         </Text>
-    </View>
-);
-
-const Step2 = () => {
-
-    const { age, setAge } = useUserProfileStore(
-        useShallow((state) => ({ age: state.age, setAge: state.setAge }))
-    );
-    const [selectedAge, setSelectedAge] = useState<number>(age);
-
-    const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-    const ages = Array.from({ length: 88 }, (_, i) => i + 13);
-
-    const handleAgeChange = (value: string | number) => {
-        const newAge = Number(value);
-        setSelectedAge(newAge);
-
-        // Debounce Zustand update
-        if (timerRef.current) clearTimeout(timerRef.current);
-
-        timerRef.current = setTimeout(() => {
-            setAge(newAge);
-        }, 150); // Adjust the delay if needed
-    };
-
-    // Clean up the timer on unmount
-    useEffect(() => {
-        return () => {
-            if (timerRef.current) clearTimeout(timerRef.current);
-        };
-    }, []);
-
-    return (
-        <OnboardingWrapper>
-            <View className="flex-1">
-                <AgeSelectionTitle />
-
-                <View className="flex-1 justify-center items-center">
-                    <CustomSmoothPicker
-                        data={ages}
-                        selectedValue={selectedAge}
-                        onValueChange={handleAgeChange}
-                        itemHeight={60}
-                        width={120}
-                        highlightColor="#22c55e" // Using your primary green
-                        highlightBgColor="#f0fdf4" // Using your primary-50
-                        textColor="#64748b" // Using your secondary-500
-                        selectedTextColor="#1e293b" // Using your secondary-800
-
-                    />
-
-                    {/* Show selected age for feedback */}
-                    <View className="mt-8">
-                        <Text className="text-center text-secondary-600 font-jakarta-medium">
-                            Selected Age: {age}
-                        </Text>
-                    </View>
-                </View>
-            </View>
-        </OnboardingWrapper>
-    );
-};
-
-export default Step2;
+      </View>
+    </OnboardingScreen>
+  );
+}
