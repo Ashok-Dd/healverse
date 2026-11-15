@@ -8,7 +8,38 @@ module.exports = {
   theme: {
     extend: {
       colors: {
+        // Semantic tokens (shadcn-style). Values are CSS variables in app/globals.css.
+        background: "hsl(var(--background) / <alpha-value>)",
+        foreground: "hsl(var(--foreground) / <alpha-value>)",
+        card: {
+          DEFAULT: "hsl(var(--card) / <alpha-value>)",
+          foreground: "hsl(var(--card-foreground) / <alpha-value>)",
+        },
+        muted: {
+          DEFAULT: "hsl(var(--muted) / <alpha-value>)",
+          foreground: "hsl(var(--muted-foreground) / <alpha-value>)",
+        },
+        accent: {
+          DEFAULT: "hsl(var(--accent) / <alpha-value>)",
+          foreground: "hsl(var(--accent-foreground) / <alpha-value>)",
+        },
+        destructive: {
+          DEFAULT: "hsl(var(--destructive) / <alpha-value>)",
+          foreground: "hsl(var(--destructive-foreground) / <alpha-value>)",
+        },
+        success: "hsl(var(--success) / <alpha-value>)",
+        warning: "hsl(var(--warning) / <alpha-value>)",
+        info: "hsl(var(--info) / <alpha-value>)",
+        border: "hsl(var(--border) / <alpha-value>)",
+        input: "hsl(var(--input) / <alpha-value>)",
+        ring: "hsl(var(--ring) / <alpha-value>)",
+
+        // `primary` / `secondary`: DEFAULT + foreground are the new brand tokens.
+        // The numeric shades (50-900) are the LEGACY green/slate scales still used by
+        // screens that have not been migrated yet. Remove them once those screens move over.
         primary: {
+          DEFAULT: "hsl(var(--primary) / <alpha-value>)",
+          foreground: "hsl(var(--primary-foreground) / <alpha-value>)",
           50: '#f0fdf4',
           100: '#dcfce7',
           200: '#bbf7d0',
@@ -21,6 +52,8 @@ module.exports = {
           900: '#14532d',
         },
         secondary: {
+          DEFAULT: "hsl(var(--secondary) / <alpha-value>)",
+          foreground: "hsl(var(--secondary-foreground) / <alpha-value>)",
           50: '#f8fafc',
           100: '#f1f5f9',
           200: '#e2e8f0',
@@ -58,6 +91,11 @@ module.exports = {
         'strong': '0 8px 32px rgba(0, 0, 0, 0.16)',
       },
       fontFamily: {
+        display: ["Fredoka-SemiBold", "sans-serif"],
+        "display-bold": ["Fredoka-Bold", "sans-serif"],
+        body: ["Nunito-Regular", "sans-serif"],
+        "body-semibold": ["Nunito-SemiBold", "sans-serif"],
+        "body-bold": ["Nunito-Bold", "sans-serif"],
         jakarta: ["Jakarta", "sans-serif"],
         "jakarta-bold": ["Jakarta-Bold", "sans-serif"],
         "jakarta-extra-bold": ["Jakarta-ExtraBold", "sans-serif"],

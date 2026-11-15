@@ -1,6 +1,8 @@
 import { getQueryClient } from "@/lib/react-query-client";
 import { useAuthStore } from "@/store/authStore";
 import { QueryClientProvider } from "@tanstack/react-query";
+import { Fredoka_600SemiBold, Fredoka_700Bold } from "@expo-google-fonts/fredoka";
+import { Nunito_400Regular, Nunito_600SemiBold, Nunito_700Bold } from "@expo-google-fonts/nunito";
 import { useFonts } from "expo-font";
 import { router, Slot, SplashScreen } from "expo-router";
 import { useEffect } from "react";
@@ -26,6 +28,11 @@ SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
   const [fontsLoaded, fontError] = useFonts({
+    "Fredoka-SemiBold": Fredoka_600SemiBold,
+    "Fredoka-Bold": Fredoka_700Bold,
+    "Nunito-Regular": Nunito_400Regular,
+    "Nunito-SemiBold": Nunito_600SemiBold,
+    "Nunito-Bold": Nunito_700Bold,
     "Jakarta-Bold": require("../assets/fonts/PlusJakartaSans-Bold.ttf"),
     "Jakarta-ExtraBold": require("../assets/fonts/PlusJakartaSans-ExtraBold.ttf"),
     "Jakarta-ExtraLight": require("../assets/fonts/PlusJakartaSans-ExtraLight.ttf"),
