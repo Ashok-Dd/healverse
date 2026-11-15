@@ -19,6 +19,14 @@ const NETWORK_SECURITY_CONFIG = `<?xml version="1.0" encoding="utf-8"?>
 </network-security-config>
 `;
 
+// Debug builds (dev client) must load the JS bundle from Metro over plain HTTP on the LAN,
+// so the debug source set overrides the strict config with a permissive one. Never shipped in release.
+const DEBUG_NETWORK_SECURITY_CONFIG = `<?xml version="1.0" encoding="utf-8"?>
+<network-security-config>
+    <base-config cleartextTrafficPermitted="true" />
+</network-security-config>
+`;
+
 const withNetworkSecurityConfig = (config) => {
   config = withDangerousMod(config, [
     'android',
@@ -26,6 +34,9 @@ const withNetworkSecurityConfig = (config) => {
       const dir = path.join(cfg.modRequest.platformProjectRoot, 'app/src/main/res/xml');
       fs.mkdirSync(dir, { recursive: true });
       fs.writeFileSync(path.join(dir, 'network_security_config.xml'), NETWORK_SECURITY_CONFIG);
+      const debugDir = path.join(cfg.modRequest.platformProjectRoot, 'app/src/debug/res/xml');
+      fs.mkdirSync(debugDir, { recursive: true });
+      fs.writeFileSync(path.join(debugDir, 'network_security_config.xml'), DEBUG_NETWORK_SECURITY_CONFIG);
       return cfg;
     },
   ]);
