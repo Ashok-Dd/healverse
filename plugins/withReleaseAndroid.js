@@ -1,21 +1,14 @@
 // Local Expo config plugin, applied on `expo prebuild` so the settings survive android/ regeneration.
-//  1. Cleartext HTTP only for the API host (network_security_config), not globally.
+//  1. Release builds are HTTPS-only (network_security_config); debug builds allow cleartext for Metro.
 //  2. Release size: R8 minify + resource shrinking, and no x86/x86_64 native libraries.
 const fs = require('fs');
 const path = require('path');
 const { withAndroidManifest, withDangerousMod, withGradleProperties } = require('expo/config-plugins');
 
-// TODO(https): remove this host entry (and the whole cleartext rule) once the API is served over HTTPS.
-const CLEARTEXT_HOST = '51.20.149.43';
-
 const NETWORK_SECURITY_CONFIG = `<?xml version="1.0" encoding="utf-8"?>
 <network-security-config>
-    <!-- Everything is HTTPS-only by default. -->
+    <!-- No plain-HTTP traffic in release builds. -->
     <base-config cleartextTrafficPermitted="false" />
-    <!-- TODO(https): temporary plain-HTTP exception for the current API server only. -->
-    <domain-config cleartextTrafficPermitted="true">
-        <domain includeSubdomains="false">${CLEARTEXT_HOST}</domain>
-    </domain-config>
 </network-security-config>
 `;
 
