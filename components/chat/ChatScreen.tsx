@@ -67,6 +67,8 @@ const ChatScreen = ({ conversationId, isExistingConversation = false }: ChatScre
           placeholder="Ask any question"
           // Voice assistant is switched off on the server (410 Gone). Re-enable together with VoiceModel.
           showVoiceButton={false}
+          // Image input is not built yet (the button had no handler). Show it again once it is.
+          showImageButton={false}
           showSuggestions={showSuggestions}
         />
       </Animated.View>
