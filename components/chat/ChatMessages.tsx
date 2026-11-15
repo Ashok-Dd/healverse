@@ -52,6 +52,7 @@ export const ChatMessages = ({
         message={item.content}
         isUser={item.sender === "USER"}
         timestamp={formatTime(item.createdAt)}
+        outboxStatus={item.outboxStatus}
       />
     ),
     []

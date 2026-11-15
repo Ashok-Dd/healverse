@@ -1,8 +1,5 @@
 // CalorieMeterPage.tsx - Fixed Version
-import {
-  useDateSelectorForHealthStore,
-  useFoodLogMutations,
-} from "@/store/healthStore";
+import { logFoodPhoto } from "@/lib/outboxActions";
 import { MealType } from "@/types/type";
 import { Feather, Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { CameraType, CameraView, useCameraPermissions } from "expo-camera";
@@ -355,14 +352,10 @@ const PermissionScreen: React.FC<PermissionScreenProps> = ({
 };
 
 // Main CalorieMeterPage Component
-interface CalorieMeterPageProps {}
-
-const CalorieMeterPage: React.FC<CalorieMeterPageProps> = () => {
+const CalorieMeterPage: React.FC = () => {
   const router = useRouter();
 
   const { type } = useLocalSearchParams();
-
-  const { selectedDate } = useDateSelectorForHealthStore();
 
   const [cameraPermission, requestCameraPermission] = useCameraPermissions();
   const [cameraType, setCameraType] = useState<CameraType>("back");
@@ -372,8 +365,6 @@ const CalorieMeterPage: React.FC<CalorieMeterPageProps> = () => {
   const [isTextInputActive, setIsTextInputActive] = useState(false);
   const [textInput, setTextInput] = useState("");
   const cameraRef = useRef<CameraView | null>(null);
-
-  const { addFoodLog } = useFoodLogMutations(selectedDate);
 
   // Request camera permission if not granted
   useEffect(() => {
@@ -395,7 +386,6 @@ const CalorieMeterPage: React.FC<CalorieMeterPageProps> = () => {
           setIsProcessing(true);
           // Simulate processing time for better UX
           setTimeout(() => {
-            console.log(photo.uri);
             setCapturedImage(photo.uri);
             setIsProcessing(false);
           }, 800);
@@ -450,16 +440,7 @@ const CalorieMeterPage: React.FC<CalorieMeterPageProps> = () => {
         { compress: 0.7, format: ImageManipulator.SaveFormat.JPEG }
       );
 
-      const formData = new FormData();
-      formData.append("image", {
-        uri: resized.uri,
-        name: "meal.jpg",
-        type: "image/jpeg",
-      } as any);
-      formData.append("mealType", (type as string).toUpperCase() as MealType);
-      formData.append("loggedAt", new Date().toISOString());
-
-      addFoodLog.mutate(formData);
+      await logFoodPhoto(resized.uri, (type as string).toUpperCase() as MealType);
 
       router.push("/(root)/(tabs)/tracker");
     } catch (error) {

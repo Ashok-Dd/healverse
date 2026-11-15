@@ -1,7 +1,5 @@
 import { fetchApi } from "@/lib/fetchApi";
 import {
-  CreateExerciseLogData,
-  CreateWaterLogData,
   DailySummary,
   ExerciseLog,
   FoodItem,
@@ -14,6 +12,14 @@ import {
 import type { QueryClient } from "@tanstack/react-query";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCallback, useState } from "react";
+import { useOutboxEntries } from "@/hooks/useOutboxEntries";
+import {
+  exerciseLogFromEntry,
+  isOnDay,
+  mergeQueued,
+  waterLogFromEntry,
+} from "@/lib/outboxOverlay";
+import { withPausedAsLoading } from "@/lib/queryStatus";
 import { getCurrentDate, isValidDateForData } from "./dietPlan";
 
 const healthBaseKey = ["health"] as const;
@@ -180,7 +186,7 @@ export const useFoodLogs = {
     );
 
     return {
-      ...query,
+      ...withPausedAsLoading(query),
       getById,
     };
   },
@@ -217,90 +223,6 @@ export const useFoodLogMutations = (date: string) => {
     );
   };
 
-  const addFoodLog = useMutation({
-    mutationKey: ["addFoodLog"],
-    mutationFn: async (formData: FormData): Promise<FoodLog> => {
-      return await fetchApi<FoodLog>("/api/food-logs/log/image", {
-        method: "POST",
-        requiresAuth: true,
-        body: formData,
-        headers: {},
-      });
-    },
-    onSuccess: (newLog) => {
-
-      // Check if this log already exists in the cache to prevent duplicates
-      const existingLogs =
-        queryClient.getQueryData<FoodLog[]>(
-          healthQueryKeys.foodLogs.byDate(date)
-        ) || [];
-
-      const logExists = existingLogs.some(
-        (log) =>
-          log.id === newLog.id ||
-          (log.loggedAt === newLog.loggedAt && log.mealType === newLog.mealType)
-      );
-
-      if (!logExists) {
-        // Only add if it doesn't already exist
-        queryClient.setQueryData<FoodLog[]>(
-          healthQueryKeys.foodLogs.byDate(date),
-          (old = []) => {
-            // Double-check here too
-            const exists = old.some((log) => log.id === newLog.id);
-            return exists ? old : [...old, newLog];
-          }
-        );
-
-        // invalidate the user-gamification summary to reflect any changes
-        queryClient.invalidateQueries({
-          queryKey: ["gamification", "summary"],
-        });
-
-        // Update dashboard data
-        const nutrition = calculateTotalNutrition(newLog.items);
-        queryClient.setQueryData<DailySummary>(
-          healthQueryKeys.summary(date),
-          (old) => {
-            if (!old) return old;
-            return {
-              ...old,
-              consumedCalories: old.consumedCalories + nutrition.calories,
-              consumedProtein: old.consumedProtein + nutrition.protein,
-              consumedCarbs: old.consumedCarbs + nutrition.carbs,
-              consumedFat: old.consumedFat + nutrition.fat,
-              // update progresses also
-              calorieProgress:
-                ((old.consumedCalories + nutrition.calories) /
-                  old.targetCalories) *
-                100,
-              proteinProgress:
-                ((old.consumedProtein + nutrition.protein) /
-                  old.targetProtein) *
-                100,
-              carbsProgress:
-                ((old.consumedCarbs + nutrition.carbs) / old.targetCarbs) * 100,
-              fatProgress:
-                ((old.consumedFat + nutrition.fat) / old.targetFat) * 100,
-            };
-          }
-        );
-      } else {
-        // If log exists, just invalidate to ensure we have the latest data
-        queryClient.invalidateQueries({
-          queryKey: healthQueryKeys.foodLogs.byDate(date),
-        });
-        queryClient.invalidateQueries({
-          queryKey: healthQueryKeys.summary(date),
-        });
-      }
-    },
-    onError: (error) => {
-      console.error("Food log mutation error:", error);
-    },
-  });
-
-  // Rest of mutations with similar careful approach...
   const updateFoodLog = useMutation({
     mutationFn: async ({
       id,
@@ -519,7 +441,6 @@ export const useFoodLogMutations = (date: string) => {
   });
 
   return {
-    addFoodLog,
     updateFoodLog,
     deleteFoodLog,
     updateFoodItem,
@@ -530,11 +451,16 @@ export const useFoodLogMutations = (date: string) => {
 
 export const useExerciseLogs = {
   ByDate: (date: string) => {
-    return useQuery({
+    const query = useQuery({
       queryKey: healthQueryKeys.exerciseLogs.byDate(date),
       queryFn: () => healthAPIs.fetchExerciseLogsByDate(date),
       staleTime: 2 * 60 * 1000,
     });
+    const queued = useOutboxEntries("exercise");
+    return mergeQueued(
+      query,
+      queued.filter((entry) => isOnDay(entry, date)).map(exerciseLogFromEntry)
+    );
   },
 
   Types: () => {
@@ -558,34 +484,6 @@ export const useExerciseLogs = {
 
 export const useExerciseLogMutations = (date: string) => {
   const queryClient = useQueryClient();
-
-  const addExerciseLog = useMutation({
-    mutationFn: async (data: CreateExerciseLogData): Promise<ExerciseLog> => {
-      return await fetchApi<ExerciseLog>("/api/exercise-logs/log", {
-        method: "POST",
-        requiresAuth: true,
-        body: data,
-      });
-    },
-    onSuccess: (newLog) => {
-      queryClient.setQueryData<ExerciseLog[]>(
-        healthQueryKeys.exerciseLogs.byDate(date),
-        (old = []) => [...old, newLog]
-      );
-
-      queryClient.setQueryData<DailySummary>(
-        healthQueryKeys.summary(date),
-        (old) => {
-          if (!old) return old;
-          return {
-            ...old,
-            caloriesBurned: old.caloriesBurned + newLog.caloriesBurned,
-            remainingCalories: old.remainingCalories - newLog.caloriesBurned,
-          };
-        }
-      );
-    },
-  });
 
   const updateExerciseLog = useMutation({
     mutationFn: async ({
@@ -639,7 +537,6 @@ export const useExerciseLogMutations = (date: string) => {
   });
 
   return {
-    addExerciseLog,
     updateExerciseLog,
     deleteExerciseLog,
   };
@@ -647,85 +544,21 @@ export const useExerciseLogMutations = (date: string) => {
 
 export const useWaterLogs = {
   ByDate: (date: string) => {
-    return useQuery({
+    const query = useQuery({
       queryKey: healthQueryKeys.waterLogs.byDate(date),
       queryFn: () => healthAPIs.fetchWaterLogsByDate(date),
       staleTime: 1 * 60 * 1000, // 1 minute
     });
+    const queued = useOutboxEntries("water");
+    return mergeQueued(
+      query,
+      queued.filter((entry) => isOnDay(entry, date)).map(waterLogFromEntry)
+    );
   },
 };
 
 export const useWaterLogMutations = (date: string) => {
   const queryClient = useQueryClient();
-
-  const addWaterLog = useMutation({
-    mutationFn: async (data: CreateWaterLogData): Promise<WaterLog> => {
-      const response = await fetchApi<WaterLog>("/api/water-logs/log", {
-        method: "POST",
-        requiresAuth: true,
-        body: data,
-      });
-      return response;
-    },
-    onSuccess: (newLog) => {
-      queryClient.setQueryData<WaterLog[]>(
-        healthQueryKeys.waterLogs.byDate(date),
-        (old = []) => [...old, newLog]
-      );
-
-      // queryClient.setQueryData<number>(
-      //   healthQueryKeys.waterLogs.todayTotal(),
-      //   (old = 0) => old + newLog.amountMl
-      // );
-
-      queryClient.setQueryData<DailySummary>(
-        healthQueryKeys.summary(date),
-        (old) => {
-          if (!old) return old;
-          return {
-            ...old,
-            waterConsumedMl: old.waterConsumedMl + newLog.amountMl,
-          };
-        }
-      );
-    },
-  });
-
-  const addQuickWaterLog = useMutation({
-    mutationFn: async (
-      presetType: "GLASS" | "BOTTLE" | "LARGE"
-    ): Promise<WaterLog> => {
-      const response = await fetchApi<WaterLog>("/api/water-logs/quick", {
-        method: "POST",
-        requiresAuth: true,
-        body: { presetType },
-      });
-      return response;
-    },
-    onSuccess: (newLog) => {
-      queryClient.setQueryData<WaterLog[]>(
-        healthQueryKeys.waterLogs.today(),
-        (old = []) => [...old, newLog]
-      );
-
-      queryClient.setQueryData<number>(
-        healthQueryKeys.waterLogs.todayTotal(),
-        (old = 0) => old + newLog.amountMl
-      );
-
-      const today = getCurrentDate();
-      queryClient.setQueryData<DailySummary>(
-        healthQueryKeys.summary(today),
-        (old) => {
-          if (!old) return old;
-          return {
-            ...old,
-            waterConsumedMl: old.waterConsumedMl + newLog.amountMl,
-          };
-        }
-      );
-    },
-  });
 
   const deleteWaterLog = useMutation({
     mutationFn: async (id: number): Promise<void> => {
@@ -752,8 +585,6 @@ export const useWaterLogMutations = (date: string) => {
   });
 
   return {
-    addWaterLog,
-    addQuickWaterLog,
     deleteWaterLog,
   };
 };

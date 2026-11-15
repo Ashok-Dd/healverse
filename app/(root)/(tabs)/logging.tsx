@@ -1,3 +1,4 @@
+import { OutboxFailures } from "@/components/OutboxFailures";
 import { ThemedStatusBar } from "@/components/ui/ThemedStatusBar";
 import DaySelector from "@/components/DaySelector";
 import ExerciseLogs from "@/components/ExerciseLogs";
@@ -53,6 +54,7 @@ export default function Logging() {
         >
           <GlobalHeader />
           <DaySelector selectedDate={selectedDate} handleDateChange={setSelectedDate} />
+          <OutboxFailures />
 
           {isValidDate ? (
             <>

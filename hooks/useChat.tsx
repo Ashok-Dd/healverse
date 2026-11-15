@@ -1,20 +1,21 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useOutboxEntries } from "@/hooks/useOutboxEntries";
 import { fetchApi } from "@/lib/fetchApi";
+import { sendChatMessage } from "@/lib/outboxActions";
+import { withPausedAsLoading } from "@/lib/queryStatus";
 import { Message } from "@/types/type";
-import { useCallback, useMemo, useRef, useEffect } from "react";
-import { Alert, FlatList } from "react-native";
+import { useQuery } from "@tanstack/react-query";
+import { useCallback, useEffect, useMemo, useRef } from "react";
+import { FlatList } from "react-native";
 
 interface ChatInterface {
     messages: Message[];
     isMessagesLoading: boolean;
     errorLoadingMessages: Error | null;
     sendMessage: (message: string) => void;
+    /** True while the dietitian's reply is being generated. */
     isSendingMessage: boolean;
-    sendMessageError: Error | null;
     refetchMessages: () => void;
     isRefetching: boolean;
-    retryFailedMessage: () => void;
-    clearError: () => void;
     flatListRef: React.RefObject<FlatList<Message> | null>;
 }
 
@@ -22,163 +23,79 @@ interface UseChatOptions {
     isExistingConversation?: boolean;
 }
 
+/**
+ * Messages are queued the moment they are sent and shown right away. Offline they wait with a
+ * "Waiting to sync" marker, and the dietitian's reply arrives once the queue has been uploaded
+ * (a reply needs the AI service, so it cannot be produced offline).
+ */
 export const useChat = (
     conversationId: string,
     options: UseChatOptions = {}
 ): ChatInterface => {
-    const queryClient = useQueryClient();
     const { isExistingConversation = false } = options;
-
     const flatListRef = useRef<FlatList<Message> | null>(null);
 
-    const queryKey = useMemo(
-        () => ["messages", conversationId],
-        [conversationId]
-    );
-
-    const {
-        data: messages = [],
-        isLoading: isMessagesLoading,
-        error: errorLoadingMessages,
-        refetch: refetchMessages,
-        isRefetching,
-    } = useQuery<Message[]>({
-        queryKey,
-        queryFn: async () => {
-            if (!conversationId) {
-                throw new Error("Conversation ID is required");
-            }
-            return await fetchApi<Message[]>(
-                `/api/conversations/${conversationId}/messages`,
-                {
+    const query = withPausedAsLoading(
+        useQuery<Message[]>({
+            queryKey: ["messages", conversationId],
+            queryFn: () =>
+                fetchApi<Message[]>(`/api/conversations/${conversationId}/messages`, {
                     method: "GET",
                     requiresAuth: true,
-                }
-            );
-        },
-        enabled: !!conversationId && isExistingConversation,
-        staleTime: 1000 * 60 * 5,
-        refetchOnWindowFocus: false,
-        refetchOnReconnect: true,
-    });
+                }),
+            enabled: !!conversationId && isExistingConversation,
+            staleTime: 1000 * 60 * 5,
+            refetchOnWindowFocus: false,
+            refetchOnReconnect: true,
+        })
+    );
 
-    const sendMessageMutation = useMutation<
-        Message,
-        Error,
-        string,
-        { previousMessages: Message[] | undefined; tempId: string }
-    >({
-        mutationFn: async (userMessage: string) => {
-            if (!userMessage.trim()) {
-                throw new Error("Message cannot be empty");
-            }
-            const response = await fetchApi<Message>(
-                `/api/conversations/${conversationId}/messages`,
-                {
-                    body: {
-                        sender: "USER",
-                        content: userMessage.trim(),
-                    },
-                    method: "POST",
-                    requiresAuth: true,
-                }
-            );
-            return response;
-        },
-        onMutate: async (userMessage: string) => {
-            await queryClient.cancelQueries({ queryKey });
+    const queued = useOutboxEntries("chat");
+    const queuedForChat = useMemo(
+        () => queued.filter((entry) => entry.payload.conversationId === conversationId),
+        [queued, conversationId]
+    );
 
-            const previousMessages = queryClient.getQueryData<Message[]>(queryKey);
-
-            const tempId = `temp-${Date.now()}-${Math.random()
-                .toString(36)
-                .substr(2, 9)}`;
-
-            const tempUserMessage: Partial<Message> = {
-                id: tempId as any,
-                sender: "USER",
-                content: userMessage.trim(),
+    const messages = useMemo<Message[]>(
+        () => [
+            ...(query.data ?? []),
+            ...queuedForChat.map((entry) => ({
+                id: -entry.seq,
                 conversationId,
-            };
-
-            queryClient.setQueryData<Message[]>(queryKey, (old = []) => [
-                ...old,
-                tempUserMessage as Message,
-            ]);
-
-            // Scroll immediately after optimistic update
-            setTimeout(() => {
-                flatListRef.current?.scrollToEnd({ animated: true });
-            }, 500);
-
-            return { previousMessages, tempId };
-        },
-        onSuccess: (response) => {
-            queryClient.setQueryData<Message[]>(queryKey, (old = []) => [
-                ...old.filter((m) => m.id !== (response as any).tempId),
-                response,
-            ]);
-
-            // Scroll when server message arrives
-            setTimeout(() => {
-                flatListRef.current?.scrollToEnd({ animated: true });
-            }, 500);
-        },
-        onError: (error, userMessage, context) => {
-            console.error("Failed to send message:", error.message);
-            queryClient.setQueryData(queryKey, context?.previousMessages);
-            Alert.alert(
-                "Message Failed",
-                "Failed to send message. Please try again.",
-                [
-                    { text: "Cancel", style: "cancel" },
-                    { text: "Retry", onPress: () => sendMessage(userMessage) },
-                ]
-            );
-        },
-    });
+                content: entry.payload.content,
+                sender: "USER" as const,
+                createdAt: entry.createdAt,
+                outboxStatus: entry.status,
+            })),
+        ],
+        [query.data, queuedForChat, conversationId]
+    );
 
     const sendMessage = useCallback(
         (message: string) => {
-            if (!conversationId) {
-                Alert.alert("Error", "No conversation selected");
-                return;
-            }
-            sendMessageMutation.mutate(message);
+            const content = message.trim();
+            if (!conversationId || !content) return;
+            sendChatMessage(conversationId, content);
         },
-        [conversationId, sendMessageMutation]
+        [conversationId]
     );
 
-    const retryFailedMessage = useCallback(() => {
-        if (sendMessageMutation.variables) {
-            sendMessageMutation.mutate(sendMessageMutation.variables);
-        }
-    }, [sendMessageMutation]);
-
-    const clearError = useCallback(() => {
-        sendMessageMutation.reset();
-    }, [sendMessageMutation]);
-
-    // Auto-scroll when messages are first loaded or change
+    // Keep the latest message in view when messages first load or change.
     useEffect(() => {
         if (messages.length > 0) {
-            setTimeout(() => {
-                flatListRef.current?.scrollToEnd({ animated: false });
-            }, 50);
+            const timer = setTimeout(() => flatListRef.current?.scrollToEnd({ animated: true }), 100);
+            return () => clearTimeout(timer);
         }
     }, [messages.length]);
 
     return {
         messages,
-        isMessagesLoading,
-        errorLoadingMessages: errorLoadingMessages as Error | null,
+        isMessagesLoading: query.isLoading && queuedForChat.length === 0,
+        errorLoadingMessages: query.error,
         sendMessage,
-        isSendingMessage: sendMessageMutation.isPending,
-        sendMessageError: sendMessageMutation.error,
-        refetchMessages,
-        isRefetching,
-        retryFailedMessage,
-        clearError,
+        isSendingMessage: queuedForChat.some((entry) => entry.status === "syncing"),
+        refetchMessages: query.refetch,
+        isRefetching: query.isRefetching,
         flatListRef,
     };
 };

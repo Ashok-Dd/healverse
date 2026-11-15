@@ -1,50 +1,27 @@
 // FoodLoggingTrackerCard.tsx - Optimized main component
 import Skeleton from "@/components/skeleton/Skeleton";
 import { images } from "@/constants";
-import { useFoodLogMutationTracker } from "@/hooks/useFoodMutationTracker";
+import { useOutboxEntries } from "@/hooks/useOutboxEntries";
+import { dayOf } from "@/lib/day";
 import { useFoodLogs } from "@/store/healthStore";
-import { FoodLog } from "@/types/type";
 import { router } from "expo-router";
-import React, { useMemo } from "react";
+import React from "react";
 import { Image, ScrollView, Text, TouchableOpacity, View } from "react-native";
 import FoodLogCard from "./FoodLogCard";
+import { QueuedFoodCard } from "./QueuedFoodCard";
 
 interface FoodLoggingTrackerCardProps {
     date: string;
 }
 
 const FoodLoggingTrackerCard = ({ date }: FoodLoggingTrackerCardProps) => {
-    const { loading, variables, result } = useFoodLogMutationTracker();
     const { data: foodLogs, isLoading: foodLogsLoading } = useFoodLogs.ByDate(date);
-
-    // Memoized helper functions
-    const imagePreview = useMemo(() => {
-        if (variables instanceof FormData) {
-            const imageEntry = variables.get("image");
-            if (imageEntry && typeof imageEntry === "object" && "uri" in imageEntry) {
-                return (imageEntry as any).uri;
-            }
-        }
-        return null;
-    }, [variables]);
-
-    const mealType = useMemo(() => {
-        if (variables instanceof FormData) {
-            const mealTypeEntry = variables.get("mealType");
-            return typeof mealTypeEntry === "string" ? mealTypeEntry : "Unknown";
-        }
-        return "Unknown";
-    }, [variables]);
-
-    // Memoized loading food log for ongoing mutation
-    const loadingFoodLog = useMemo(() => ({
-        items: (result as unknown as FoodLog)?.items || [],
-        mealName: `Logging ${mealType}...`,
-        loggedAt: new Date().toISOString()
-    }), [result, mealType]);
+    const queuedPhotos = useOutboxEntries("food-photo").filter(
+        (entry) => dayOf(entry.payload.loggedAt) === date
+    );
 
     // Only claim "nothing logged" once the request has actually finished.
-    if (!foodLogsLoading && !loading && !result && (!foodLogs || foodLogs.length === 0)) {
+    if (!foodLogsLoading && queuedPhotos.length === 0 && (!foodLogs || foodLogs.length === 0)) {
         return (
             <View className="bg-muted rounded-xl px-1 py-1">
                 <View className="flex flex-row items-center">
@@ -70,17 +47,9 @@ const FoodLoggingTrackerCard = ({ date }: FoodLoggingTrackerCardProps) => {
                 showsHorizontalScrollIndicator={false}
                 contentContainerStyle={{ paddingHorizontal: 4 }}
             >
-                {/* Show ongoing mutation (loading state) */}
-                {loading && !result && (
-                    <View className="mr-3">
-                        <FoodLogCard
-                            foodLog={loadingFoodLog}
-                            isLoading={true}
-                            imagePreview={imagePreview}
-                            mealType={mealType}
-                        />
-                    </View>
-                )}
+                {queuedPhotos.map((entry) => (
+                    <QueuedFoodCard key={entry.id} entry={entry} />
+                ))}
 
                 {/* Show existing food logs for the day */}
                 {foodLogs?.map((foodLog: any, index: number) => (

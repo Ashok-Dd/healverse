@@ -1,7 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import React, { useState } from "react";
 import {
-    ActivityIndicator,
     Alert,
     Modal,
     Text,
@@ -9,15 +8,13 @@ import {
     TouchableOpacity,
     View, ViewStyle,
 } from "react-native";
-import {useWaterLogMutations} from "@/store/healthStore";
-import {CreateWaterLogData} from "@/types/type";
+import { logWater } from "@/lib/outboxActions";
 
 interface WaterLogModalProps {
   visible: boolean;
   onClose: () => void;
   currentIntake?: number; // Current daily intake
   dailyGoal?: number; // Daily goal in mL
-  date: string;
 }
 
 const WaterLogModal: React.FC<WaterLogModalProps> = ({
@@ -25,12 +22,7 @@ const WaterLogModal: React.FC<WaterLogModalProps> = ({
   onClose,
   currentIntake = 0,
   dailyGoal = 3700,
-  date
 }) => {
-    const {
-        addWaterLog
-    } = useWaterLogMutations(date);
-
   const [waterAmount, setWaterAmount] = useState<string>("");
   const [selectedPreset, setSelectedPreset] = useState<number | null>(null);
 
@@ -61,12 +53,7 @@ const WaterLogModal: React.FC<WaterLogModalProps> = ({
         {
           text: "Yes",
           onPress: () => {
-
-            addWaterLog.mutate({
-                amountMl : amount,
-                loggedAt : new Date().toISOString()
-            } as CreateWaterLogData)
-
+            logWater(amount);
             handleClose();
           },
         },
@@ -74,14 +61,8 @@ const WaterLogModal: React.FC<WaterLogModalProps> = ({
       return;
     }
 
-      addWaterLog.mutate({
-          amountMl : amount,
-          loggedAt : new Date().toISOString()
-      } as CreateWaterLogData , {
-        onSettled: () => {
-          handleClose();
-        }
-      });
+      logWater(amount);
+      handleClose();
   };
 
   const handleClose = () => {
@@ -221,27 +202,21 @@ const WaterLogModal: React.FC<WaterLogModalProps> = ({
             </TouchableOpacity>
               <TouchableOpacity
                   className={`flex-1 py-4 rounded-xl items-center ${
-                      waterAmount && !addWaterLog.isPending ? "bg-primary" : "bg-muted"
+                      waterAmount ? "bg-primary" : "bg-muted"
                   }`}
                   onPress={handleSave}
-                  disabled={!waterAmount || addWaterLog.isPending}
+                  disabled={!waterAmount}
               >
                   <View className="flex-row items-center">
-                      {addWaterLog.isPending ? (
-                          <ActivityIndicator size="small" color="white" />
-                      ) : (
-                          <>
-                              <Ionicons
-                                  name="add"
-                                  size={20}
-                                  className="text-primary-foreground"
-                                  style={{ marginRight: 8 } as any}
-                              />
-                              <Text className="text-primary-foreground font-body-semibold text-lg">
-                                  Log Water
-                              </Text>
-                          </>
-                      )}
+                      <Ionicons
+                          name="add"
+                          size={20}
+                          className="text-primary-foreground"
+                          style={{ marginRight: 8 } as any}
+                      />
+                      <Text className="text-primary-foreground font-body-semibold text-lg">
+                          Log Water
+                      </Text>
                   </View>
               </TouchableOpacity>
 

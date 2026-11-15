@@ -1,3 +1,4 @@
+import { OutboxFailures } from "@/components/OutboxFailures";
 import Ping from "@/components/Calorie-counter-button";
 import { NutritionGrid } from "@/components/CalorieProgress";
 import ErrorCard from "@/components/cards/ErrorCard";
@@ -86,6 +87,7 @@ const Tracker = () => {
       >
         <GlobalHeader />
         <DaySelector selectedDate={selectedDate} handleDateChange={setSelectedDate} />
+        <OutboxFailures />
 
         {isValidDate ? (
           <>
