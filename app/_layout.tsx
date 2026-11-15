@@ -17,6 +17,7 @@ import {
 // Optional: global styles for tailwind or other CSS-in-JS
 import ErrorBoundary from "@/components/providers/ErrorBoundary";
 import { Button } from "@/components/ui/Button";
+import { NetworkBanner } from "@/components/ui/NetworkBanner";
 import { useThemeColors } from "@/constants/theme";
 import { images } from "@/constants";
 import { NotificationProvider } from "@/context/NotificationContext";
@@ -124,6 +125,7 @@ export default function RootLayout() {
             <NavigationThemeProvider>
               <View className="flex-1 bg-background">
                 <Slot />
+                <NetworkBanner />
               </View>
             </NavigationThemeProvider>
           </NotificationProvider>

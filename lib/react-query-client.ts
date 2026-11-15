@@ -1,4 +1,5 @@
 import { MutationCache, QueryClient } from "@tanstack/react-query";
+import "./network";
 import { showToast } from "./toast";
 
 let queryClient: QueryClient;
