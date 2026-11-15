@@ -1,31 +1,8 @@
-import {
-  KeyboardAvoidingView,
-  Platform,
-  StyleSheet,
-  Text,
-  View,
-} from "react-native";
-import { useLocalSearchParams } from "expo-router";
 import ChatScreen from "@/components/chat/ChatScreen";
+import { useLocalSearchParams } from "expo-router";
+import React from "react";
 
-const Conversation = () => {
-  const { id } = useLocalSearchParams();
-
-  return (
-    <KeyboardAvoidingView
-      style={styles.container}
-      behavior={Platform.OS === "ios" ? "padding" : "height"}
-    >
-      <ChatScreen conversationId={id as string} isExistingConversation={true} />
-    </KeyboardAvoidingView>
-  );
-};
-
-export default Conversation;
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#ffffff",
-  },
-});
+export default function Conversation() {
+  const { id } = useLocalSearchParams<{ id: string }>();
+  return <ChatScreen conversationId={id} isExistingConversation />;
+}

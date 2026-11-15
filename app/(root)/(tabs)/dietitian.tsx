@@ -1,29 +1,9 @@
-import { useRef } from "react";
-import { generateUUID } from "@/lib/utils";
 import ChatScreen from "@/components/chat/ChatScreen";
-import { KeyboardAvoidingView, Platform, StyleSheet, View } from "react-native";
+import { generateUUID } from "@/lib/utils";
+import React, { useState } from "react";
 
-const Dietitian = () => {
-  const conversationId = useRef<string>(generateUUID());
-
-  return (
-    <KeyboardAvoidingView
-      style={styles.container}
-      behavior={Platform.OS === "ios" ? "padding" : "height"}
-    >
-      <ChatScreen
-        conversationId={conversationId.current}
-        isExistingConversation={false}
-      />
-    </KeyboardAvoidingView>
-  );
-};
-
-export default Dietitian;
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#ffffff",
-  },
-});
+export default function Dietitian() {
+  // A new conversation id per visit of the tab's lifetime; history opens past ones.
+  const [conversationId] = useState(generateUUID);
+  return <ChatScreen conversationId={conversationId} isExistingConversation={false} />;
+}
