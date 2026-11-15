@@ -1,21 +1,23 @@
 import { Button } from "@/components/ui/Button";
+import { FormError } from "@/components/ui/FormError";
 import { Input } from "@/components/ui/Input";
-import { images } from "@/constants";
+import { colors } from "@/constants/theme";
 import { useAuthStore } from "@/store/authStore";
 import type { ApiError } from "@/types/type";
+import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import React, { useEffect, useRef, useState } from "react";
 import {
-  Image,
-  ImageSourcePropType,
   KeyboardAvoidingView,
   Platform,
-  SafeAreaView,
+  Pressable,
   ScrollView,
   StatusBar,
   Text,
+  TextInput,
   View,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 interface UserFormData {
   username: string;
@@ -23,7 +25,8 @@ interface UserFormData {
 }
 
 const Login: React.FC = () => {
-  const { login, isLoading, error } = useAuthStore();
+  const { login, isLoading, sessionExpired, clearSessionExpired } =
+    useAuthStore();
 
   const [formData, setFormData] = useState<UserFormData>({
     username: "",
@@ -34,12 +37,15 @@ const Login: React.FC = () => {
   const [cooldown, setCooldown] = useState(0);
   const cooldownTimer = useRef<ReturnType<typeof setInterval> | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
+  const passwordRef = useRef<TextInput>(null);
 
   useEffect(
     () => () => {
       if (cooldownTimer.current) clearInterval(cooldownTimer.current);
+      // Notice is one-off: don't show it again next time login opens.
+      clearSessionExpired();
     },
-    []
+    [clearSessionExpired]
   );
 
   const startCooldown = (seconds: number) => {
@@ -67,10 +73,10 @@ const Login: React.FC = () => {
     try {
       await login({
         username: formData.username.trim(),
-        password: formData.password.trim(),
+        password: formData.password,
       });
 
-      router.push("/(root)/(tabs)/tracker" as any);
+      router.replace("/(root)/(tabs)/tracker" as any);
     } catch (e) {
       // Server message is already user-friendly for 400/401/409/429; branch on status, not text.
       const status = (e as { status?: number })?.status;
@@ -82,125 +88,122 @@ const Login: React.FC = () => {
     }
   };
 
+  const handleBack = () => {
+    if (router.canGoBack()) router.back();
+    else router.replace("/(auth)/welcome" as any);
+  };
+
+  const canSubmit =
+    formData.username.trim().length > 0 && formData.password.length > 0;
+
+  const buttonTitle =
+    cooldown > 0
+      ? `Try again in ${cooldown}s`
+      : isLoading
+        ? "Signing in..."
+        : "Sign in";
+
   return (
     <>
-      <StatusBar barStyle="dark-content" backgroundColor="#ffffff" />
-      <SafeAreaView className="flex-1 bg-white">
+      <StatusBar barStyle="dark-content" backgroundColor={colors.background} />
+      <SafeAreaView className="flex-1 bg-background">
         <KeyboardAvoidingView
-          style={{ flex: 1 }}
+          className="flex-1"
           behavior={Platform.OS === "ios" ? "padding" : "height"}
-          keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 20}
         >
           <ScrollView
-            style={{ flex: 1 }}
-            contentContainerStyle={{ 
-              flexGrow: 1,
-              justifyContent: 'space-between',
-              paddingHorizontal: 24,
-              paddingVertical: 32
-            }}
+            contentContainerClassName="flex-grow px-6 pt-6 pb-6"
             showsVerticalScrollIndicator={false}
             keyboardShouldPersistTaps="handled"
           >
-            {/* Top Section - Logo and Welcome */}
-            <View>
-              {/* Logo Section */}
-              <View className="items-center mb-8">
-                <View className="mb-6">
-                  <Image
-                    source={images.logo as ImageSourcePropType}
-                    className="w-32 h-32"
-                    resizeMode="contain"
-                  />
-                </View>
-                <Text className="text-3xl font-jakarta-bold text-primary-600">
-                  Heal<Text className="text-secondary-900">Verse</Text>
-                </Text>
-                <Text className="text-center font-jakarta-medium text-sm text-gray-600 mt-2">
-                  🌿 Your personalized wellness companion
-                </Text>
-              </View>
+            <Pressable
+              onPress={handleBack}
+              hitSlop={8}
+              accessibilityRole="button"
+              accessibilityLabel="Go back"
+              className="w-11 h-11 rounded-full bg-card items-center justify-center border border-border"
+            >
+              <Ionicons name="chevron-back" size={22} color={colors.foreground} />
+            </Pressable>
 
-              {/* Welcome Section */}
-              <View className="mb-8">
-                <Text className="text-2xl font-jakarta-bold text-center text-secondary-800 mb-2">
-                  Welcome Back
-                </Text>
-                <Text className="text-base font-jakarta-regular text-center text-secondary-600">
-                  Please enter your details to continue your wellness journey
-                </Text>
-              </View>
+            <View className="flex-1 mt-8">
+              <Text
+                accessibilityRole="header"
+                className="text-4xl font-display-bold text-foreground"
+              >
+                Welcome back
+              </Text>
+              <Text className="text-base font-body text-muted-foreground mt-2 mb-8">
+                Sign in to pick up where you left off.
+              </Text>
+
+              <Input
+                label="Username"
+                value={formData.username}
+                onChangeText={(text) => updateFormData("username", text)}
+                placeholder="Your username"
+                icon={
+                  <Ionicons name="person-outline" size={20} color={colors.mutedForeground} />
+                }
+                returnKeyType="next"
+                autoCapitalize="none"
+                autoCorrect={false}
+                autoComplete="username"
+                textContentType="username"
+                onSubmitEditing={() => passwordRef.current?.focus()}
+                submitBehavior="submit"
+              />
+
+              <Input
+                ref={passwordRef}
+                label="Password"
+                value={formData.password}
+                onChangeText={(text) => updateFormData("password", text)}
+                placeholder="Your password"
+                icon={
+                  <Ionicons name="lock-closed-outline" size={20} color={colors.mutedForeground} />
+                }
+                secureTextEntry
+                autoComplete="password"
+                textContentType="password"
+                returnKeyType="done"
+                onSubmitEditing={handleLogin}
+              />
+
+              {formError ? (
+                <FormError message={formError} />
+              ) : sessionExpired ? (
+                <FormError
+                  tone="info"
+                  message="Your session has expired. Please sign in again."
+                />
+              ) : null}
+
+              <Button
+                variant="default"
+                title={buttonTitle}
+                onPress={handleLogin}
+                loading={isLoading}
+                disabled={!canSubmit || cooldown > 0}
+                className="mt-2"
+              />
             </View>
 
-            {/* Middle Section - Form */}
-            <View className="flex-1 justify-center min-h-[300px]">
-              <View className="space-y-4">
-                <Input
-                  label="Username"
-                  value={formData.username}
-                  onChangeText={(text) => updateFormData("username", text)}
-                  placeholder="Enter your username"
-                  returnKeyType="next"
-                  autoCapitalize="none"
-                  autoCorrect={false}
-                />
-
-                <Input
-                  label="Password"
-                  value={formData.password}
-                  onChangeText={(text) => updateFormData("password", text)}
-                  placeholder="Enter your password"
-                  secureTextEntry
-                  returnKeyType="done"
-                  onSubmitEditing={handleLogin}
-                />
-
-                {(formError || error) && (
-                  <View className="bg-red-50 border border-red-200 rounded-xl p-3 mb-4">
-                    <Text className="text-red-600 text-sm font-jakarta-medium text-center">
-                      {formError || error}
-                    </Text>
-                  </View>
-                )}
-
-                <View className="mt-6">
-                  <Button
-                    title={
-                      cooldown > 0
-                        ? `Try again in ${cooldown}s`
-                        : isLoading
-                          ? "Signing in..."
-                          : "Sign In"
-                    }
-                    onPress={handleLogin}
-                    disabled={isLoading || cooldown > 0}
-                    variant="primary"
-                    className="bg-primary-500 py-4 shadow-medium"
-                    textClassName="text-white font-jakarta-semi-bold text-lg"
-                  />
-                </View>
-              </View>
-            </View>
-
-            {/* Bottom Section - Additional Options and Footer */}
-            <View>
-              {/* Additional Options */}
-              <View className="mt-6 pt-4 border-t border-gray-100">
-                <Button
-                  title="Don't have an account? Get started here"
-                  onPress={() => router.push("/(auth)/welcome" as any)}
-                  variant="secondary"
-                  className="bg-blue-50 border-none shadow-none py-2"
-                  textClassName="text-blue-500 font-jakarta-medium text-sm"
-                />
-              </View>
-
-              {/* Footer */}
-              <View className="mt-8 mb-4">
-                <Text className="text-center text-gray-500 font-jakarta-regular text-xs">
-                  Continue your wellness journey 🧘‍♀️🍵
+            <View className="flex-row items-center justify-center mt-10">
+              <Text className="text-sm font-body text-muted-foreground">
+                New to HealVerse?
+              </Text>
+              <Pressable
+                onPress={() => router.push("/(auth)/welcome" as any)}
+                hitSlop={8}
+                accessibilityRole="link"
+                accessibilityLabel="Create an account"
+                className="min-h-[44px] justify-center px-2"
+              >
+                <Text className="text-sm font-body-bold text-primary">
+                  Create an account
                 </Text>
-              </View>
+              </Pressable>
             </View>
           </ScrollView>
         </KeyboardAvoidingView>
@@ -209,38 +212,4 @@ const Login: React.FC = () => {
   );
 };
 
-
-
 export default Login;
-
-// const handleGoogleSignIn = async (): Promise<void> => {
-//     try {
-//         // Validate form first
-//         const validationError = validateUserForm(formData.username, formData.age);
-//         if (validationError) {
-//             Alert.alert('Validation Error', validationError);
-//             return;
-//         }
-//
-//         // Sign in with Google
-//         const googleAccount = await signInWithGoogle();
-//         if (!googleAccount) return;
-//
-//         // Combine form data with Google account details
-//         const loginData: LoginData = {
-//             ...formData,
-//             ...googleAccount,
-//         };
-//
-//         // Handle login
-//         await AuthService.handleLogin(loginData);
-//
-//         Alert.alert(
-//             'Login Successful!',
-//             `Welcome ${googleAccount.name}!\nEmail: ${googleAccount.email}`,
-//             [{ text: 'OK' }]
-//         );
-//     } catch (error: any) {
-//         Alert.alert('Login Error', error.message);
-//     }
-// };

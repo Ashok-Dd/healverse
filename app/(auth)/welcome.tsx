@@ -1,37 +1,52 @@
-import React from "react";
-import { SafeAreaView, StatusBar, View } from "react-native";
-import Header from "@/components/Header";
-import WelcomeContent from "@/components/WelcomeContent";
-import { router } from "expo-router";
 import { Button } from "@/components/ui/Button";
+import { images } from "@/constants";
+import { colors } from "@/constants/theme";
+import { router } from "expo-router";
+import React from "react";
+import { Image, ScrollView, StatusBar, Text, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 const Welcome: React.FC = () => (
   <>
-    <StatusBar barStyle="dark-content" backgroundColor="#ffffff" />
-    <SafeAreaView className="flex-1 bg-white p-3 gap-y-3">
-      <View className="flex-1">
-        <Header progress={1} showProgress={true} />
+    <StatusBar barStyle="dark-content" backgroundColor={colors.background} />
+    <SafeAreaView className="flex-1 bg-background">
+      <ScrollView
+        contentContainerClassName="flex-grow px-6 pt-8 pb-6"
+        showsVerticalScrollIndicator={false}
+      >
+        <View className="flex-1 items-center">
+          <Text
+            accessibilityRole="header"
+            className="text-5xl font-display-bold text-foreground text-center"
+          >
+            HealVerse
+          </Text>
+          <Text className="text-lg font-body text-muted-foreground text-center mt-2">
+            Eat well, feel better.{"\n"}One meal at a time.
+          </Text>
 
-        <WelcomeContent />
-
-        <View className="flex-1  flex items-center justify-center">
-          <Button
-            title="If you have account, please sign in here"
-            onPress={() => router.push("/(auth)/login" as any)}
-            variant="secondary"
-            className="bg-blue-50 border-nones shadow-none  w-fit text-center mx-auto px-2 !py-1  rounded-full"
-            textClassName="text-blue-500 font-jakarta-medium text-center text-xs  italic"
-          />
+          <View className="flex-1 w-full my-4 min-h-[180px] max-h-[360px]">
+            <Image
+              source={images.welcomeHero}
+              className="flex-1 w-full"
+              resizeMode="contain"
+              accessible={false}
+            />
+          </View>
         </View>
 
         <Button
-          title="Get Started"
+          variant="default"
+          title="Get started"
           onPress={() => router.push("/(auth)/(onboarding)/step1" as any)}
-          variant="primary"
-          className="bg-primary-500 py-3  shadow-medium mb-5"
-          textClassName="text-white font-jakarta-semi-bold text-lg"
         />
-      </View>
+        <Button
+          variant="ghost"
+          title="I already have an account"
+          onPress={() => router.push("/(auth)/login" as any)}
+          className="mt-2"
+        />
+      </ScrollView>
     </SafeAreaView>
   </>
 );

@@ -21,14 +21,15 @@ interface AuthState {
   // True when the launch-time auth check could not reach the server (offline, 5xx, 429, timeout).
   // The token is kept in that case so the user is not logged out by a temporary problem.
   serverUnreachable: boolean;
-  error: string | null;
+  // Set when a 401 ended the session; the login screen shows a one-off notice and clears it.
+  sessionExpired: boolean;
 
   // Actions
   login: (credentials: LoginCredentials) => Promise<void>;
   register: (credentials: RegisterCredentials) => Promise<void>;
   checkAuth: () => Promise<boolean>;
   logout: () => Promise<void>;
-  clearError: () => void;
+  clearSessionExpired: () => void;
   updateUser: (userData: Partial<User>) => void;
 }
 
@@ -60,19 +61,17 @@ export const useAuthStore = create<AuthState>()(
     isLoading: false,
     isInitializing: true,
     serverUnreachable: false,
-    error: null,
+    sessionExpired: false,
 
     // Login action
     login: async (credentials: LoginCredentials) => {
-      set({ isLoading: true, error: null });
+      set({ isLoading: true, sessionExpired: false });
 
       try {
         const response = await fetchApi<AuthResponse>("/auth/login", {
           method: "POST",
           body: credentials,
         });
-
-        console.log("Login successful:", response);
 
         // Store only token in secure storage
         await storeToken(response!.token);
@@ -82,21 +81,16 @@ export const useAuthStore = create<AuthState>()(
           user: response!.user,
           isAuthenticated: true,
           isLoading: false,
-          error: null,
         });
       } catch (error) {
-        const apiError = error as ApiError;
-        set({
-          isLoading: false,
-          error: apiError.message || "Login failed",
-        });
+        set({ isLoading: false });
         throw error;
       }
     },
 
     // Register action
     register: async (credentials: RegisterCredentials) => {
-      set({ isLoading: true, error: null });
+      set({ isLoading: true });
 
       try {
         const response = await fetchApi<AuthResponse>("/auth/register", {
@@ -112,14 +106,9 @@ export const useAuthStore = create<AuthState>()(
           user: response!.user,
           isAuthenticated: true,
           isLoading: false,
-          error: null,
         });
       } catch (error) {
-        const apiError = error as ApiError;
-        set({
-          isLoading: false,
-          error: apiError.message || "Registration failed",
-        });
+        set({ isLoading: false });
         throw error;
       }
     },
@@ -168,7 +157,6 @@ export const useAuthStore = create<AuthState>()(
             isAuthenticated: false,
             isInitializing: false,
             serverUnreachable: false,
-            error: null,
           });
         } else {
           set({
@@ -176,7 +164,6 @@ export const useAuthStore = create<AuthState>()(
             isAuthenticated: false,
             isInitializing: false,
             serverUnreachable: true,
-            error: null,
           });
         }
         return false;
@@ -204,12 +191,10 @@ export const useAuthStore = create<AuthState>()(
         user: null,
         isAuthenticated: false,
         isLoading: false,
-        error: null,
       });
     },
 
-    // Clear error
-    clearError: () => set({ error: null }),
+    clearSessionExpired: () => set({ sessionExpired: false }),
 
     // Update user data (only in state, not in storage)
     updateUser: (userData: Partial<User>) => {
@@ -232,7 +217,7 @@ setUnauthorizedHandler(() => {
       user: null,
       isAuthenticated: false,
       isLoading: false,
-      error: "Your session has expired. Please sign in again.",
+      sessionExpired: true,
     });
     router.replace("/(auth)/login");
   });
