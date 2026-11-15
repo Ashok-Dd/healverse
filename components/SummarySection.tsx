@@ -24,8 +24,6 @@ const RenderContent = ({ summary } : { summary: DailySummary }) => (
                 <GuidanceButton
                     title="About Calorie Calculation"
                     content={INFO_ABOUT_CALORIE_CALCUATION}
-                    variant="icon-only"
-                    size="small"
                 />
 
             </View>

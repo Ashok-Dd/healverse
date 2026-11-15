@@ -14,6 +14,9 @@ export const colors = {
   accent: "#DCE9DF",
   accentForeground: "#3F6A4C",
   destructive: "#B42525",
+  success: "#3F6A4C",
+  warning: "#9A5B0B",
+  info: "#5B4AA8",
   border: "#E8DFD0",
   ring: "#4F7A5C",
 } as const;

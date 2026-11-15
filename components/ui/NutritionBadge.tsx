@@ -1,30 +1,37 @@
-import {Text, View} from "react-native";
 import { Entypo, MaterialCommunityIcons } from "@expo/vector-icons";
-import { ComponentProps } from "react";
+import React, { ComponentProps } from "react";
+import { Text, View } from "react-native";
 
 interface NutrientBadgeProps {
-    iconType?: "Entypo" | "MaterialCommunityIcons";
-    iconName: ComponentProps<typeof Entypo>["name"] | ComponentProps<typeof MaterialCommunityIcons>["name"];
-    iconColor: string;
-    value: number;
-    unit: string;
-    textColor: string;
+  iconType?: "Entypo" | "MaterialCommunityIcons";
+  iconName: ComponentProps<typeof Entypo>["name"] | ComponentProps<typeof MaterialCommunityIcons>["name"];
+  iconColor: string;
+  value: number;
+  unit: string;
+  /** Tailwind text colour class for the value, e.g. `text-info`. */
+  textColor: string;
 }
 
-const NutrientBadge = ({ iconType = "MaterialCommunityIcons", iconName, iconColor, value, unit, textColor }: NutrientBadgeProps) => {
-    const IconComponent = iconType === "Entypo" ? Entypo : MaterialCommunityIcons;
+/** Small pill showing one nutrient value with its icon. */
+const NutrientBadge = ({
+  iconType = "MaterialCommunityIcons",
+  iconName,
+  iconColor,
+  value,
+  unit,
+  textColor,
+}: NutrientBadgeProps) => {
+  const Icon = iconType === "Entypo" ? Entypo : MaterialCommunityIcons;
 
-    return (
-        <View className="flex-row items-center bg-gray-100 rounded-full px-1">
-            <Text className="text-xs">
-                <IconComponent name={iconName as any} color={iconColor} size={12} />
-            </Text>
-            <Text className={`text-xs font-semibold ml-1 ${textColor}`}>
-                {value}
-                {unit}
-            </Text>
-        </View>
-    );
+  return (
+    <View className="flex-row items-center gap-1 rounded-full bg-muted px-2 py-1">
+      <Icon name={iconName as any} color={iconColor} size={12} />
+      <Text className={`font-body-semibold text-xs ${textColor}`}>
+        {value}
+        {unit}
+      </Text>
+    </View>
+  );
 };
 
-export default NutrientBadge;
+export default React.memo(NutrientBadge);
