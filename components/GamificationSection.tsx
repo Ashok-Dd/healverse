@@ -19,19 +19,19 @@ const GamificationSkeleton = () => (
                 <View className="flex-1 mr-2">
                     <View className="bg-muted rounded-xl p-4">
                         <View className="w-20 h-8 bg-muted rounded mb-1" />
-                        <View className="w-16 h-4 bg-gray-150 rounded" />
+                        <View className="w-16 h-4 bg-border rounded" />
                     </View>
                 </View>
                 <View className="flex-1 mx-1">
                     <View className="bg-muted rounded-xl p-4">
                         <View className="w-20 h-8 bg-muted rounded mb-1" />
-                        <View className="w-16 h-4 bg-gray-150 rounded" />
+                        <View className="w-16 h-4 bg-border rounded" />
                     </View>
                 </View>
                 <View className="flex-1 ml-2">
                     <View className="bg-muted rounded-xl p-4">
                         <View className="w-20 h-8 bg-muted rounded mb-1" />
-                        <View className="w-16 h-4 bg-gray-150 rounded" />
+                        <View className="w-16 h-4 bg-border rounded" />
                     </View>
                 </View>
             </View>
@@ -48,27 +48,24 @@ const StatItem = ({
     icon,
     value,
     label,
-    iconColor,
-    bgColor,
+    iconClass,
+    bgClass,
 }: {
     icon: keyof typeof Ionicons.glyphMap;
     value: string | number;
     label: string;
-    iconColor: string;
-    bgColor: string;
+    iconClass: string;
+    bgClass: string;
 }) => (
     <View className="flex-1">
         <View className="bg-muted rounded-xl p-4 items-center">
-            <View 
-                className="w-10 h-10 rounded-full items-center justify-center mb-2"
-                style={{ backgroundColor: bgColor }}
-            >
-                <Ionicons name={icon} size={20} color={iconColor} />
+            <View className={`mb-2 h-10 w-10 items-center justify-center rounded-full ${bgClass}`}>
+                <Ionicons name={icon} size={20} className={iconClass} />
             </View>
-            <Text className="text-secondary-800 text-2xl font-jakarta-bold mb-1">
+            <Text className="text-foreground text-2xl font-body-bold mb-1">
                 {value}
             </Text>
-            <Text className="text-secondary-500 text-xs font-jakarta-regular text-center">
+            <Text className="text-muted-foreground text-xs font-body text-center">
                 {label}
             </Text>
         </View>
@@ -148,15 +145,15 @@ const ActivityItem = ({ activity }: { activity: GamificationActivity }) => {
                 />
             </View>
             <View className="flex-1">
-                <Text className="text-secondary-800 font-jakarta-semi-bold text-sm mb-1">
+                <Text className="text-foreground font-body-semibold text-sm mb-1">
                     {activity.description}
                 </Text>
-                <Text className="text-secondary-500 font-jakarta-regular text-xs">
+                <Text className="text-muted-foreground font-body text-xs">
                     {formatDate(activity.date)}
                 </Text>
             </View>
-            <View className="bg-primary-50 px-2 py-1 rounded-lg">
-                <Text className="text-primary-600 font-jakarta-bold text-xs">
+            <View className="bg-accent px-2 py-1 rounded-lg">
+                <Text className="text-primary font-body-bold text-xs">
                     +{activity.pointsEarned}
                 </Text>
             </View>
@@ -190,14 +187,14 @@ const ActivityModal = ({
                 >
                     {/* Header */}
                     <View className="flex-row items-center justify-between p-6 border-b border-border">
-                        <Text className="text-xl font-jakarta-bold text-secondary-800">
+                        <Text className="text-xl font-body-bold text-foreground">
                             Recent Activity
                         </Text>
                         <TouchableOpacity
                             onPress={onClose}
                             className="w-8 h-8 bg-muted rounded-full items-center justify-center"
                         >
-                            <Ionicons name="close" size={20} color="#6B7280" />
+                            <Ionicons name="close" size={20} className="text-muted-foreground" />
                         </TouchableOpacity>
                     </View>
 
@@ -209,11 +206,11 @@ const ActivityModal = ({
                             ))
                         ) : (
                             <View className="items-center py-12">
-                                <Ionicons name="trophy-outline" size={64} color="#D1D5DB" />
-                                <Text className="text-secondary-500 font-jakarta-regular text-base mt-4">
+                                <Ionicons name="trophy-outline" size={64} className="text-border" />
+                                <Text className="text-muted-foreground font-body text-base mt-4">
                                     No activity yet
                                 </Text>
-                                <Text className="text-secondary-400 font-jakarta-regular text-sm mt-2 text-center">
+                                <Text className="text-muted-foreground font-body text-sm mt-2 text-center">
                                     Complete daily tasks to earn points!
                                 </Text>
                             </View>
@@ -238,18 +235,18 @@ const GamificationSection = () => {
         return (
             <View className="mx-6 mb-6">
                 <View className="bg-card rounded-2xl p-6  border border-border items-center">
-                    <Ionicons name="alert-circle-outline" size={48} color="#EF4444" />
-                    <Text className="text-secondary-800 font-jakarta-semi-bold text-lg mt-4 mb-2">
+                    <Ionicons name="alert-circle-outline" size={48} className="text-destructive" />
+                    <Text className="text-foreground font-body-semibold text-lg mt-4 mb-2">
                         Unable to Load Progress
                     </Text>
-                    <Text className="text-secondary-500 font-jakarta-regular text-sm text-center mb-4">
+                    <Text className="text-muted-foreground font-body text-sm text-center mb-4">
                         We could not fetch your wellness progress right now.
                     </Text>
                     <TouchableOpacity
                         onPress={() => refetch()}
-                        className="bg-primary-500 px-6 py-2 rounded-lg"
+                        className="bg-primary px-6 py-2 rounded-lg"
                     >
-                        <Text className="text-white font-jakarta-semi-bold text-sm">
+                        <Text className="text-primary-foreground font-body-semibold text-sm">
                             Try Again
                         </Text>
                     </TouchableOpacity>
@@ -269,35 +266,35 @@ const GamificationSection = () => {
                         icon="flame"
                         value={gamification.currentStreak}
                         label="Day Streak"
-                        iconColor="#F97316"
-                        bgColor="#FFF7ED"
+                        iconClass="text-warning"
+                        bgClass="bg-warning/10"
                     />
                     <View className="w-2" />
                     <StatItem
                         icon="star"
                         value={gamification.totalPoints}
                         label="Total Points"
-                        iconColor="#22C55E"
-                        bgColor="#F0FDF4"
+                        iconClass="text-success"
+                        bgClass="bg-success/10"
                     />
                     <View className="w-2" />
                     <StatItem
                         icon="trending-up"
                         value={gamification.longestStreak}
                         label="Best Streak"
-                        iconColor="#3B82F6"
-                        bgColor="#EFF6FF"
+                        iconClass="text-info"
+                        bgClass="bg-info/10"
                     />
                 </View>
 
                 {/* Points today Card */}
-                <View className="bg-blue-50 rounded-xl p-4 border border-primary-100">
+                <View className="bg-secondary rounded-xl p-4 border border-border">
                     <View className="flex-row items-center justify-between">
                         <View>
-                            <Text className="text-secondary-600 font-jakarta-regular text-sm mb-1">
+                            <Text className="text-muted-foreground font-body text-sm mb-1">
                                 Points today
                             </Text>
-                            <Text className="text-blue-600 font-jakarta-bold text-3xl">
+                            <Text className="text-primary font-body-bold text-3xl">
                                 {gamification.todayPoints}
                             </Text>
                         </View>
@@ -305,10 +302,10 @@ const GamificationSection = () => {
                             onPress={() => setIsModalVisible(true)}
                             className=" px-4 py-2 rounded-lg flex-row items-center"
                         >
-                            <Text className="text-blue-500 font-jakarta-semi-bold text-sm mr-1">
+                            <Text className="text-primary font-body-semibold text-sm mr-1">
                                 View Activity
                             </Text>
-                            <Ionicons name="arrow-forward-outline" size={16} color="#3b82f6" />
+                            <Ionicons name="arrow-forward-outline" size={16} className="text-primary" />
                         </TouchableOpacity>
                     </View>
                 </View>

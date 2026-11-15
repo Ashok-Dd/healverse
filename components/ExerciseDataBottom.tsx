@@ -18,19 +18,19 @@ export const BottomSection: React.FC<BottomSectionProps> = ({
     isPending
                                                             }) => {
     return (
-        <View className="px-4 py-4 border-t flex-row justify-between items-center border-gray-100 bg-white">
+        <View className="px-4 py-4 border-t flex-row justify-between items-center border-border bg-card">
             <View className="mb-4">
                 <View className="flex-row items-center">
-                    <Ionicons name="time-outline" size={20} color="#6b7280" />
-                    <Text className="text-gray-600 ml-2">Today {currentTime}</Text>
+                    <Ionicons name="time-outline" size={20} className="text-muted-foreground" />
+                    <Text className="text-muted-foreground ml-2">Today {currentTime}</Text>
                     <TouchableOpacity className="ml-3">
-                        <Ionicons name="create-outline" size={15} color="skyblue" />
+                        <Ionicons name="create-outline" size={15} className="text-primary" />
                     </TouchableOpacity>
                 </View>
                 <View className="flex-row items-center justify-between mb-4">
                     <View className="flex-row items-center">
-                        <Ionicons name="menu" size={20} color="#374151" />
-                        <Text className="text-gray-800 font-medium ml-2">
+                        <Ionicons name="menu" size={20} className="text-foreground" />
+                        <Text className="text-foreground font-body-semibold ml-2">
                             Total: {totalCalories}kcal
                         </Text>
                     </View>
@@ -39,7 +39,7 @@ export const BottomSection: React.FC<BottomSectionProps> = ({
 
             <TouchableOpacity
                 className={`px-10 py-4 rounded-xl items-center justify-center ${
-                    selectedExercise && !isPending ? "bg-green-500" : "bg-gray-300"
+                    selectedExercise && !isPending ? "bg-primary" : "bg-muted"
                 }`}
                 disabled={!selectedExercise || isPending}
                 onPress={onSubmit}
@@ -52,10 +52,10 @@ export const BottomSection: React.FC<BottomSectionProps> = ({
                             <Ionicons
                                 name="checkmark"
                                 size={20}
-                                color="white"
+                                className="text-primary-foreground"
                                 style={{ marginRight: 8 } as any}
                             />
-                            <Text className="text-white font-semibold text-lg">Okay</Text>
+                            <Text className="text-primary-foreground font-body-semibold text-lg">Okay</Text>
                         </>
                     )}
                 </View>

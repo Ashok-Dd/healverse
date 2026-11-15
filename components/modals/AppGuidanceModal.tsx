@@ -9,7 +9,6 @@ import {
     View
 } from 'react-native';
 
-const { height: screenHeight } = Dimensions.get('window');
 
 interface AppGuidanceModalProps {
   visible: boolean;
@@ -33,27 +32,27 @@ const AppGuidanceModal: React.FC<AppGuidanceModalProps> = ({
     switch (type) {
       case 'tip':
         return {
-          headerBg: 'bg-primary-600',
-          iconColor: '#FFFFFF',
-          accentColor: 'border-blue-500'
+          headerBg: 'bg-primary',
+          iconClass: 'text-primary-foreground',
+          accentColor: 'border-border'
         };
       case 'warning':
         return {
-          headerBg: 'bg-orange-500',
-          iconColor: '#FFFFFF',
-          accentColor: 'border-orange-500'
+          headerBg: 'bg-warning',
+          iconClass: 'text-background',
+          accentColor: 'border-warning/30'
         };
       case 'feature':
         return {
-          headerBg: 'bg-green-500',
-          iconColor: '#FFFFFF',
-          accentColor: 'border-green-500'
+          headerBg: 'bg-primary',
+          iconClass: 'text-primary-foreground',
+          accentColor: 'border-border'
         };
       default: // info
         return {
-          headerBg: 'bg-gray-700',
-          iconColor: '#FFFFFF',
-          accentColor: 'border-gray-500'
+          headerBg: 'bg-secondary-foreground',
+          iconClass: 'text-background',
+          accentColor: 'border-border'
         };
     }
   };
@@ -72,8 +71,8 @@ const AppGuidanceModal: React.FC<AppGuidanceModalProps> = ({
           <View key={index} className="mb-3">
             {bulletPoints.map((point, pointIndex) => (
               <View key={pointIndex} className="flex-row items-start mb-2">
-                <View className="w-1.5 h-1.5 bg-blue-500 rounded-full mt-2 mr-2.5" />
-                <Text className="text-gray-700 text-sm leading-relaxed flex-1">
+                <View className="w-1.5 h-1.5 bg-primary rounded-full mt-2 mr-2.5" />
+                <Text className="text-foreground text-sm leading-relaxed flex-1">
                   {point.replace(/^[•-]\s*/, '')}
                 </Text>
               </View>
@@ -86,7 +85,7 @@ const AppGuidanceModal: React.FC<AppGuidanceModalProps> = ({
       if (paragraph.trim().startsWith('#')) {
         const headingText = paragraph.replace(/^#+\s*/, '');
         return (
-          <Text key={index} className="text-lg font-bold text-gray-900 mb-2 mt-3">
+          <Text key={index} className="text-lg font-body-bold text-foreground mb-2 mt-3">
             {headingText}
           </Text>
         );
@@ -94,7 +93,7 @@ const AppGuidanceModal: React.FC<AppGuidanceModalProps> = ({
       
       // Regular paragraph
       return (
-        <Text key={index} className="text-gray-700 text-sm leading-relaxed mb-3">
+        <Text key={index} className="text-foreground text-sm leading-relaxed mb-3">
           {paragraph}
         </Text>
       );
@@ -109,12 +108,12 @@ const AppGuidanceModal: React.FC<AppGuidanceModalProps> = ({
       onRequestClose={onClose}
     >
       <View className="flex-1 bg-black/50 justify-center items-center px-8">
-        <View className="bg-white max-w-md w-full rounded-2xl shadow-2xl overflow-hidden">
+        <View className="bg-card max-w-md w-full rounded-2xl shadow-2xl overflow-hidden">
           {/* Header */}
-          <View className={`bg-primary-500 px-4 py-3.5 flex-row items-center justify-between`}>
+          <View className={`bg-primary px-4 py-3.5 flex-row items-center justify-between`}>
             <View className="flex-row items-center flex-1">
-              <Ionicons name={icon} size={22} color={styles.iconColor} />
-              <Text className="text-white text-base font-semibold ml-2.5 flex-1">
+              <Ionicons name={icon} size={22} className={styles.iconClass} />
+              <Text className={`${styles.iconClass} text-base font-body-semibold ml-2.5 flex-1`}>
                 {title}
               </Text>
             </View>
@@ -123,13 +122,13 @@ const AppGuidanceModal: React.FC<AppGuidanceModalProps> = ({
               className="p-1.5 -mr-1"
               activeOpacity={0.7}
             >
-              <Feather name="x" size={20} color={styles.iconColor} />
+              <Feather name="x" size={20} className={styles.iconClass} />
             </TouchableOpacity>
           </View>
 
           {/* Content */}
           <ScrollView 
-            className="px-5 py-4 max-h-96 bg-white"
+            className="px-5 py-4 max-h-96 bg-card"
             showsVerticalScrollIndicator={false}
             contentContainerStyle={{ paddingBottom: 8 }}
           >
@@ -137,13 +136,13 @@ const AppGuidanceModal: React.FC<AppGuidanceModalProps> = ({
           </ScrollView>
 
           {/* Footer */}
-          <View className="px-5 py-3.5 bg-gray-50 border-t border-gray-100">
+          <View className="px-5 py-3.5 bg-background border-t border-border">
             <TouchableOpacity
               onPress={onClose}
-              className="bg-primary-500 py-2.5 px-4 rounded-lg flex-row items-center justify-center active:bg-primary-600"
+              className="bg-primary py-2.5 px-4 rounded-lg flex-row items-center justify-center active:bg-primary"
               activeOpacity={0.8}
             >
-              <Text className="text-white text-sm font-semibold">
+              <Text className="text-primary-foreground text-sm font-body-semibold">
                 Got it!
               </Text>
             </TouchableOpacity>

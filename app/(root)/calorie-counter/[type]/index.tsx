@@ -9,6 +9,7 @@ import { CameraType, CameraView, useCameraPermissions } from "expo-camera";
 import * as ImageManipulator from "expo-image-manipulator";
 import * as ImagePicker from "expo-image-picker";
 import { Link, useLocalSearchParams, useRouter } from "expo-router";
+import { useThemeColors } from "@/constants/theme";
 import React, { useEffect, useRef, useState } from "react";
 import {
   Alert,
@@ -32,19 +33,19 @@ const Header: React.FC<HeaderProps> = ({ isTextInputActive, onBack }) => {
   return (
     <View className="flex w-full flex-row items-center justify-between px-5">
       <TouchableOpacity onPress={onBack}>
-        <Ionicons name="arrow-back" color={"black"} size={25} />
+        <Ionicons name="arrow-back" className="text-foreground" size={25} />
       </TouchableOpacity>
 
       <View className="flex flex-row items-center justify-center gap-x-2">
-        <Ionicons name="qr-code-outline" size={20} color="black" />
-        <Text className="text-black text-base font-bold">LogFood</Text>
+        <Ionicons name="qr-code-outline" size={20} className="text-foreground" />
+        <Text className="text-foreground text-base font-body-bold">LogFood</Text>
       </View>
 
       <Link
         href={"/"}
-        className="flex items-center justify-center bg-blue-200 rounded-full p-1"
+        className="flex items-center justify-center bg-secondary rounded-full p-1"
       >
-        <Ionicons name="help" color={"blue"} size={12} />
+        <Ionicons name="help" size={12} className="text-primary" />
       </Link>
     </View>
   );
@@ -66,13 +67,14 @@ const TextInputSection: React.FC<TextInputSectionProps> = ({
   onFocus,
   onContinue,
 }) => {
+  const colors = useThemeColors();
   if (isActive) {
     return (
       <View className="flex-1 px-5 pt-8">
         <TextInput
-          className="bg-gray-100 p-4 rounded-lg text-base text-black min-h-32"
+          className="bg-muted p-4 rounded-lg text-base text-foreground min-h-32"
           placeholder="Describe your food here..."
-          placeholderTextColor="#9CA3AF"
+          placeholderTextColor={colors.mutedForeground}
           value={value}
           onChangeText={onChangeText}
           multiline
@@ -81,10 +83,10 @@ const TextInputSection: React.FC<TextInputSectionProps> = ({
         />
 
         <TouchableOpacity
-          className="bg-green-500 py-4 px-8 rounded-3xl items-center mt-6"
+          className="bg-primary py-4 px-8 rounded-3xl items-center mt-6"
           onPress={onContinue}
         >
-          <Text className="text-white text-base font-bold">Continue</Text>
+          <Text className="text-primary-foreground text-base font-body-bold">Continue</Text>
         </TouchableOpacity>
       </View>
     );
@@ -93,12 +95,10 @@ const TextInputSection: React.FC<TextInputSectionProps> = ({
   return (
     <View className="px-5 pb-4 min-h-52">
       <TouchableOpacity onPress={onFocus}>
-        <View className="bg-gray-100 p-2 min-h-28 gap-2 flex flex-row items-center rounded-lg">
-          <Feather name="edit-2" size={20} color="gray" />
-          <Text className="flex-1 flex-wrap text-gray-400">
-            Please enter a prompt describing the food you'd like to scan (e.g.,
-            'a bowl of fresh salad with tomatoes and cucumbers') instead of
-            uploading an image.
+        <View className="bg-muted p-2 min-h-28 gap-2 flex flex-row items-center rounded-lg">
+          <Feather name="edit-2" size={20} className="text-muted-foreground" />
+          <Text className="flex-1 flex-wrap text-muted-foreground">
+            {"Please enter a prompt describing the food you'd like to scan (e.g., 'a bowl of fresh salad with tomatoes and cucumbers') instead of uploading an image."}
           </Text>
         </View>
       </TouchableOpacity>
@@ -109,12 +109,13 @@ const TextInputSection: React.FC<TextInputSectionProps> = ({
 // Spinning loader component with consistent animation
 interface SpinnerProps {
   size?: "small" | "large";
-  color?: string;
+  /** Use on a primary-coloured background. */
+  onPrimary?: boolean;
 }
 
 const Spinner: React.FC<SpinnerProps> = ({
   size = "small",
-  color = "white",
+  onPrimary = false,
 }) => {
   const spinValue = useRef(new Animated.Value(0)).current;
 
@@ -138,7 +139,7 @@ const Spinner: React.FC<SpinnerProps> = ({
 
   const sizeClasses =
     size === "large" ? "w-12 h-12 border-4" : "w-8 h-8 border-2";
-  const borderColor = color === "white" ? "border-white" : "border-green-500";
+  const borderColor = onPrimary ? "border-primary-foreground" : "border-primary";
 
   return (
     <Animated.View
@@ -152,12 +153,12 @@ const Spinner: React.FC<SpinnerProps> = ({
 const ProcessingOverlay: React.FC = () => {
   return (
     <View className="flex-1 max-h-[330px] w-full bg-black/50 rounded-3xl items-center justify-center">
-      <View className="bg-white/90 rounded-2xl p-6 items-center">
+      <View className="bg-card/90 rounded-2xl p-6 items-center">
         <View className="mb-3">
-          <Spinner size="large" color="green" />
+          <Spinner size="large" />
         </View>
-        <Text className="text-black text-lg font-semibold">Processing...</Text>
-        <Text className="text-gray-600 text-sm mt-1">Analyzing your image</Text>
+        <Text className="text-foreground text-lg font-body-semibold">Processing...</Text>
+        <Text className="text-muted-foreground text-sm mt-1">Analyzing your image</Text>
       </View>
     </View>
   );
@@ -213,17 +214,17 @@ const CameraButton: React.FC<CameraButtonProps> = ({
   return (
     <TouchableOpacity
       key="camera-button"
-      className={`w-24 h-24 rounded-full justify-center items-center p-1 border border-green-400 ${
+      className={`w-24 h-24 rounded-full justify-center items-center p-1 border border-border ${
         isLoading ? "opacity-70" : ""
       }`}
       onPress={capturedImage ? onAcceptImage : onTakePicture}
       disabled={isLoading}
     >
-      <View className="flex-1 w-full items-center justify-center rounded-full bg-green-500">
+      <View className="flex-1 w-full items-center justify-center rounded-full bg-primary">
         {isLoading ? (
-          <Spinner size="small" color="white" />
+          <Spinner size="small" onPrimary />
         ) : capturedImage ? (
-          <Ionicons key="checkmark" name="checkmark" size={40} color="white" />
+          <Ionicons key="checkmark" name="checkmark" size={40} className="text-primary-foreground" />
         ) : (
           <View
             key="scan-icon"
@@ -231,11 +232,10 @@ const CameraButton: React.FC<CameraButtonProps> = ({
           >
             <MaterialCommunityIcons
               name="food"
-              className="absolute top-1/2 left-1/2 transform -translate-y-5 -translate-x-6"
+              className="absolute top-1/2 left-1/2 transform -translate-y-5 -translate-x-6 text-primary-foreground"
               size={28}
-              color="white"
             />
-            <Ionicons name="scan-outline" size={60} color="white" />
+            <Ionicons name="scan-outline" size={60} className="text-primary-foreground" />
           </View>
         )}
       </View>
@@ -281,7 +281,7 @@ const CameraControls: React.FC<CameraControlsProps> = ({
               onPress={onPickImage}
               disabled={isProcessing}
             >
-              <Feather name="image" size={32} color="black" />
+              <Feather name="image" size={32} className="text-foreground" />
             </TouchableOpacity>
           ) : null}
         </View>
@@ -308,7 +308,7 @@ const CameraControls: React.FC<CameraControlsProps> = ({
               onPress={onFlipCamera}
               disabled={isProcessing}
             >
-              <Feather name="refresh-ccw" size={32} color="black" />
+              <Feather name="refresh-ccw" size={32} className="text-foreground" />
             </TouchableOpacity>
           ) : (
             <TouchableOpacity
@@ -318,7 +318,7 @@ const CameraControls: React.FC<CameraControlsProps> = ({
               onPress={onCancelCapture}
               disabled={isProcessing}
             >
-              <Ionicons name="close" size={30} color="black" />
+              <Ionicons name="close" size={30} className="text-foreground" />
             </TouchableOpacity>
           )}
         </View>
@@ -340,14 +340,14 @@ const PermissionScreen: React.FC<PermissionScreenProps> = ({
   onPress,
 }) => {
   return (
-    <SafeAreaView className="flex-1 bg-white">
-      <Text className="text-black text-center text-base m-5">{message}</Text>
+    <SafeAreaView className="flex-1 bg-background">
+      <Text className="text-foreground text-center text-base m-5">{message}</Text>
       {buttonText && onPress && (
         <TouchableOpacity
-          className="bg-green-500 mx-5 py-4 px-8 rounded-3xl items-center"
+          className="bg-primary mx-5 py-4 px-8 rounded-3xl items-center"
           onPress={onPress}
         >
-          <Text className="text-white text-base font-bold">{buttonText}</Text>
+          <Text className="text-primary-foreground text-base font-body-bold">{buttonText}</Text>
         </TouchableOpacity>
       )}
     </SafeAreaView>
@@ -517,7 +517,7 @@ const CalorieMeterPage: React.FC<CalorieMeterPageProps> = () => {
   }
 
   return (
-    <SafeAreaView className="flex-1 bg-white">
+    <SafeAreaView className="flex-1 bg-background">
       <Header isTextInputActive={isTextInputActive} onBack={handleBack} />
 
       {/* Text Input Field (when active, moves to top) */}

@@ -1,3 +1,4 @@
+import { ThemedStatusBar } from "@/components/ui/ThemedStatusBar";
 import { ExerciseCard } from "@/components/cards/ExerciseCard";
 import { ErrorState } from "@/components/ErrorState";
 import { BottomSection } from "@/components/ExerciseDataBottom";
@@ -17,7 +18,7 @@ import {
 } from "@/types/type";
 import { router } from "expo-router";
 import React, { useState } from "react";
-import { FlatList, StatusBar, View } from "react-native";
+import { FlatList, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 const ExerciseLogScreen: React.FC = () => {
@@ -103,8 +104,8 @@ const ExerciseLogScreen: React.FC = () => {
   if (error) return <ErrorState />;
 
   return (
-    <SafeAreaView className="flex-1 px-2 py-1 bg-white">
-      <StatusBar barStyle="dark-content" backgroundColor="white" />
+    <SafeAreaView className="flex-1 px-2 py-1 bg-card">
+      <ThemedStatusBar />
 
       <ScreenHeader
         title="Add Exercise Log"

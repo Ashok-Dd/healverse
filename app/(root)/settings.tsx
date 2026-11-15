@@ -1,3 +1,4 @@
+import { useThemeColors } from "@/constants/theme";
 import { useAuthStore } from "@/store/authStore"; // Adjust path as needed
 import { Feather, Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { router } from "expo-router";
@@ -12,7 +13,7 @@ import {
     View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import {UserProfile , User} from "@/types/type";
+import {UserProfile} from "@/types/type";
 
 // Type Definitions
 // type SettingItemType = "navigation" | "button" | "toggle" | "modal";
@@ -162,24 +163,25 @@ const IconRenderer: React.FC<{
     name: string;
     family: "ionicons" | "feather" | "material";
     size?: number;
-    color?: string;
-}> = ({ name, family, size = 20, color = "#374151" }) => {
+    className?: string;
+}> = ({ name, family, size = 20, className = "text-foreground" }) => {
     switch (family) {
         case "ionicons":
-            return <Ionicons name={name as any} size={size} color={color} />;
+            return <Ionicons name={name as any} size={size} className={className} />;
         case "feather":
-            return <Feather name={name as any} size={size} color={color} />;
+            return <Feather name={name as any} size={size} className={className} />;
         case "material":
             return (
-                <MaterialCommunityIcons name={name as any} size={size} color={color} />
+                <MaterialCommunityIcons name={name as any} size={size} className={className} />
             );
         default:
-            return <Ionicons name="settings-outline" size={size} color={color} />;
+            return <Ionicons name="settings-outline" size={size} className={className} />;
     }
 };
 
 // Main Component
 const SettingsScreen: React.FC = () => {
+  const colors = useThemeColors();
     const { user } = useAuthStore();
     const [exerciseCalories, setExerciseCalories] = useState<boolean>(true);
     const [modalVisible, setModalVisible] = useState<boolean>(false);
@@ -344,30 +346,6 @@ const SettingsScreen: React.FC = () => {
             inputType: "selection",
         });
     }, [profile?.healthCondition]);
-
-    // Modal Handlers
-    const handleGenderModal = useCallback((): void => {
-        openModal(
-            "Select Gender",
-            [
-                { label: "Male", value: "MALE" },
-                { label: "Female", value: "FEMALE" },
-                { label: "Other", value: "OTHER" },
-            ],
-            "gender"
-        );
-    }, [openModal]);
-
-    const handleUnitModal = useCallback((): void => {
-        openModal(
-            "Select Unit System",
-            [
-                { label: "Metric (kg, cm)", value: "METRIC" },
-                { label: "Imperial (lb, ft)", value: "IMPERIAL" },
-            ],
-            "unit"
-        );
-    }, [openModal]);
 
     // Settings Data Configuration
     const settingsData: SettingSection[] = [
@@ -705,9 +683,9 @@ const SettingsScreen: React.FC = () => {
         ({ item }: { item: { label: string; value: string } }) => (
             <TouchableOpacity
                 onPress={() => handleModalSelect(item.value)}
-                className="px-6 py-4 border-b border-gray-100"
+                className="px-6 py-4 border-b border-border"
             >
-                <Text className="text-base text-gray-900">{item.label}</Text>
+                <Text className="text-base text-foreground">{item.label}</Text>
             </TouchableOpacity>
         ),
         [handleModalSelect]
@@ -734,7 +712,7 @@ const SettingsScreen: React.FC = () => {
                 <View className={`${isLastItem ? "" : "mb-1"}`}>
                     <TouchableOpacity
                         onPress={handlePress}
-                        className="flex-row items-center justify-between px-4 py-1 bg-gray-100 rounded-lg active:bg-gray-50"
+                        className="flex-row items-center justify-between px-4 py-1 bg-muted rounded-lg active:bg-background"
                         disabled={item.type === "toggle"}
                     >
                         {/* Left Side - Icon and Title */}
@@ -743,9 +721,9 @@ const SettingsScreen: React.FC = () => {
                                 name={item.icon}
                                 family={item.iconFamily}
                                 size={20}
-                                color="#374151"
+                                className="text-foreground"
                             />
-                            <Text className="text-sm text-gray-900 font-medium ml-3">
+                            <Text className="text-sm text-foreground font-body-semibold ml-3">
                                 {item.title}
                             </Text>
                         </View>
@@ -755,16 +733,16 @@ const SettingsScreen: React.FC = () => {
                             {item.type === "button" && (
                                 <TouchableOpacity
                                     onPress={item.action}
-                                    className="bg-blue-100 px-3 py-1.5 rounded-full active:bg-blue-200"
+                                    className="bg-secondary px-3 py-1.5 rounded-full active:bg-secondary"
                                 >
                                     <View className="flex-row items-center">
                                         <IconRenderer
                                             name={item.buttonIcon}
                                             family="ionicons"
                                             size={14}
-                                            color="#2563eb"
+                                            className="text-primary"
                                         />
-                                        <Text className="text-blue-600 text-xs  ml-1">
+                                        <Text className="text-primary text-xs  ml-1">
                                             {item.buttonText}
                                         </Text>
                                     </View>
@@ -773,14 +751,14 @@ const SettingsScreen: React.FC = () => {
 
                             {(item.type === "navigation" || item.type === "modal") && (
                                 <>
-                                    <Text className="text-gray-500 mr-2 text-xs">
+                                    <Text className="text-muted-foreground mr-2 text-xs">
                                         {"value" in item ? item.value : ""}
                                     </Text>
                                     <IconRenderer
                                         name="chevron-right"
                                         family="feather"
                                         size={16}
-                                        color="#9ca3af"
+                                        className="text-muted-foreground"
                                     />
                                 </>
                             )}
@@ -790,11 +768,11 @@ const SettingsScreen: React.FC = () => {
                                     value={item.toggleValue}
                                     onValueChange={item.onToggle}
                                     trackColor={{
-                                        false: "#e5e7eb",
-                                        true: "#22c55e",
+                                        false: colors.border,
+                                        true: colors.primary,
                                     }}
-                                    thumbColor="#ffffff"
-                                    ios_backgroundColor="#e5e7eb"
+                                    thumbColor={colors.card}
+                                    ios_backgroundColor={colors.border}
                                 />
                             )}
                         </View>
@@ -802,16 +780,16 @@ const SettingsScreen: React.FC = () => {
                 </View>
             );
         },
-        [settingsData, openModal]
+        [settingsData, openModal, colors.border, colors.card, colors.primary]
     );
 
     const renderSection: ListRenderItem<SettingSection> = useCallback(
         ({ item }) => (
             <View className="px-4 pb-6">
-                <Text className="text-lg font-bold text-gray-900 mb-4">
+                <Text className="text-lg font-body-bold text-foreground mb-4">
                     {item.title}
                 </Text>
-                <View className="bg-gray-50 rounded-xl p-1">
+                <View className="bg-background rounded-xl p-1">
                     <FlatList
                         data={item.items}
                         renderItem={renderSettingItem}
@@ -828,19 +806,19 @@ const SettingsScreen: React.FC = () => {
     const keyExtractor = useCallback((item: SettingSection) => item.id, []);
 
     return (
-        <SafeAreaView className="flex-1  bg-white">
+        <SafeAreaView className="flex-1  bg-card">
             {/* Header */}
-            <View className="flex-row items-center  justify-center py-2  px-4 border-b border-gray-100 relative bg-white">
+            <View className="flex-row items-center  justify-center py-2  px-4 border-b border-border relative bg-card">
                 <TouchableOpacity
                     onPress={handleBack}
-                    className="absolute left-4 px-2 active:bg-gray-100 rounded-full"
+                    className="absolute left-4 px-2 active:bg-muted rounded-full"
                 >
                     <IconRenderer name="arrow-left" family="feather" size={20} />
                 </TouchableOpacity>
 
                 <View className="flex-row items-center">
                     <IconRenderer name="settings-outline" family="ionicons" size={24} />
-                    <Text className="text-xl font-bold text-gray-900 ml-2">Settings</Text>
+                    <Text className="text-xl font-body-bold text-foreground ml-2">Settings</Text>
                 </View>
             </View>
 
@@ -862,9 +840,9 @@ const SettingsScreen: React.FC = () => {
                 onRequestClose={() => setModalVisible(false)}
             >
                 <View className="flex-1 justify-end bg-black bg-opacity-50">
-                    <View className="bg-white rounded-t-3xl">
-                        <View className="flex-row items-center justify-between px-6 py-4 border-b border-gray-100">
-                            <Text className="text-lg font-bold text-gray-900">
+                    <View className="bg-card rounded-t-3xl">
+                        <View className="flex-row items-center justify-between px-6 py-4 border-b border-border">
+                            <Text className="text-lg font-body-bold text-foreground">
                                 {modalTitle}
                             </Text>
                             <TouchableOpacity

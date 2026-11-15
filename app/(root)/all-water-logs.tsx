@@ -1,9 +1,7 @@
 import { Feather, Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
-import React, { useState } from "react";
+import React from "react";
 import {
-  Modal,
-  Pressable,
   ScrollView,
   Text,
   TouchableOpacity,
@@ -16,26 +14,26 @@ const AllWaterLogs: React.FC = () => {
 
 
   return (
-    <SafeAreaView className="flex-1 bg-white">
+    <SafeAreaView className="flex-1 bg-background">
       {/* Header */}
-      <View className="flex-row items-center justify-between px-4 py-3 bg-white  border-gray-200">
+      <View className="flex-row items-center justify-between px-4 py-3 bg-card  border-border">
         <TouchableOpacity className="p-1" onPress={() => router.back()}>
-          <Ionicons name="arrow-back" size={24} color="#000" />
+          <Ionicons name="arrow-back" size={24} className="text-foreground" />
         </TouchableOpacity>
         <View className="flex-row items-center flex-1 justify-center -ml-10">
-          <Feather name="clock" size={24} color="#666" />
-          <Text className="text-lg font-semibold ml-2 text-black">Water</Text>
+          <Feather name="clock" size={24} className="text-muted-foreground" />
+          <Text className="text-lg font-body-semibold ml-2 text-foreground">Water</Text>
         </View>
         <View className="flex-row items-center space-x-4">
           <TouchableOpacity>
             <Ionicons
               name="information-circle-outline"
               size={24}
-              color="#2196F3"
+              className="text-primary"
             />
           </TouchableOpacity>
           <TouchableOpacity>
-            <Ionicons name="menu" size={24} color="#666" />
+            <Ionicons name="menu" size={24} className="text-muted-foreground" />
           </TouchableOpacity>
         </View>
       </View>
