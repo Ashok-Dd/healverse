@@ -34,6 +34,7 @@ export default function TabLayout() {
           backgroundColor: colors.card,
           borderTopColor: colors.border,
           borderTopWidth: 1,
+          elevation: 0,
           height: 60 + insets.bottom,
           paddingTop: 6,
           paddingBottom: insets.bottom + 6,

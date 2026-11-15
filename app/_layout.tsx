@@ -1,5 +1,7 @@
 import { getQueryClient } from "@/lib/react-query-client";
+import { NavigationThemeProvider } from "@/components/providers/NavigationThemeProvider";
 import { useAuthStore } from "@/store/authStore";
+import { useThemeStore } from "@/store/themeStore";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Fredoka_600SemiBold, Fredoka_700Bold } from "@expo-google-fonts/fredoka";
 import { Nunito_400Regular, Nunito_600SemiBold, Nunito_700Bold } from "@expo-google-fonts/nunito";
@@ -50,11 +52,15 @@ export default function RootLayout() {
   const isInitializing = useAuthStore((state) => state.isInitializing);
   const serverUnreachable = useAuthStore((state) => state.serverUnreachable);
 
-  useEffect(() => {
-    checkAuth();
-  }, [checkAuth]);
+  const hydrateTheme = useThemeStore((s) => s.hydrate);
 
-  const appReady = fontsLoaded && !isInitializing;
+  useEffect(() => {
+    hydrateTheme();
+    checkAuth();
+  }, [hydrateTheme, checkAuth]);
+
+  const themeHydrated = useThemeStore((s) => s.hydrated);
+  const appReady = fontsLoaded && !isInitializing && themeHydrated;
 
   useEffect(() => {
     if (fontError) throw fontError;
@@ -115,9 +121,11 @@ export default function RootLayout() {
       <ErrorBoundary>
         <QueryClientProvider client={getQueryClient()}>
           <NotificationProvider>
-            <View className="flex-1 bg-background">
-              <Slot />
-            </View>
+            <NavigationThemeProvider>
+              <View className="flex-1 bg-background">
+                <Slot />
+              </View>
+            </NavigationThemeProvider>
           </NotificationProvider>
         </QueryClientProvider>
       </ErrorBoundary>
