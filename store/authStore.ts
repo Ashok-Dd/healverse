@@ -1,6 +1,7 @@
 import { appTokenCache } from "@/lib/auth";
 import { fetchApi, setUnauthorizedHandler } from "@/lib/fetchApi";
 import { clearLocalSessionData } from "@/lib/session";
+import { loadCachedUser, saveCachedUser } from "@/lib/sessionCache";
 import type {
   ApiError,
   AuthResponse,
@@ -36,6 +37,7 @@ interface AuthState {
 
 // Secure storage key - only for token
 const TOKEN_KEY = "token";
+const CHECK_AUTH_TIMEOUT_MS = 10000;
 
 // Helper functions for secure storage (only token)
 const storeToken = async (token: string): Promise<void> => {
@@ -77,7 +79,8 @@ export const useAuthStore = create<AuthState>()(
         // Store only token in secure storage
         await storeToken(response!.token);
 
-        // Store user data only in state
+        // User data lives in state, plus an encrypted copy so the app can open offline
+        saveCachedUser(response!.user);
         set({
           user: response!.user,
           isAuthenticated: true,
@@ -102,7 +105,8 @@ export const useAuthStore = create<AuthState>()(
         // Store only token in secure storage
         await storeToken(response!.token);
 
-        // Store user data only in state
+        // User data lives in state, plus an encrypted copy so the app can open offline
+        saveCachedUser(response!.user);
         set({
           user: response!.user,
           isAuthenticated: true,
@@ -132,12 +136,15 @@ export const useAuthStore = create<AuthState>()(
         const response = await fetchApi<AuthResponse>("/auth/check-auth", {
           method: "GET",
           requiresAuth: true,
+          // A "connected but no internet" network would otherwise hold the splash for 30 s.
+          timeout: CHECK_AUTH_TIMEOUT_MS,
         });
 
         // Store new token in secure storage
         await storeToken(response!.token);
 
         // Update state with fresh user data
+        saveCachedUser(response!.user);
         set({
           user: response!.user,
           isAuthenticated: true,
@@ -153,7 +160,7 @@ export const useAuthStore = create<AuthState>()(
         // 5xx and 429 are temporary: keep the token and let the user retry.
         if (status === 401 || status === 403) {
           await clearTokenStorage();
-          await clearLocalSessionData();
+          await clearLocalSessionData("expired");
           set({
             user: null,
             isAuthenticated: false,
@@ -161,12 +168,15 @@ export const useAuthStore = create<AuthState>()(
             serverUnreachable: false,
           });
         } else {
-          set({
-            user: null,
-            isAuthenticated: false,
-            isInitializing: false,
-            serverUnreachable: true,
-          });
+          // Offline or the server is down. The token is still there, so open the app with the
+          // cached user and cached data instead of blocking; requests catch up when the
+          // connection returns, and an expired token still ends the session via the 401 handler.
+          const cachedUser = loadCachedUser();
+          set(
+            cachedUser
+              ? { user: cachedUser, isAuthenticated: true, isInitializing: false, serverUnreachable: false }
+              : { user: null, isAuthenticated: false, isInitializing: false, serverUnreachable: true }
+          );
         }
         return false;
       }
@@ -203,6 +213,7 @@ export const useAuthStore = create<AuthState>()(
       const { user } = get();
       if (user) {
         const updatedUser = { ...user, ...userData };
+        saveCachedUser(updatedUser);
         set({ user: updatedUser });
       }
     },
@@ -214,7 +225,7 @@ export const useAuthStore = create<AuthState>()(
 // parallel 401s only trigger one redirect.
 setUnauthorizedHandler(() => {
   if (!useAuthStore.getState().isAuthenticated) return;
-  void Promise.all([clearTokenStorage(), clearLocalSessionData()]).finally(() => {
+  void Promise.all([clearTokenStorage(), clearLocalSessionData("expired")]).finally(() => {
     useAuthStore.setState({
       user: null,
       isAuthenticated: false,

@@ -1,4 +1,6 @@
 import { useThemeColors, type ThemeColors } from "@/constants/theme";
+import { SyncBadge } from "@/components/ui/SyncBadge";
+import type { OutboxStatus } from "@/types/type";
 import React, { memo, useMemo } from "react";
 import { Text, View } from "react-native";
 import Markdown, { MarkdownProps } from "react-native-markdown-display";
@@ -7,6 +9,7 @@ interface MessageBubbleProps {
   message: string;
   isUser: boolean;
   timestamp?: string;
+  outboxStatus?: OutboxStatus;
 }
 
 const createMarkdownStyles = (colors: ThemeColors): MarkdownProps["style"] => {
@@ -89,6 +92,7 @@ export const MessageBubble = memo(function MessageBubble({
   message,
   isUser,
   timestamp,
+  outboxStatus,
 }: MessageBubbleProps) {
   const colors = useThemeColors();
   const markdownStyles = useMemo(() => createMarkdownStyles(colors), [colors]);
@@ -102,6 +106,7 @@ export const MessageBubble = memo(function MessageBubble({
         {timestamp ? (
           <Text className="mt-1 font-body text-xs text-muted-foreground">{timestamp}</Text>
         ) : null}
+        <SyncBadge status={outboxStatus} />
       </View>
     );
   }

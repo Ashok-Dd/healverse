@@ -1,5 +1,6 @@
 import { MutationCache, QueryClient } from "@tanstack/react-query";
 import "./network";
+import { CACHE_MAX_AGE_MS } from "./queryPersistence";
 import { showToast } from "./toast";
 
 let queryClient: QueryClient;
@@ -22,6 +23,9 @@ export function getQueryClient() {
                         return failureCount < 1;
                     },
                     retryDelay: 500,
+                    // Cached data must outlive the screen that loaded it, or there is nothing
+                    // to show (or persist) the next time the app opens. Same as the disk max age.
+                    gcTime: CACHE_MAX_AGE_MS,
                 },
             },
             // Runs for every mutation across the app (add/update/delete food,

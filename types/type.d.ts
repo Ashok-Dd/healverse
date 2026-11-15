@@ -143,7 +143,12 @@ export interface FoodItem {
   fats: number;
 }
 
+/** Sync state of a log that was made on this device and has not reached the server yet. */
+export type OutboxStatus = "pending" | "syncing" | "failed";
+
 export interface ExerciseLog {
+  /** Set only on entries still in the outbox (their id is negative). */
+  outboxStatus?: OutboxStatus;
   id: number;
   exerciseName: string;
   durationMinutes: number;
@@ -154,6 +159,7 @@ export interface ExerciseLog {
 }
 
 export interface WaterLog {
+  outboxStatus?: OutboxStatus;
   id: number;
   amountMl: number;
   loggedAt: string; // ISO string format
@@ -222,6 +228,7 @@ export interface Conversation {
 export type Role = "USER" | "BOT";
 
 export interface Message {
+  outboxStatus?: OutboxStatus;
   id: number;
   conversationId: Conversation["id"];
   content: string;

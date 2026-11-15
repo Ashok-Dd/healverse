@@ -11,6 +11,8 @@ interface MealCardProps {
   isToday: boolean;
   /** True while this meal is being regenerated. */
   isReplacing: boolean;
+  /** Replacing a meal needs the AI service, so it is off while offline. */
+  canReplace: boolean;
   onReplace: (mealType: MealType) => void;
 }
 
@@ -32,7 +34,7 @@ const Macro = ({ label, value, text }: { label: string; value: number; text: str
   </View>
 );
 
-const MealCard = ({ meal, isToday, isReplacing, onReplace }: MealCardProps) => {
+const MealCard = ({ meal, isToday, isReplacing, canReplace, onReplace }: MealCardProps) => {
   const [expanded, setExpanded] = useState(false);
   const type = meal.mealType.toLowerCase();
 
@@ -108,9 +110,10 @@ const MealCard = ({ meal, isToday, isReplacing, onReplace }: MealCardProps) => {
         <View className="mt-4 flex-row flex-wrap gap-3">
           <IconButton
             iconName="refresh-cw"
-            label="Replace meal"
+            label={canReplace ? "Replace meal" : "Replace meal (needs internet)"}
             loadingLabel="Replacing..."
             loading={isReplacing}
+            disabled={!canReplace}
             onPress={() => onReplace(meal.mealType)}
           />
           <IconButton

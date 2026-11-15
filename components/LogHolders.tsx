@@ -4,6 +4,7 @@ import { router } from "expo-router";
 import React from "react";
 import { Pressable, Text, View } from "react-native";
 import FoodItemCard from "./cards/FoodItemCard";
+import { SyncBadge } from "./ui/SyncBadge";
 
 export const ExerciseLogHolder = ({ log }: { log: ExerciseLog }) => (
   <View className="flex-row items-center justify-between rounded-2xl bg-muted p-3">
@@ -16,6 +17,7 @@ export const ExerciseLogHolder = ({ log }: { log: ExerciseLog }) => (
         <Text className="font-body text-xs text-muted-foreground">
           {log.durationMinutes} min
         </Text>
+        <SyncBadge status={log.outboxStatus} />
       </View>
     </View>
     <View className="flex-row items-center gap-1">
@@ -37,6 +39,7 @@ export const WaterLogHolder = ({ log }: { log: WaterLog }) => (
       <Text className="font-body text-xs text-muted-foreground">
         {new Date(log.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
       </Text>
+      <SyncBadge status={log.outboxStatus} />
     </View>
   </View>
 );

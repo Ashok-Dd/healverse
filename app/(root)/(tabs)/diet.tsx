@@ -11,6 +11,7 @@ import GuidanceButton from "@/components/ui/GuidanceButton";
 import IconButton from "@/components/ui/IconButton";
 import { INFO_ABOUT_DIET_PLAN } from "@/constants";
 import { useThemeColors } from "@/constants/theme";
+import { useIsOnline } from "@/lib/network";
 import { showToast } from "@/lib/toast";
 import { useDietPlanManager } from "@/store/dietPlan";
 import type { Meal, MealType } from "@/types/type";
@@ -23,6 +24,7 @@ const keyExtractor = (meal: Meal, index: number) => `${meal.mealType}-${meal.id 
 
 export default function Diet() {
   const colors = useThemeColors();
+  const isOnline = useIsOnline();
   const {
     selectedDate,
     handleDateChange,
@@ -66,10 +68,11 @@ export default function Diet() {
         meal={item}
         isToday={isToday}
         isReplacing={replacingType === item.mealType}
+        canReplace={isOnline}
         onReplace={handleReplaceMeal}
       />
     ),
-    [isToday, replacingType, handleReplaceMeal]
+    [isToday, replacingType, isOnline, handleReplaceMeal]
   );
 
   const meals = (dietPlan?.meals ?? []) as Meal[];
@@ -87,9 +90,10 @@ export default function Diet() {
         <View className="mt-3 flex-row justify-end">
           <IconButton
             iconName="refresh-cw"
-            label="Replace whole day"
+            label={isOnline ? "Replace whole day" : "Replace whole day (needs internet)"}
             loadingLabel="Generating..."
             loading={isRegenerating}
+            disabled={!isOnline}
             onPress={handleGenerateNewPlan}
           />
         </View>
@@ -108,6 +112,9 @@ export default function Diet() {
       );
     }
     if (!isValidDate) return <PlaceHolder message="There's no meal plan for this date." />;
+    if (!dietPlan && !isOnline) {
+      return <PlaceHolder message="This day's plan is not saved on your phone yet. Connect to the internet to load it." />;
+    }
     if (!dietPlan) return <PlaceHolder message="No meal plan for this day yet." />;
 
     return (

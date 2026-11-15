@@ -43,7 +43,6 @@ export const isValidDateForData = (date: string | undefined | null): boolean => 
 interface UseDietPlanOptions {
   enabled?: boolean;
   staleTime?: number;
-  gcTime?: number;
 }
 
 export const useDietPlan = (
@@ -58,7 +57,6 @@ export const useDietPlan = (
     queryFn: () => dietPlanApi.fetchByDate(targetDate),
     enabled: isValidDate && options.enabled !== false,
     staleTime: options.staleTime ?? 5 * 60 * 1000, // 5 minutes
-    gcTime: options.gcTime ?? 10 * 60 * 1000, // 10 minutes
   });
 
   // Utility functions for working with meals

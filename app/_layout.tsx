@@ -16,6 +16,8 @@ import {
 } from "react-native-reanimated";
 // Optional: global styles for tailwind or other CSS-in-JS
 import ErrorBoundary from "@/components/providers/ErrorBoundary";
+import { OutboxSync } from "@/components/providers/OutboxSync";
+import { QueryCachePersistence } from "@/components/providers/QueryCachePersistence";
 import { Button } from "@/components/ui/Button";
 import { NetworkBanner } from "@/components/ui/NetworkBanner";
 import { useThemeColors } from "@/constants/theme";
@@ -121,14 +123,17 @@ export default function RootLayout() {
     <GestureHandlerRootView style={{ flex: 1 }}>
       <ErrorBoundary>
         <QueryClientProvider client={getQueryClient()}>
-          <NotificationProvider>
-            <NavigationThemeProvider>
-              <View className="flex-1 bg-background">
-                <Slot />
-                <NetworkBanner />
-              </View>
-            </NavigationThemeProvider>
-          </NotificationProvider>
+          <QueryCachePersistence>
+            <OutboxSync />
+            <NotificationProvider>
+              <NavigationThemeProvider>
+                <View className="flex-1 bg-background">
+                  <Slot />
+                  <NetworkBanner />
+                </View>
+              </NavigationThemeProvider>
+            </NotificationProvider>
+          </QueryCachePersistence>
         </QueryClientProvider>
       </ErrorBoundary>
     </GestureHandlerRootView>

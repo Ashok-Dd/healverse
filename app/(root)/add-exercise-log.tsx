@@ -7,23 +7,14 @@ import { ExerciseModal } from "@/components/models/ExerciseModel";
 import { ExerciseDataSkeleton } from "@/components/skeleton/ExerciseDataSkeleton";
 import { useCurrentTime } from "@/hooks/useCurrentTime";
 import { useExerciseData } from "@/hooks/useExerciseData";
-import {
-  useDateSelectorForHealthStore,
-  useExerciseLogMutations,
-} from "@/store/healthStore";
-import {
-  CreateExerciseLogData,
-  ExerciseLog as Exercise,
-  ExerciseIntensity,
-} from "@/types/type";
+import { logExercise } from "@/lib/outboxActions";
+import { ExerciseLog as Exercise, ExerciseIntensity } from "@/types/type";
 import { router } from "expo-router";
 import React, { useState } from "react";
 import { FlatList, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 const ExerciseLogScreen: React.FC = () => {
-  const { selectedDate } = useDateSelectorForHealthStore();
-
   const [selectedExercise, setSelectedExercise] = useState<string | null>(null);
   const [openModal, setOpenModal] = useState<boolean>(false);
   const [currentOpenedModal, setCurrentOpenModal] = useState<Exercise | null>(
@@ -35,8 +26,6 @@ const ExerciseLogScreen: React.FC = () => {
 
   const { exerciseData, isLoading, error, calculateCalories, updateExercise } =
     useExerciseData();
-
-  const { addExerciseLog } = useExerciseLogMutations(selectedDate);
 
   const currentTime = useCurrentTime();
 
@@ -78,22 +67,14 @@ const ExerciseLogScreen: React.FC = () => {
 
       // console.log("Mutating : " , exercise);
       if (exercise) {
-        addExerciseLog.mutate(
-          {
-            exerciseName: exercise.exerciseName,
-            durationMinutes: exercise.durationMinutes,
-            intensity: exercise.intensity,
-            loggedAt: new Date().toISOString(),
-            caloriesBurned: exercise.caloriesBurned,
-          } as CreateExerciseLogData,
-          {
-            onSettled: () => {
-              router.back();
-            },
-          }
-        );
-      } else {
-        // console.log("Select valid excercise");
+        logExercise({
+          exerciseName: exercise.exerciseName,
+          durationMinutes: exercise.durationMinutes,
+          intensity: exercise.intensity,
+          loggedAt: new Date().toISOString(),
+          caloriesBurned: exercise.caloriesBurned,
+        });
+        router.back();
       }
     }
   };
@@ -133,7 +114,6 @@ const ExerciseLogScreen: React.FC = () => {
         totalCalories={getTotalCalories()}
         selectedExercise={selectedExercise}
         onSubmit={handleSubmit}
-        isPending={addExerciseLog.isPending}
       />
 
       <ExerciseModal

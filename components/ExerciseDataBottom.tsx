@@ -1,5 +1,5 @@
 import React from 'react';
-import {View, Text, TouchableOpacity, ActivityIndicator} from 'react-native';
+import {View, Text, TouchableOpacity} from 'react-native';
 import { Ionicons } from "@expo/vector-icons";
 
 interface BottomSectionProps {
@@ -7,7 +7,6 @@ interface BottomSectionProps {
     totalCalories: number;
     selectedExercise: string | null;
     onSubmit: () => void;
-    isPending: boolean;
 }
 
 export const BottomSection: React.FC<BottomSectionProps> = ({
@@ -15,7 +14,6 @@ export const BottomSection: React.FC<BottomSectionProps> = ({
                                                                 totalCalories,
                                                                 selectedExercise,
                                                                 onSubmit,
-    isPending
                                                             }) => {
     return (
         <View className="px-4 py-4 border-t flex-row justify-between items-center border-border bg-card">
@@ -39,25 +37,19 @@ export const BottomSection: React.FC<BottomSectionProps> = ({
 
             <TouchableOpacity
                 className={`px-10 py-4 rounded-xl items-center justify-center ${
-                    selectedExercise && !isPending ? "bg-primary" : "bg-muted"
+                    selectedExercise ? "bg-primary" : "bg-muted"
                 }`}
-                disabled={!selectedExercise || isPending}
+                disabled={!selectedExercise}
                 onPress={onSubmit}
             >
                 <View className="flex-row items-center">
-                    {isPending ? (
-                        <ActivityIndicator size="small" color="white" />
-                    ) : (
-                        <>
-                            <Ionicons
-                                name="checkmark"
-                                size={20}
-                                className="text-primary-foreground"
-                                style={{ marginRight: 8 } as any}
-                            />
-                            <Text className="text-primary-foreground font-body-semibold text-lg">Okay</Text>
-                        </>
-                    )}
+                    <Ionicons
+                        name="checkmark"
+                        size={20}
+                        className="text-primary-foreground"
+                        style={{ marginRight: 8 } as any}
+                    />
+                    <Text className="text-primary-foreground font-body-semibold text-lg">Okay</Text>
                 </View>
             </TouchableOpacity>
 

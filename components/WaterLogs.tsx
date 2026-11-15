@@ -31,7 +31,6 @@ const WaterLogs = ({ date }: { date: string }) => {
       />
       {modalOpen && (
         <WaterLogModal
-          date={date}
           visible={modalOpen}
           onClose={() => setModalOpen(false)}
           currentIntake={summary?.waterConsumedMl || 0}

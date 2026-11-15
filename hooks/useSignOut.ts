@@ -1,3 +1,4 @@
+import { useOutboxStore } from "@/lib/outbox";
 import { clearLocalSessionData } from "@/lib/session";
 import { useAuthStore } from "@/store/authStore";
 import { router } from "expo-router";
@@ -15,7 +16,14 @@ export function useSignOut() {
   }, [logout]);
 
   return useCallback(() => {
-    Alert.alert("Sign out", "Are you sure you want to sign out?", [
+    const unsent = useOutboxStore.getState().entries.length;
+    const warning =
+      unsent > 0
+        ? `
+
+${unsent} ${unsent === 1 ? "entry has" : "entries have"} not been uploaded yet and will be lost.`
+        : "";
+    Alert.alert("Sign out", `Are you sure you want to sign out?${warning}`, [
       { text: "Cancel", style: "cancel" },
       { text: "Sign out", style: "destructive", onPress: performLogout },
     ]);
