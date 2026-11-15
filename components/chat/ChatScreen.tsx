@@ -33,10 +33,7 @@ const ChatScreen = ({
     sendMessage(message);
   };
 
-  const handleMenuPress = () => {
-    // Show menu options
-    console.log("Menu pressed");
-  };
+  const handleMenuPress = () => router.push("/(root)/conversations" as any);
 
 
 

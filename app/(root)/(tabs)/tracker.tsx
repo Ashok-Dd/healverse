@@ -1,85 +1,128 @@
 import Ping from "@/components/Calorie-counter-button";
 import { NutritionGrid } from "@/components/CalorieProgress";
+import ErrorCard from "@/components/cards/ErrorCard";
 import FoodLoggingTrackerCard from "@/components/cards/FoodLoggingTrackerCard";
 import CompactInsights from "@/components/CompactInsights";
 import DaySelector from "@/components/DaySelector";
 import GlobalHeader from "@/components/headers/GlobalHeader";
+import PlaceHolder from "@/components/PlaceHolder";
+import { NutritionGridSkeleton } from "@/components/skeleton/NutritionGridSkeleton";
+import { colors } from "@/constants/theme";
 import { useSummaryData } from "@/hooks/useSummaryData";
-import { useDateSelectorForHealthStore } from "@/store/healthStore";
-import { Feather, Ionicons } from "@expo/vector-icons";
-import React, { useCallback } from "react";
-import { Text, TouchableOpacity, View } from "react-native";
+import { healthQueryKeys, useDateSelectorForHealthStore } from "@/store/healthStore";
+import { Ionicons } from "@expo/vector-icons";
+import { useQueryClient } from "@tanstack/react-query";
+import { router } from "expo-router";
+import React, { useCallback, useState } from "react";
+import { Pressable, RefreshControl, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+const SectionTitle = ({
+  icon,
+  title,
+  onPress,
+  actionLabel,
+}: {
+  icon: React.ComponentProps<typeof Ionicons>["name"];
+  title: string;
+  onPress?: () => void;
+  actionLabel?: string;
+}) => (
+  <View className="flex-row items-center justify-between py-2">
+    <View className="flex-row items-center gap-2">
+      <Ionicons name={icon} size={18} color={colors.foreground} />
+      <Text accessibilityRole="header" className="font-display text-base text-foreground">
+        {title}
+      </Text>
+    </View>
+    {onPress && (
+      <Pressable
+        onPress={onPress}
+        hitSlop={12}
+        accessibilityRole="button"
+        accessibilityLabel={actionLabel}
+        className="min-h-[44px] min-w-[44px] items-end justify-center"
+      >
+        <Ionicons name="arrow-forward-circle" size={24} color={colors.ring} />
+      </Pressable>
+    )}
+  </View>
+);
 
 const Tracker = () => {
-    const { selectedDate, setSelectedDate } = useDateSelectorForHealthStore();
+  const queryClient = useQueryClient();
+  const { selectedDate, setSelectedDate, isValidDate } = useDateSelectorForHealthStore();
+  const summary = useSummaryData(selectedDate);
+  const [refreshing, setRefreshing] = useState(false);
 
-    const {
-        data: dailySummary,
-        // isLoading,
-        // error
-    } = useSummaryData(selectedDate);
+  // Insights come from a slow AI call with a long cache time, so pulling down does not wait for them.
+  const handleRefresh = useCallback(async () => {
+    setRefreshing(true);
+    try {
+      await Promise.all([
+        queryClient.refetchQueries({ queryKey: healthQueryKeys.summary(selectedDate) }),
+        queryClient.refetchQueries({ queryKey: healthQueryKeys.foodLogs.byDate(selectedDate) }),
+      ]);
+    } finally {
+      setRefreshing(false);
+    }
+  }, [queryClient, selectedDate]);
 
-    const handleDateChange = useCallback(
-        (date: string) => {
-            setSelectedDate(date);
-        },
-        [setSelectedDate]
-    );
+  return (
+    <SafeAreaView className="flex-1 bg-background" edges={["top"]}>
+      <ScrollView
+        className="flex-1"
+        contentContainerClassName="px-3 pb-28"
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={handleRefresh}
+            tintColor={colors.primary}
+            colors={[colors.primary]}
+          />
+        }
+      >
+        <GlobalHeader />
+        <DaySelector selectedDate={selectedDate} handleDateChange={setSelectedDate} />
 
-
-    return (
-        <SafeAreaView className="flex-1 px-2 py-1 bg-white">
-            {/* Healverse header */}
-            <GlobalHeader />
-
-
-            {/* Date Selector */}
-            <DaySelector
-                selectedDate={selectedDate}
-                handleDateChange={handleDateChange}
+        {isValidDate ? (
+          <>
+            <SectionTitle
+              icon="time-outline"
+              title="Logged foods"
+              actionLabel="See all logged foods"
+              onPress={() => router.push("/(root)/all-food-logs" as any)}
             />
+            <FoodLoggingTrackerCard date={selectedDate} />
 
-            <View className=" flex-row flex  py-2  items-center justify-between ">
-                <View className="flex flex-row gap-1  items-center  ">
-                    <Feather name="clock" size={16} />
-                    <Text className="text-font-semibold">Logged Foods</Text>
-                </View>
-                <TouchableOpacity className="">
-                    <Feather name="arrow-right-circle" size={20} color={"skyblue"} />
-                </TouchableOpacity>
-            </View>
-
-
-            <View>
-                <FoodLoggingTrackerCard date={selectedDate} />
-            </View>
-
-
-            <View className="flex items-start ">
-                <View className="my-2 flex flex-row gap-1  items-center  ">
-                    <Ionicons name="analytics" size={16} />
-                    <Text className="text-font-semibold">Nutrition Overview</Text>
-                </View>
-            </View>
-
-            {dailySummary && (
-                <NutritionGrid
-                    data={dailySummary}
-                    types={["calories", "protein", "fat", "carbs"]}
-                    size={90}
-                />
+            <SectionTitle icon="analytics-outline" title="Nutrition overview" />
+            {summary.isLoading ? (
+              <NutritionGridSkeleton />
+            ) : summary.data ? (
+              <NutritionGrid
+                data={summary.data}
+                types={["calories", "protein", "fat", "carbs"]}
+                size={90}
+              />
+            ) : (
+              <ErrorCard
+                message={summary.error?.message}
+                onPress={() => summary.refetch()}
+                className="mx-0"
+              />
             )}
 
-            {/* ai insights ...but like suggestions from ai
-                with UI matching the rest of the app
-            */}
             <CompactInsights type="health" />
+          </>
+        ) : (
+          <PlaceHolder message="There's no data for this date." />
+        )}
+      </ScrollView>
 
-            <Ping />
-        </SafeAreaView>
-    );
+      <Ping />
+    </SafeAreaView>
+  );
 };
 
 export default Tracker;

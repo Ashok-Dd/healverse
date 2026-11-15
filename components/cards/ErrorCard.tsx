@@ -1,34 +1,34 @@
-import {
-    Text,
-    TouchableOpacity,
-    View
-} from "react-native";
+import React from "react";
+import { Text, View } from "react-native";
+import { Button } from "@/components/ui/Button";
 
 interface ErrorCardProps {
-    message: string;
-    onPress?: () => void;
+  message?: string;
+  /** Shows a "Try again" button when provided. */
+  onPress?: () => void;
+  className?: string;
 }
 
-const ErrorCard = ({
-    message,
-    onPress,
-}: ErrorCardProps) => { 
-    return (
-        <View className="bg-red-100 p-4 rounded-lg m-4">
-            <Text className="text-red-600 font-semibold mb-2">⚠ Oops!</Text>
-            <Text className="text-red-500 mb-3">
-                {message || "Something went wrong while loading your dashboard."}
-            </Text>
-            {onPress && (
-                <TouchableOpacity
-                    onPress={() => onPress()}
-                    className="bg-red-500 px-4 py-2 rounded-lg"
-                >
-                    <Text className="text-white font-semibold">Retry</Text>
-                </TouchableOpacity>
-            )}
-        </View>
-    )
-};
+/** Inline error with an optional retry, for a section that failed to load. */
+const ErrorCard = ({ message, onPress, className = "" }: ErrorCardProps) => (
+  <View
+    accessibilityRole="alert"
+    className={`m-4 rounded-2xl border border-destructive/30 bg-destructive/10 p-4 ${className}`}
+  >
+    <Text className="mb-1 font-display text-base text-destructive">Something went wrong</Text>
+    <Text className="font-body text-sm text-foreground">
+      {message || "We couldn't load this. Please try again."}
+    </Text>
+    {onPress && (
+      <Button
+        title="Try again"
+        variant="soft"
+        size="sm"
+        onPress={onPress}
+        className="mt-3 self-start"
+      />
+    )}
+  </View>
+);
 
 export default ErrorCard;

@@ -1,3 +1,4 @@
+import { colors } from "@/constants/theme";
 import { MealType } from "@/types/type";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { router } from "expo-router";
@@ -18,7 +19,7 @@ const PulseButton = () => {
 
   // Calorie button pulse animation
   useEffect(() => {
-    Animated.loop(
+    const loop = Animated.loop(
       Animated.sequence([
         Animated.timing(pulseAnim, {
           toValue: 1.08,
@@ -31,8 +32,10 @@ const PulseButton = () => {
           useNativeDriver: true,
         }),
       ])
-    ).start();
-  }, []);
+    );
+    loop.start();
+    return () => loop.stop();
+  }, [pulseAnim]);
 
   // Bounce animation for button press
   const handleButtonPress = (callback: () => void) => {
@@ -65,6 +68,8 @@ const PulseButton = () => {
       >
         <TouchableOpacity
           style={styles.button}
+          accessibilityRole="button"
+          accessibilityLabel="Log a meal"
           onPress={() => {
             handleButtonPress(() => {
               const mealType = getMealType();
@@ -72,7 +77,7 @@ const PulseButton = () => {
             });
           }}
         >
-          <View className="flex-1 w-full items-center justify-center rounded-full bg-green-500">
+          <View className="flex-1 w-full items-center justify-center rounded-full bg-primary">
             <View className="flex-row relative items-center space-x-2">
               <MaterialCommunityIcons
                 name="food"
@@ -105,18 +110,18 @@ const styles = StyleSheet.create({
     width: 75,
     height: 75,
     borderRadius: 40,
-    backgroundColor: "#22c55e",
+    backgroundColor: colors.primary,
     opacity: 0.1,
   },
   button: {
     width: 60,
     height: 60,
     borderRadius: 30,
-    backgroundColor: "#22c55e",
+    backgroundColor: colors.primary,
     alignItems: "center",
     justifyContent: "center",
     elevation: 6,
-    shadowColor: "#22c55e",
+    shadowColor: colors.primary,
     shadowOffset: {
       width: 0,
       height: 3,
