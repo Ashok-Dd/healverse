@@ -33,7 +33,8 @@ interface MessageInputProps {
   showVoiceButton?: boolean;
   showImageButton?: boolean;
   showAttachmentButton?: boolean;
-  messagesLength: number;
+  /** Show suggested questions above the input (only for a new, empty chat). */
+  showSuggestions?: boolean;
 }
 
 // Constants
@@ -68,7 +69,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({
   showVoiceButton = true,
   showImageButton = true,
   showAttachmentButton = false,
-  messagesLength,
+  showSuggestions = false,
 }) => {
   const theme = useThemeColors();
   const COLORS = useMemo(() => createPalette(theme), [theme]);
@@ -266,7 +267,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({
 
   return (
     <View>
-      {messagesLength === 0 && (
+      {showSuggestions && (
         <HealthQueriesHorizontalScroll handleQuerySelect={handleQuerySelect} />
       )}
       <View

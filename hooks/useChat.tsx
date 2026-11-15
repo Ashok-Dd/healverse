@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { fetchApi } from "@/lib/fetchApi";
-import { Message, Role } from "@/types/type";
+import { Message } from "@/types/type";
 import { useCallback, useMemo, useRef, useEffect } from "react";
 import { Alert, FlatList } from "react-native";
 
@@ -16,11 +16,6 @@ interface ChatInterface {
     retryFailedMessage: () => void;
     clearError: () => void;
     flatListRef: React.RefObject<FlatList<Message> | null>;
-}
-
-interface SendMessagePayload {
-    sender: Role;
-    content: string;
 }
 
 interface UseChatOptions {
@@ -63,16 +58,6 @@ export const useChat = (
         },
         enabled: !!conversationId && isExistingConversation,
         staleTime: 1000 * 60 * 5,
-        retry: (failureCount, error) => {
-            if (
-                error?.message?.includes("401") ||
-                error?.message?.includes("403") ||
-                error?.message?.includes("500")
-            ) {
-                return false;
-            }
-            return failureCount < 3;
-        },
         refetchOnWindowFocus: false,
         refetchOnReconnect: true,
     });
