@@ -6,6 +6,7 @@ import {
 import { MealType } from "@/types/type";
 import { Feather, Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { CameraType, CameraView, useCameraPermissions } from "expo-camera";
+import * as ImageManipulator from "expo-image-manipulator";
 import * as ImagePicker from "expo-image-picker";
 import { Link, useLocalSearchParams, useRouter } from "expo-router";
 import React, { useEffect, useRef, useState } from "react";
@@ -432,29 +433,41 @@ const CalorieMeterPage: React.FC<CalorieMeterPageProps> = () => {
     setIsProcessing(false);
   };
 
-  const acceptImage = () => {
-    if (!capturedImage) {
+  const acceptImage = async () => {
+    if (!capturedImage || isProcessing) {
       Alert.alert("Error", "No image captured");
       return;
     }
 
-    const formData = new FormData();
+    try {
+      setIsProcessing(true);
 
-    // console.log("Accepting : ", capturedImage);
+      // Server accepts JPEG/PNG/WebP only (max 10 MB). Always send a ~1024px JPEG:
+      // smaller upload, fewer AI tokens, and HEIC/PNG pickers can't cause a 400.
+      const resized = await ImageManipulator.manipulateAsync(
+        capturedImage,
+        [{ resize: { width: 1024 } }],
+        { compress: 0.7, format: ImageManipulator.SaveFormat.JPEG }
+      );
 
-    // Fix: Properly format the image object for FormData
-    formData.append("image", {
-      uri: capturedImage,
-      name: "meal.jpg",
-      type: "image/jpeg",
-    } as any);
+      const formData = new FormData();
+      formData.append("image", {
+        uri: resized.uri,
+        name: "meal.jpg",
+        type: "image/jpeg",
+      } as any);
+      formData.append("mealType", (type as string).toUpperCase() as MealType);
+      formData.append("loggedAt", new Date().toISOString());
 
-    formData.append("mealType", (type as string).toUpperCase() as MealType);
-    formData.append("loggedAt", new Date().toISOString());
+      addFoodLog.mutate(formData);
 
-    addFoodLog.mutate(formData);
-
-    router.push("/(root)/(tabs)/tracker");
+      router.push("/(root)/(tabs)/tracker");
+    } catch (error) {
+      console.error(error);
+      Alert.alert("Error", "Could not prepare the image. Please try another photo.");
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
   const handleTextInputFocus = () => {
