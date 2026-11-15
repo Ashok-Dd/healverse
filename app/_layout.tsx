@@ -4,7 +4,7 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { useFonts } from "expo-font";
 import { router, Slot, SplashScreen } from "expo-router";
 import { useEffect } from "react";
-import { ActivityIndicator, Image, ImageSourcePropType, Text, View } from "react-native";
+import { ActivityIndicator, Image, ImageSourcePropType, Text, TouchableOpacity, View } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import {
   configureReanimatedLogger,
@@ -37,6 +37,7 @@ export default function RootLayout() {
 
   const checkAuth = useAuthStore((state) => state.checkAuth);
   const isInitializing = useAuthStore((state) => state.isInitializing);
+  const serverUnreachable = useAuthStore((state) => state.serverUnreachable);
 
   useEffect(() => {
     checkAuth();
@@ -51,7 +52,8 @@ export default function RootLayout() {
 
   useEffect(() => {
     if (appReady) {
-      const { isAuthenticated } = useAuthStore.getState();
+      const { isAuthenticated, serverUnreachable } = useAuthStore.getState();
+      if (serverUnreachable) return;
       if (isAuthenticated) {
         router.replace("/(root)/(tabs)/tracker");
       } else {
@@ -60,12 +62,36 @@ export default function RootLayout() {
     }
   }, [appReady]);
 
+  // Launch-time auth check could not reach the server. The token is kept, so offer a retry
+  // instead of logging the user out.
+  if (appReady && serverUnreachable) {
+    return (
+      <View className="flex-1 items-center justify-center bg-white px-8">
+        <Text className="text-xl font-jakarta-bold text-secondary-800 mb-2 text-center">
+          Can&apos;t reach the server
+        </Text>
+        <Text className="text-base font-jakarta-regular text-secondary-600 text-center mb-6">
+          Check your internet connection and try again. You&apos;re still signed in.
+        </Text>
+        <TouchableOpacity
+          className="bg-primary-500 py-4 px-10 rounded-3xl"
+          onPress={() => {
+            useAuthStore.setState({ isInitializing: true });
+            checkAuth();
+          }}
+        >
+          <Text className="text-white text-base font-jakarta-semi-bold">Try again</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
+
   if (!appReady) {
     // Matches app.json's expo-splash-screen backgroundColor, so there's no
     // color-mismatch flash in the gap between hideAsync() and Slot mounting —
     // but still shows the brand + a spinner so it doesn't read as frozen.
     return (
-      <View style={{ flex: 1, backgroundColor: "#2e7d32" }} className="items-center justify-center">
+      <View style={{ flex: 1, backgroundColor: "#0B8714" }} className="items-center justify-center">
         <Image
           source={images.logo as ImageSourcePropType}
           className="w-24 h-24 mb-4"

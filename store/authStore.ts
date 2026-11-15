@@ -1,5 +1,5 @@
 import { appTokenCache } from "@/lib/auth";
-import { fetchApi } from "@/lib/fetchApi";
+import { fetchApi, setUnauthorizedHandler } from "@/lib/fetchApi";
 import type {
   ApiError,
   AuthResponse,
@@ -7,6 +7,7 @@ import type {
   RegisterCredentials,
   User,
 } from "@/types/type";
+import { router } from "expo-router";
 import * as SecureStore from "expo-secure-store";
 import { create } from "zustand";
 import { subscribeWithSelector } from "zustand/middleware";
@@ -17,6 +18,9 @@ interface AuthState {
   isAuthenticated: boolean;
   isLoading: boolean;
   isInitializing: boolean;
+  // True when the launch-time auth check could not reach the server (offline, 5xx, 429, timeout).
+  // The token is kept in that case so the user is not logged out by a temporary problem.
+  serverUnreachable: boolean;
   error: string | null;
 
   // Actions
@@ -55,6 +59,7 @@ export const useAuthStore = create<AuthState>()(
     isAuthenticated: false,
     isLoading: false,
     isInitializing: true,
+    serverUnreachable: false,
     error: null,
 
     // Login action
@@ -121,6 +126,7 @@ export const useAuthStore = create<AuthState>()(
 
     // Check auth action (replaces refresh token)
     checkAuth: async (): Promise<boolean> => {
+      set({ serverUnreachable: false });
       try {
         const token = await getStoredToken();
 
@@ -151,14 +157,28 @@ export const useAuthStore = create<AuthState>()(
         return true;
       } catch (error) {
         console.warn("Auth check failed:", error);
-        // Clear invalid token and reset state
-        await clearTokenStorage();
-        set({
-          user: null,
-          isAuthenticated: false,
-          isInitializing: false,
-          error: null,
-        });
+        const status = (error as ApiError & { status?: number })?.status;
+
+        // Only an explicit 401/403 means the token is bad. Network errors, timeouts,
+        // 5xx and 429 are temporary: keep the token and let the user retry.
+        if (status === 401 || status === 403) {
+          await clearTokenStorage();
+          set({
+            user: null,
+            isAuthenticated: false,
+            isInitializing: false,
+            serverUnreachable: false,
+            error: null,
+          });
+        } else {
+          set({
+            user: null,
+            isAuthenticated: false,
+            isInitializing: false,
+            serverUnreachable: true,
+            error: null,
+          });
+        }
         return false;
       }
     },
@@ -201,3 +221,19 @@ export const useAuthStore = create<AuthState>()(
     },
   }))
 );
+
+// Any authenticated request that returns 401 (e.g. the 7-day token expired mid-session)
+// ends the session and sends the user to login. Ignored if already logged out, so several
+// parallel 401s only trigger one redirect.
+setUnauthorizedHandler(() => {
+  if (!useAuthStore.getState().isAuthenticated) return;
+  void clearTokenStorage().finally(() => {
+    useAuthStore.setState({
+      user: null,
+      isAuthenticated: false,
+      isLoading: false,
+      error: "Your session has expired. Please sign in again.",
+    });
+    router.replace("/(auth)/login");
+  });
+});

@@ -2,10 +2,10 @@ import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { images } from "@/constants";
 import { useAuthStore } from "@/store/authStore";
+import type { ApiError } from "@/types/type";
 import { router } from "expo-router";
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
-  Alert,
   Image,
   ImageSourcePropType,
   KeyboardAvoidingView,
@@ -30,22 +30,41 @@ const Login: React.FC = () => {
     password: "",
   });
 
+  // After a 429 (too many attempts) keep the button disabled for a while.
+  const [cooldown, setCooldown] = useState(0);
+  const cooldownTimer = useRef<ReturnType<typeof setInterval> | null>(null);
+  const [formError, setFormError] = useState<string | null>(null);
+
+  useEffect(
+    () => () => {
+      if (cooldownTimer.current) clearInterval(cooldownTimer.current);
+    },
+    []
+  );
+
+  const startCooldown = (seconds: number) => {
+    if (cooldownTimer.current) clearInterval(cooldownTimer.current);
+    setCooldown(seconds);
+    cooldownTimer.current = setInterval(() => {
+      setCooldown((c) => {
+        if (c <= 1) {
+          if (cooldownTimer.current) clearInterval(cooldownTimer.current);
+          return 0;
+        }
+        return c - 1;
+      });
+    }, 1000);
+  };
+
   const updateFormData = (field: keyof UserFormData, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
   const handleLogin = async () => {
-    try {
-      // Validate form
-      // const validationError = validateUserForm(
-      //   formData.username,
-      //   formData.password
-      // );
-      // if (validationError) {
-      //   Alert.alert("Validation Error", validationError);
-      //   return;
-      // }
+    if (cooldown > 0) return;
+    setFormError(null);
 
+    try {
       await login({
         username: formData.username.trim(),
         password: formData.password.trim(),
@@ -53,13 +72,16 @@ const Login: React.FC = () => {
 
       router.push("/(root)/(tabs)/tracker" as any);
     } catch (e) {
-      console.log(e);
-      Alert.alert(
-        "Login Failed",
-        error || "Please check your credentials and try again."
-      );
+      // Server message is already user-friendly for 400/401/409/429; branch on status, not text.
+      const status = (e as { status?: number })?.status;
+      const message =
+        (e as ApiError & Error)?.message ||
+        "Please check your credentials and try again.";
+      setFormError(message);
+      if (status === 429) startCooldown(30);
     }
   };
+
   return (
     <>
       <StatusBar barStyle="dark-content" backgroundColor="#ffffff" />
@@ -133,19 +155,25 @@ const Login: React.FC = () => {
                   onSubmitEditing={handleLogin}
                 />
 
-                {error && (
+                {(formError || error) && (
                   <View className="bg-red-50 border border-red-200 rounded-xl p-3 mb-4">
                     <Text className="text-red-600 text-sm font-jakarta-medium text-center">
-                      {error}
+                      {formError || error}
                     </Text>
                   </View>
                 )}
 
                 <View className="mt-6">
                   <Button
-                    title={isLoading ? "Signing in..." : "Sign In"}
+                    title={
+                      cooldown > 0
+                        ? `Try again in ${cooldown}s`
+                        : isLoading
+                          ? "Signing in..."
+                          : "Sign In"
+                    }
                     onPress={handleLogin}
-                    disabled={isLoading}
+                    disabled={isLoading || cooldown > 0}
                     variant="primary"
                     className="bg-primary-500 py-4 shadow-medium"
                     textClassName="text-white font-jakarta-semi-bold text-lg"

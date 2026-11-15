@@ -22,7 +22,37 @@ interface FetchApiOptions extends Omit<RequestInit, 'method' | 'body' | 'headers
 
 
 
-class ApiError extends Error {
+// Endpoints that call the AI provider: typically 5-20 s, so they get a longer default timeout.
+const AI_ENDPOINT_PATTERN =
+    /^\/api\/(diet-plans\/generate|food-logs\/log\/|conversations\/[^/]+\/messages)/;
+const DEFAULT_TIMEOUT_MS = 30000;
+const AI_TIMEOUT_MS = 60000;
+
+// Registered by authStore (avoids a circular import). Called when an authenticated
+// request comes back 401, i.e. the token is missing, expired or invalid.
+let unauthorizedHandler: (() => void) | null = null;
+export const setUnauthorizedHandler = (handler: (() => void) | null): void => {
+    unauthorizedHandler = handler;
+};
+
+// Friendly text for statuses where the server body may be missing or too technical.
+const friendlyMessage = (status: number, serverMessage?: string): string => {
+    if (status === 429) {
+        return serverMessage || "Too many requests. Please wait a moment and try again.";
+    }
+    if (status === 502) {
+        return serverMessage || "The AI service is busy right now. Please try again in a moment.";
+    }
+    if (status === 410) {
+        return serverMessage || "This feature is currently unavailable.";
+    }
+    if (status >= 500) {
+        return "Something went wrong on our side. Please try again.";
+    }
+    return serverMessage || `HTTP ${status}`;
+};
+
+export class ApiError extends Error {
     public readonly status: number;
     public readonly response?: any;
 
@@ -89,7 +119,7 @@ export const fetchApi = async <T = unknown>(
         requiresAuth = false,
         isRefreshRequest = false,
         suppressToasts = true,
-        timeout = 30000, // 30 seconds default
+        timeout = AI_ENDPOINT_PATTERN.test(endpoint) ? AI_TIMEOUT_MS : DEFAULT_TIMEOUT_MS,
         ...restOptions
     } = options;
 
@@ -145,7 +175,12 @@ export const fetchApi = async <T = unknown>(
 
         // Handle HTTP errors
         if (!response.ok) {
-            const errorMessage = parsedResponse.message || `HTTP ${response.status}: ${response.statusText}`;
+            // Any authenticated call that gets 401 means the session is over.
+            if (response.status === 401 && requiresAuth) {
+                unauthorizedHandler?.();
+            }
+
+            const errorMessage = friendlyMessage(response.status, parsedResponse.message);
             
             if (!suppressToasts) {
                 showToast(errorMessage, { type: "error" });
@@ -184,8 +219,13 @@ export const fetchApi = async <T = unknown>(
             throw error; // Re-throw API errors as-is
         }
 
-        const isNetworkError = error instanceof TypeError || (error as any)?.message === 'Request timeout';
-        const errorMessage = isNetworkError ? "Network error occurred" : "An unexpected error occurred";
+        const isTimeout = (error as any)?.message === 'Request timeout';
+        const isNetworkError = error instanceof TypeError || isTimeout;
+        const errorMessage = isTimeout
+            ? "The request took too long. Please try again."
+            : isNetworkError
+                ? "Can't reach the server. Check your connection and try again."
+                : "An unexpected error occurred";
 
         console.error("[fetchApi] Error:", error);
         
@@ -194,7 +234,7 @@ export const fetchApi = async <T = unknown>(
         }
 
         throw new ApiError(
-            error instanceof Error ? error.message : errorMessage,
+            isNetworkError ? errorMessage : error instanceof Error ? error.message : errorMessage,
             isNetworkError ? 0 : 500,
             error
         );
