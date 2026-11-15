@@ -46,7 +46,8 @@ Reference for the app (`healverse-client`). Written 2026-11-15 against server PR
 |---|---|---|
 | 1 | Point the app at the real server through an env variable, not the LAN IP in `constants/api.ts` | The release build must not contain `192.168.x.x`. Live server: `http://51.20.149.43` (port 80, no `:8080`). |
 | 2 | Allow HTTP for that server, **or** get a domain + HTTPS first (recommended) | Android only allows plain HTTP in **debug** builds (`android/app/src/debug/AndroidManifest.xml` sets `usesCleartextTraffic`). A release APK calling `http://` fails with "Network request failed". See section 4. |
-| 3 | Decide the final **package name** now (`com.anonymous.RN` is the template placeholder) | It identifies the app forever (updates, Play Store, Firebase). Changing it later = a different app. See section 3. |
+| 3 | Decide the final **package name** now (`com.anonymous.RN` is the template placeholder) |npx expo start --dev-client --tunnel -c
+ It identifies the app forever (updates, Play Store, Firebase). Changing it later = a different app. See section 3. |
 | 4 | Hide or handle the **voice assistant** (server now returns 410) | `components/chat/ChatScreen.tsx` renders `<VoiceModel/>`. See section 2, item 4. |
 | 5 | Stop `checkAuth` logging users out on any hiccup | `store/authStore.ts`: every failure clears the token. See section 2, item 2. |
 | 6 | Create a **release signing key** (or let EAS manage it) | The Android release build is currently signed with the debug keystore. See section 5. |

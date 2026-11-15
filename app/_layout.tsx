@@ -17,7 +17,7 @@ import {
 // Optional: global styles for tailwind or other CSS-in-JS
 import ErrorBoundary from "@/components/providers/ErrorBoundary";
 import { OutboxSync } from "@/components/providers/OutboxSync";
-import { QueryCachePersistence } from "@/components/providers/QueryCachePersistence";
+import { useQueryCachePersistence } from "@/components/providers/QueryCachePersistence";
 import { Button } from "@/components/ui/Button";
 import { NetworkBanner } from "@/components/ui/NetworkBanner";
 import { useThemeColors } from "@/constants/theme";
@@ -63,7 +63,9 @@ export default function RootLayout() {
   }, [hydrateTheme, checkAuth]);
 
   const themeHydrated = useThemeStore((s) => s.hydrated);
-  const appReady = fontsLoaded && !isInitializing && themeHydrated;
+  // Held until the saved cache is restored, so the first screen already has its data.
+  const cacheRestored = useQueryCachePersistence();
+  const appReady = fontsLoaded && !isInitializing && themeHydrated && cacheRestored;
 
   useEffect(() => {
     if (fontError) throw fontError;
@@ -123,17 +125,15 @@ export default function RootLayout() {
     <GestureHandlerRootView style={{ flex: 1 }}>
       <ErrorBoundary>
         <QueryClientProvider client={getQueryClient()}>
-          <QueryCachePersistence>
-            <OutboxSync />
-            <NotificationProvider>
-              <NavigationThemeProvider>
-                <View className="flex-1 bg-background">
-                  <Slot />
-                  <NetworkBanner />
-                </View>
-              </NavigationThemeProvider>
-            </NotificationProvider>
-          </QueryCachePersistence>
+          <OutboxSync />
+          <NotificationProvider>
+            <NavigationThemeProvider>
+              <View className="flex-1 bg-background">
+                <Slot />
+                <NetworkBanner />
+              </View>
+            </NavigationThemeProvider>
+          </NotificationProvider>
         </QueryClientProvider>
       </ErrorBoundary>
     </GestureHandlerRootView>

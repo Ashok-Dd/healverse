@@ -19,7 +19,11 @@ interface ChatMessagesProps {
 const formatTime = (timestamp: string) =>
   new Date(timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
 
-const keyExtractor = (item: Message, index: number) => String(item.id ?? index);
+// Server ids are unique and positive. Messages made on this device have negative ids that are
+// only unique within their own kind, and older saved chats may contain repeats, so the position
+// is added for those. The list only grows at the end, so positions of existing messages hold.
+const keyExtractor = (item: Message, index: number) =>
+  item.id > 0 ? String(item.id) : `${item.outboxStatus ? "queued" : "local"}-${item.id}-${index}`;
 
 const ThinkingBubble = () => {
   const colors = useThemeColors();

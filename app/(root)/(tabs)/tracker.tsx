@@ -95,7 +95,7 @@ const Tracker = () => {
               icon="time-outline"
               title="Logged foods"
               actionLabel="See all logged foods"
-              onPress={() => router.push("/(root)/all-food-logs" as any)}
+              onPress={() => router.push(`/(root)/all-food-logs?date=${selectedDate}` as any)}
             />
             <FoodLoggingTrackerCard date={selectedDate} />
 

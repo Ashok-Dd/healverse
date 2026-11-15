@@ -1,5 +1,5 @@
 import { dayOf } from "@/lib/day";
-import { healthQueryKeys } from "@/store/healthStore";
+import { healthQueryKeys } from "@/lib/healthQueryKeys";
 import type { DailySummary, ExerciseLog, FoodItem, FoodLog, WaterLog } from "@/types/type";
 import type { QueryClient } from "@tanstack/react-query";
 

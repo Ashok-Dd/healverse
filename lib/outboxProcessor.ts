@@ -22,8 +22,11 @@ async function sendChatMessage(entry: ChatEntry, queryClient: QueryClient): Prom
     headers: idempotencyHeader(entry),
   });
   // The server stores the user's message too; show it (the next refetch swaps in the real one).
+  // This copy stays in the cache, so its id must never repeat. `entry.seq` restarts at 1 whenever
+  // the queue is empty, which made every second message share an id (and a list key) with an
+  // earlier one. Negative ids cannot clash with the server's positive ones.
   const sent: Message = {
-    id: -entry.seq,
+    id: -Date.now(),
     conversationId,
     content,
     sender: "USER",
