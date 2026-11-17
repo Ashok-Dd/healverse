@@ -110,7 +110,7 @@ const Tracker = () => {
               />
             ) : (
               <ErrorCard
-                message={summary.error?.message}
+                message={summary.error?.message ?? "Your summary is not ready yet. Try again in a moment."}
                 onPress={() => summary.refetch()}
                 className="mx-0"
               />

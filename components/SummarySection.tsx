@@ -23,7 +23,7 @@ const SummarySection = ({ date }: { date: string }) => {
 
   if (isLoading) return <LoggingSkeleton />;
   if (error || !summary) {
-    return <ErrorCard message={error?.message} onPress={() => refetch()} className="mx-0" />;
+    return <ErrorCard message={error?.message ?? "Your summary is not ready yet. Try again in a moment."} onPress={() => refetch()} className="mx-0" />;
   }
 
   return (

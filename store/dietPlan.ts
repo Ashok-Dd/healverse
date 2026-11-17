@@ -1,4 +1,5 @@
 import { fetchApi } from "@/lib/fetchApi";
+import { useToday } from "@/lib/today";
 import { dietPlanApi } from "@/services/api";
 import { useAuthStore } from "@/store/authStore";
 import { DietPlan, Meal, MealType } from "@/types/type";
@@ -126,16 +127,16 @@ export const useDateSelectorForDietplan = (
   options: UseDateSelectorOptions = {}
 ) => {
   const queryClient = useQueryClient();
-  const currentDate = getCurrentDate();
-  const [selectedDate, setSelectedDate] = useState(
-    options.initialDate || currentDate
-  );
+  const currentDate = useToday();
+  // Only a day the user picked is remembered. Otherwise the selection follows "today".
+  const [pickedDate, setPickedDate] = useState<string | null>(options.initialDate ?? null);
+  const selectedDate = pickedDate ?? currentDate;
 
   const selectDate = useCallback(
     (date: string | null | undefined) => {
       // Safely handle date input
       const safeDate = date && typeof date === "string" ? date : currentDate;
-      setSelectedDate(safeDate);
+      setPickedDate(safeDate === currentDate ? null : safeDate);
 
       // Prefetch data for the selected date if valid and autoFetch is enabled
       if (options.autoFetch !== false && isValidDateForData(safeDate)) {
