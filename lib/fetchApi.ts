@@ -23,8 +23,10 @@ interface FetchApiOptions extends Omit<RequestInit, 'method' | 'body' | 'headers
 
 
 // Endpoints that call the AI provider: typically 5-20 s, so they get a longer default timeout.
+// The dashboard summary is one of them: for a day without a plan the server generates it first
+// (a new user's very first request), which can exceed the default timeout.
 const AI_ENDPOINT_PATTERN =
-    /^\/api\/(diet-plans\/generate|food-logs\/log\/|conversations\/[^/]+\/messages)/;
+    /^\/api\/(diet-plans\/generate|food-logs\/log\/|conversations\/[^/]+\/messages|dashboard\/summary\/)/;
 const DEFAULT_TIMEOUT_MS = 30000;
 const AI_TIMEOUT_MS = 60000;
 

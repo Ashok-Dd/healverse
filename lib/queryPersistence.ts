@@ -45,14 +45,22 @@ const cancelPendingWrite = (): void => {
  * same device can never read this cache, even if a wipe were missed.
  * Writes are debounced: a burst of cache updates produces one write.
  */
-export function createCachePersister(userId: number): Persister {
+export function createCachePersister(userId: number): Persister & { dispose: () => void } {
   const storageKey = `query-cache-user-${userId}`;
+  let disposed = false;
 
   return {
+    /** After this, nothing more is written, so a session that has ended cannot leave data behind. */
+    dispose: () => {
+      disposed = true;
+      cancelPendingWrite();
+    },
     persistClient: (client: PersistedClient) => {
+      if (disposed) return;
       cancelPendingWrite();
       pendingWrite = setTimeout(() => {
         pendingWrite = null;
+        if (disposed) return;
         try {
           getCacheStorage().set(storageKey, JSON.stringify(client));
         } catch {

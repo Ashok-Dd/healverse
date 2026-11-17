@@ -13,7 +13,11 @@ const RETRY_MAX_DELAY_MS = 5 * 60_000;
 
 const idempotencyHeader = (entry: OutboxEntry) => ({ "Idempotency-Key": entry.id });
 
-async function sendChatMessage(entry: ChatEntry, queryClient: QueryClient): Promise<void> {
+async function sendChatMessage(
+  entry: ChatEntry,
+  queryClient: QueryClient,
+  isCurrent: () => boolean
+): Promise<void> {
   const { conversationId, content } = entry.payload;
   const reply = await fetchApi<Message>(`/api/conversations/${conversationId}/messages`, {
     method: "POST",
@@ -21,6 +25,7 @@ async function sendChatMessage(entry: ChatEntry, queryClient: QueryClient): Prom
     body: { sender: "USER", content },
     headers: idempotencyHeader(entry),
   });
+  if (!isCurrent()) return;
   // The server stores the user's message too; show it (the next refetch swaps in the real one).
   // This copy stays in the cache, so its id must never repeat. `entry.seq` restarts at 1 whenever
   // the queue is empty, which made every second message share an id (and a list key) with an
@@ -40,7 +45,17 @@ async function sendChatMessage(entry: ChatEntry, queryClient: QueryClient): Prom
   void queryClient.invalidateQueries({ queryKey: ["conversations"] });
 }
 
-async function sendEntry(entry: OutboxEntry, queryClient: QueryClient): Promise<void> {
+/**
+ * Uploads one entry and puts the confirmed result into the cache. `isCurrent` says whether the
+ * session that queued the entry is still the active one: the upload can finish after a sign-out
+ * (or after another user signed in), and its response must then be dropped, never written into
+ * the new session's cache.
+ */
+async function sendEntry(
+  entry: OutboxEntry,
+  queryClient: QueryClient,
+  isCurrent: () => boolean
+): Promise<void> {
   switch (entry.kind) {
     case "water": {
       const log = await fetchApi<WaterLog>("/api/water-logs/log", {
@@ -49,7 +64,7 @@ async function sendEntry(entry: OutboxEntry, queryClient: QueryClient): Promise<
         body: entry.payload,
         headers: idempotencyHeader(entry),
       });
-      applyWaterLog(queryClient, log);
+      if (isCurrent()) applyWaterLog(queryClient, log);
       break;
     }
     case "exercise": {
@@ -59,7 +74,7 @@ async function sendEntry(entry: OutboxEntry, queryClient: QueryClient): Promise<
         body: entry.payload,
         headers: idempotencyHeader(entry),
       });
-      applyExerciseLog(queryClient, log);
+      if (isCurrent()) applyExerciseLog(queryClient, log);
       break;
     }
     case "food-photo": {
@@ -77,14 +92,14 @@ async function sendEntry(entry: OutboxEntry, queryClient: QueryClient): Promise<
         body: formData,
         headers: idempotencyHeader(entry),
       });
-      applyFoodLog(queryClient, log);
+      if (isCurrent()) applyFoodLog(queryClient, log);
       break;
     }
     case "chat":
-      await sendChatMessage(entry, queryClient);
+      await sendChatMessage(entry, queryClient, isCurrent);
       break;
   }
-  void queryClient.invalidateQueries({ queryKey: ["gamification", "summary"] });
+  if (isCurrent()) void queryClient.invalidateQueries({ queryKey: ["gamification", "summary"] });
 }
 
 const nextMacrotask = (): Promise<void> => new Promise((resolve) => setTimeout(resolve, 0));
@@ -132,8 +147,11 @@ export async function processOutbox(queryClient: QueryClient): Promise<void> {
       if (!entry) return;
 
       store().update(entry.id, { status: "syncing" });
+      const sessionUserId = store().userId;
+      const isCurrent = () => store().userId === sessionUserId;
       try {
-        await sendEntry(entry, queryClient);
+        await sendEntry(entry, queryClient, isCurrent);
+        if (!isCurrent()) return;
         // Let the cache listeners render the confirmed log first, so the queued copy is not
         // dropped a moment before the real one appears.
         await nextMacrotask();

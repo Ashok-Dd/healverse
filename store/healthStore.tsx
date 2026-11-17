@@ -20,6 +20,7 @@ import {
   waterLogFromEntry,
 } from "@/lib/outboxOverlay";
 import { withPausedAsLoading } from "@/lib/queryStatus";
+import { useToday } from "@/lib/today";
 import { getCurrentDate, isValidDateForData } from "./dietPlan";
 
 import { healthQueryKeys } from "@/lib/healthQueryKeys";
@@ -79,16 +80,16 @@ export const useDateSelectorForHealthStore = (
   options: UseDateSelectorOptions = {}
 ) => {
   const queryClient = useQueryClient();
-  const currentDate = getCurrentDate();
-  const [selectedDate, setSelectedDate] = useState(
-    options.initialDate || currentDate
-  );
+  const currentDate = useToday();
+  // Only a day the user picked is remembered. Otherwise the selection follows "today".
+  const [pickedDate, setPickedDate] = useState<string | null>(options.initialDate ?? null);
+  const selectedDate = pickedDate ?? currentDate;
 
   const selectDate = useCallback(
     (date: string | null | undefined) => {
       // Safely handle date input
       const safeDate = date && typeof date === "string" ? date : currentDate;
-      setSelectedDate(safeDate);
+      setPickedDate(safeDate === currentDate ? null : safeDate);
 
       // Prefetch data for the selected date if valid and autoFetch is enabled
       if (options.autoFetch !== false && isValidDateForData(safeDate)) {
