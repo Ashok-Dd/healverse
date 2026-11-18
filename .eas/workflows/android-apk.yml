@@ -1,0 +1,19 @@
+name: Android APK
+
+# Builds the installable APK on EAS with the `preview` profile from eas.json. The build is
+# installed from its page on expo.dev (share the link with testers); nothing is stored in GitHub.
+#
+# Triggers:
+#   - pushing a tag like v1.0.1 (needs the Expo GitHub app connected to this repository);
+#   - by hand from a terminal: npx eas-cli workflow:run .eas/workflows/android-apk.yml
+# Tag only a commit on main whose app.json version matches the tag.
+on:
+  push:
+    tags: ['v*']
+
+jobs:
+  build_android:
+    type: build
+    params:
+      platform: android
+      profile: preview
