@@ -1,5 +1,6 @@
 import { fetchApi } from "@/lib/fetchApi";
-import { getCurrentDate, useToday } from "@/lib/today";
+import { dayOf } from "@/lib/day";
+import { formatLocalDate, getCurrentDate, shiftDate, useToday } from "@/lib/today";
 import { dietPlanApi } from "@/services/api";
 import { useAuthStore } from "@/store/authStore";
 import { DietPlan, Meal, MealType } from "@/types/type";
@@ -26,8 +27,7 @@ export const isValidDateForData = (date: string | undefined | null): boolean => 
   const createdAt = useAuthStore.getState().user?.createdAt as string | Date | undefined;
   if (!createdAt) return false;
 
-  const createdDate =
-    typeof createdAt === "string" ? createdAt.split("T")[0] : createdAt.toISOString().split("T")[0];
+  const createdDate = typeof createdAt === "string" ? dayOf(createdAt) : formatLocalDate(createdAt);
 
   return date >= createdDate && date <= getCurrentDate();
 };
@@ -147,15 +147,11 @@ export const useDateSelectorForDietplan = (
   }, [currentDate, selectDate]);
 
   const selectPreviousDay = useCallback(() => {
-    const prevDate = new Date(selectedDate);
-    prevDate.setDate(prevDate.getDate() - 1);
-    selectDate(prevDate.toISOString().split("T")[0]);
+    selectDate(shiftDate(selectedDate, -1));
   }, [selectedDate, selectDate]);
 
   const selectNextDay = useCallback(() => {
-    const nextDate = new Date(selectedDate);
-    nextDate.setDate(nextDate.getDate() + 1);
-    selectDate(nextDate.toISOString().split("T")[0]);
+    selectDate(shiftDate(selectedDate, 1));
   }, [selectedDate, selectDate]);
 
   const isToday = selectedDate === currentDate;

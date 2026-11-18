@@ -1,4 +1,5 @@
 import NutrientBadge from "@/components/ui/NutritionBadge";
+import { parseServerTime } from "@/lib/day";
 import { calculateTotals } from "@/lib/utils";
 import { FoodItem } from "@/types/type";
 import React, { memo } from "react";
@@ -30,7 +31,7 @@ const FoodLogCard = memo(({ foodLog }: FoodLogCardProps) => {
                     {foodLog.mealName || `${foodLog.mealType || 'Meal'}`}
                 </Text>
                 <Text className="text-xs text-muted-foreground">
-                    {new Date(foodLog.loggedAt).toLocaleString()}
+                    {parseServerTime(foodLog.loggedAt).toLocaleString()}
                 </Text>
 
                 <View className="flex-row items-center gap-1">
