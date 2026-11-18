@@ -5,6 +5,7 @@ import ExerciseLogs from "@/components/ExerciseLogs";
 import FoodLogs from "@/components/FoodLogs";
 import GlobalHeader from "@/components/headers/GlobalHeader";
 import PlaceHolder from "@/components/PlaceHolder";
+import { images } from "@/constants";
 import SummarySection from "@/components/SummarySection";
 import WaterLogs from "@/components/WaterLogs";
 import { useThemeColors } from "@/constants/theme";
@@ -64,7 +65,7 @@ export default function Logging() {
               <FoodLogs date={selectedDate} />
             </>
           ) : (
-            <PlaceHolder message="There's no data for this date." />
+            <PlaceHolder image={images.dietPlanUnavailable} message="There's no data for this date." />
           )}
         </ScrollView>
       </SafeAreaView>

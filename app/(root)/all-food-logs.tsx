@@ -5,6 +5,7 @@ import DaySelector from "@/components/DaySelector";
 import { BackHeader } from "@/components/headers/BackHeader";
 import { OutboxFailures } from "@/components/OutboxFailures";
 import PlaceHolder from "@/components/PlaceHolder";
+import { images } from "@/constants";
 import { useThemeColors } from "@/constants/theme";
 import { useOutboxEntries } from "@/hooks/useOutboxEntries";
 import { dayOf } from "@/lib/day";
@@ -52,7 +53,7 @@ export default function AllFoodLogs() {
   }, [queryClient, selectedDate]);
 
   const renderContent = () => {
-    if (!isValidDate) return <PlaceHolder message="There's no data for this date." />;
+    if (!isValidDate) return <PlaceHolder image={images.dietPlanUnavailable} message="There's no data for this date." />;
 
     if (queuedPhotos.length > 0 || logs.length > 0) {
       return (

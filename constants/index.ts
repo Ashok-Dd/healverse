@@ -1,4 +1,7 @@
 import male from "@/assets/images/boy.png";
+import dietPlanNonePast from "@/assets/images/diet-plan-none-past.png";
+import dietPlanStart from "@/assets/images/diet-plan-start.png";
+import dietPlanUnavailable from "@/assets/images/diet-plan-unavailable.png";
 import emptyState from "@/assets/images/empty-state.png";
 import female from "@/assets/images/girl.png";
 import logo from "@/assets/images/logo.png";
@@ -16,6 +19,9 @@ export const images : Record<string , ImageSourcePropType> = {
     female,
     logo,
     emptyState,
+    dietPlanStart,
+    dietPlanNonePast,
+    dietPlanUnavailable,
     wave,
     welcomeHero,
 };

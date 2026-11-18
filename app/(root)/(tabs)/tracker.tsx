@@ -3,13 +3,17 @@ import Ping from "@/components/Calorie-counter-button";
 import { NutritionGrid } from "@/components/CalorieProgress";
 import ErrorCard from "@/components/cards/ErrorCard";
 import FoodLoggingTrackerCard from "@/components/cards/FoodLoggingTrackerCard";
+import PlanPromptBanner from "@/components/cards/PlanPromptBanner";
 import CompactInsights from "@/components/CompactInsights";
 import DaySelector from "@/components/DaySelector";
 import GlobalHeader from "@/components/headers/GlobalHeader";
 import PlaceHolder from "@/components/PlaceHolder";
+import { images } from "@/constants";
 import { NutritionGridSkeleton } from "@/components/skeleton/NutritionGridSkeleton";
 import { useThemeColors } from "@/constants/theme";
 import { useSummaryData } from "@/hooks/useSummaryData";
+import { useToday } from "@/lib/today";
+import { useDietPlan } from "@/store/dietPlan";
 import { healthQueryKeys, useDateSelectorForHealthStore } from "@/store/healthStore";
 import { Ionicons } from "@expo/vector-icons";
 import { useQueryClient } from "@tanstack/react-query";
@@ -55,6 +59,9 @@ const Tracker = () => {
   const queryClient = useQueryClient();
   const { selectedDate, setSelectedDate, isValidDate } = useDateSelectorForHealthStore();
   const summary = useSummaryData(selectedDate);
+  const today = useToday();
+  const plan = useDietPlan(selectedDate);
+  const showPlanPrompt = selectedDate === today && plan.isSuccess && plan.dietPlan === null;
   const [refreshing, setRefreshing] = useState(false);
 
   // Insights come from a slow AI call with a long cache time, so pulling down does not wait for them.
@@ -100,6 +107,7 @@ const Tracker = () => {
             <FoodLoggingTrackerCard date={selectedDate} />
 
             <SectionTitle icon="analytics-outline" title="Nutrition overview" />
+            {showPlanPrompt && <PlanPromptBanner />}
             {summary.isLoading ? (
               <NutritionGridSkeleton />
             ) : summary.data ? (
@@ -119,7 +127,7 @@ const Tracker = () => {
             <CompactInsights type="health" />
           </>
         ) : (
-          <PlaceHolder message="There's no data for this date." />
+          <PlaceHolder image={images.dietPlanUnavailable} message="There's no data for this date." />
         )}
       </ScrollView>
 
