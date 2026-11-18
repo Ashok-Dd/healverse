@@ -370,6 +370,8 @@ export interface RegisterCredentials {
     password: string;
   };
   profile: Omit<UserProfile, "id" | "createdAt" | "updatedAt">;
+  /** IANA id of the device's time zone, so the first requests already use the right day. */
+  timeZone?: string;
 }
 
 export interface AuthResponse {

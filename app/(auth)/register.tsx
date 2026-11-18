@@ -5,6 +5,7 @@ import { ACTIVITY_LABELS } from "@/constants/onboarding";
 import { useThemeColors } from "@/constants/theme";
 import { useLocation, type RegionData } from "@/hooks/useLocation";
 import { formatFeetInches } from "@/lib/body";
+import { getDeviceTimeZone } from "@/lib/timeZone";
 import { useAuthStore } from "@/store/authStore";
 import { useUserProfileStore } from "@/store/userProfile";
 import type { ApiError } from "@/types/type";
@@ -55,6 +56,7 @@ export default function Register() {
   const handleSubmit = async () => {
     setFormError(null);
     const address = formatAddress(region);
+    const timeZone = getDeviceTimeZone();
 
     try {
       await register({
@@ -73,6 +75,7 @@ export default function Register() {
           otherHealthConditionDescription: profile.otherHealthConditionDescription,
           ...(address ? { address } : {}),
         },
+        ...(timeZone ? { timeZone } : {}),
       });
 
       // The password must not linger in memory once the account exists.
