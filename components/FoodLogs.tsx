@@ -1,12 +1,11 @@
 import LogCard from "@/components/LogCard";
+import InlineError from "@/components/ui/InlineError";
 import { useFoodLogs } from "@/store/healthStore";
 import type { MealType } from "@/types/type";
 import { router } from "expo-router";
 import React, { useMemo } from "react";
 import { View } from "react-native";
-import ErrorCard from "./cards/ErrorCard";
 import { FoodLogHolder } from "./LogHolders";
-import { SkeletonLogCard } from "./skeleton/LoggingSkeleton";
 
 const MEALS: { type: MealType; title: string; description: string; action: string }[] = [
   { type: "BREAKFAST", title: "Breakfast", description: "Start your day with a log.", action: "Log breakfast" },
@@ -16,7 +15,7 @@ const MEALS: { type: MealType; title: string; description: string; action: strin
 ];
 
 const FoodLogs = ({ date }: { date: string }) => {
-  const { data, isLoading, isError, error, refetch } = useFoodLogs.ByDate(date);
+  const { data, isLoading, isError, refetch } = useFoodLogs.ByDate(date);
 
   // One pass instead of filtering the list four times on every render.
   const byMeal = useMemo(() => {
@@ -30,8 +29,14 @@ const FoodLogs = ({ date }: { date: string }) => {
     return groups;
   }, [data]);
 
-  if (isLoading) return <SkeletonLogCard />;
-  if (isError) return <ErrorCard message={error?.message} onPress={() => refetch()} className="mx-0" />;
+  // One message for all four meals instead of four identical errors; Food in the quick-add row still works.
+  if (isError && !data) {
+    return (
+      <View className="mb-3 rounded-3xl border border-border bg-card p-4">
+        <InlineError message="Couldn't load your meals." onRetry={() => refetch()} />
+      </View>
+    );
+  }
 
   return (
     <View>
@@ -46,6 +51,7 @@ const FoodLogs = ({ date }: { date: string }) => {
           items={byMeal[meal.type]}
           getKey={(log) => log.id}
           renderItem={(log) => <FoodLogHolder log={log} />}
+          loading={isLoading}
         />
       ))}
     </View>
