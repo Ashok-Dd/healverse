@@ -1,4 +1,6 @@
 import { ExerciseModal } from "@/components/models/ExerciseModel";
+import { SyncBadge } from "@/components/ui/SyncBadge";
+import { useIsOnline } from "@/lib/network";
 import {
     useDateSelectorForHealthStore, useExerciseLogMutations,
     useExerciseLogs,
@@ -15,6 +17,7 @@ import {
 } from "react-native";
 
 const AllLoggedExercises: React.FC = () => {
+    const isOnline = useIsOnline();
     const { selectedDate } = useDateSelectorForHealthStore();
     const { isLoading, data: loggedExercises } = useExerciseLogs.ByDate(selectedDate);
 
@@ -117,14 +120,17 @@ const AllLoggedExercises: React.FC = () => {
                                 -{exercise.caloriesBurned}kcal
                             </Text>
                         </View>
+                        <SyncBadge status={exercise.outboxStatus} />
                     </View>
 
-                    <TouchableOpacity
-                        className="p-2"
-                        onPress={(event) => handleMenuPress(exercise.id, event)}
-                    >
-                        <Ionicons name="ellipsis-vertical" size={20} className="text-muted-foreground" />
-                    </TouchableOpacity>
+                    {!exercise.outboxStatus && (
+                        <TouchableOpacity
+                            className="p-2"
+                            onPress={(event) => handleMenuPress(exercise.id, event)}
+                        >
+                            <Ionicons name="ellipsis-vertical" size={20} className="text-muted-foreground" />
+                        </TouchableOpacity>
+                    )}
                 </View>
             </View>
         </View>
@@ -167,19 +173,25 @@ const AllLoggedExercises: React.FC = () => {
                     >
                         <TouchableOpacity
                             className="flex-row items-center px-4 py-3"
+                            disabled={!isOnline}
                             onPress={handleEdit}
                         >
-                            <Text className="text-base text-foreground font-normal">Edit</Text>
+                            <Text className={`text-base font-normal ${isOnline ? "text-foreground" : "text-muted-foreground"}`}>Edit</Text>
                         </TouchableOpacity>
 
                         <View className="h-px bg-border mx-0" />
 
                         <TouchableOpacity
                             className="flex-row items-center px-4 py-3"
+                            disabled={!isOnline}
                             onPress={handleDelete}
                         >
-                            <Text className="text-base text-foreground font-normal">Delete</Text>
+                            <Text className={`text-base font-normal ${isOnline ? "text-foreground" : "text-muted-foreground"}`}>Delete</Text>
                         </TouchableOpacity>
+
+                        {!isOnline && (
+                            <Text className="px-4 pb-2 text-xs text-muted-foreground">Needs internet</Text>
+                        )}
                     </View>
                 </Pressable>
             </Modal>

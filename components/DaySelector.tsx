@@ -13,7 +13,7 @@ interface DaySelectorProps {
   showButton?: boolean;
 }
 
-// Dates are exchanged as UTC `YYYY-MM-DD` strings; see getCurrentDate in store/dietPlan.ts.
+// Dates are exchanged as UTC `YYYY-MM-DD` strings; see getCurrentDate in lib/today.ts.
 const toDateString = (date: Date) => date.toISOString().split("T")[0];
 
 const startOfWeek = () => {

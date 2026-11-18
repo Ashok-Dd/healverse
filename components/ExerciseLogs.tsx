@@ -1,16 +1,11 @@
 import { useExerciseLogs } from "@/store/healthStore";
 import { router } from "expo-router";
 import React from "react";
-import ErrorCard from "./cards/ErrorCard";
 import LogCard from "./LogCard";
 import { ExerciseLogHolder } from "./LogHolders";
-import { SkeletonLogCard } from "./skeleton/LoggingSkeleton";
 
 const ExerciseLogs = ({ date }: { date: string }) => {
-  const { data, isLoading, error, refetch } = useExerciseLogs.ByDate(date);
-
-  if (isLoading) return <SkeletonLogCard />;
-  if (error) return <ErrorCard message={error.message} onPress={() => refetch()} className="mx-0" />;
+  const { data, isLoading, isError, refetch } = useExerciseLogs.ByDate(date);
 
   return (
     <LogCard
@@ -23,6 +18,8 @@ const ExerciseLogs = ({ date }: { date: string }) => {
       items={data ?? []}
       getKey={(log) => log.id}
       renderItem={(log) => <ExerciseLogHolder log={log} />}
+      loading={isLoading}
+      error={isError && !data ? { onRetry: () => refetch() } : undefined}
     />
   );
 };

@@ -3,10 +3,10 @@ import { useSummaryData } from "@/hooks/useSummaryData";
 import React from "react";
 import { Text, View } from "react-native";
 import CalorieSummary from "./CalorieSummary";
-import ErrorCard from "./cards/ErrorCard";
 import NutritionInfo from "./NutritionInfo";
 import LoggingSkeleton from "./skeleton/LoggingSkeleton";
 import GuidanceButton from "./ui/GuidanceButton";
+import InlineError from "./ui/InlineError";
 
 const SectionHeader = ({ title, help }: { title: string; help?: string }) => (
   <View className="mb-2 flex-row items-center justify-between">
@@ -22,8 +22,15 @@ const SummarySection = ({ date }: { date: string }) => {
   const { data: summary, isLoading, error, refetch } = useSummaryData(date);
 
   if (isLoading) return <LoggingSkeleton />;
-  if (error || !summary) {
-    return <ErrorCard message={error?.message ?? "Your summary is not ready yet. Try again in a moment."} onPress={() => refetch()} className="mx-0" />;
+  if (!summary) {
+    return (
+      <View className="mb-3">
+        <InlineError
+          message={error ? "Couldn't load your summary." : "Your summary is not ready yet."}
+          onRetry={() => refetch()}
+        />
+      </View>
+    );
   }
 
   return (

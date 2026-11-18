@@ -34,7 +34,7 @@ Reference for the app (`healverse-client`). Written 2026-11-15 against server PR
 - Icons: transparent mark cut from the ChatGPT sheet; `icon`, `adaptive-icon`, `adaptive-icon-monochrome`, `splash-icon`, `logo`, `favicon` generated and wired (commit d3ec7ee). Background colour `#0B8714`.
 - Open items: HTTPS URL in `eas.json` (security review flagged the HTTP exception), `preview` file variable, EXPO_TOKEN secret, first preview build, device testing of everything marked "Not run", 12 pre-existing lint errors, `eas-cli` upgrade on your PC.
 
-**Pre-existing, not fixed:** `npm run lint` reports 12 errors (react/no-unescaped-entities in onboarding and other files) and about 46 warnings. CI runs lint with `continue-on-error`. Fix them, then remove that flag.
+**Pre-existing, not fixed:** `npm run lint` reports 12 errors (react/no-unescaped-entities in onboarding and other files) and about 46 warnings. Fixed on 2026-11-18: lint is clean and the CI lint step now blocks.
 
 **Manual steps for you** are listed at the end of the assistant summary and repeated in section 6.
 
@@ -257,7 +257,11 @@ Start with **A** to get a first installable APK quickly; move to **B** if you hi
 ## 6. Releasing
 
 1. Bump the version in `app.json` (`version`) and merge to `main`.
-2. Tag and push: `git tag v1.0.1 && git push origin v1.0.1`. The workflow builds the APK and attaches it to a **GitHub Release** named after the tag.
+2. Release, either way (both spend one EAS build):
+   - **Tag push:** `git tag v1.0.1 && git push origin v1.0.1` (push only that tag). The workflow builds the APK and attaches it to a **GitHub Release** named after the tag.
+   - **Manual run** (use this if the tag push does not start the workflow, as happened with v1.0.0): Actions, "Android APK", Run workflow on `main`, tick **publish**, enter the tag (`v1.0.1`). It builds and creates the release and the tag.
+   A release is refused unless the tag matches `app.json` `version` and the commit is on `main`. `versionCode` goes up on every build (`autoIncrement` in `eas.json`, EAS remote versioning), so a new APK always installs over the previous one.
+   A manual run without **publish** only builds the APK and keeps it as a workflow artifact.
 3. Testers open the Release page on their phone, download `healverse.apk`, and allow "Install unknown apps" for their browser when Android asks.
    If the client repo is **private**, testers must be GitHub collaborators to download release files.
 4. For the **Play Store** later you need a Google Play developer account (one-time fee), an **AAB** (not APK) from the `production` profile / `bundleRelease`,

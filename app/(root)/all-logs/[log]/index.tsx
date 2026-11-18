@@ -81,7 +81,7 @@ const Index = () => {
 
     const handleSelectAll = useCallback((): void => {
         setSelectedLogs(new Set(logTypes.map((log) => log.id)));
-    }, [logTypes]);
+    }, []);
 
     const openBottomSheet = useCallback(() => {
         bottomSheetRef.current?.snapToIndex(0);
@@ -168,7 +168,7 @@ const Index = () => {
                     </View>
                 );
             });
-    }, [logTypes, selectedLogs]);
+    }, [selectedLogs]);
 
     return (
         <SafeAreaView className="flex-1 bg-muted">

@@ -65,7 +65,7 @@ const ChatScreen = ({ conversationId, isExistingConversation = false }: ChatScre
           onSendMessage={sendMessage}
           isLoading={isSendingMessage}
           placeholder="Ask any question"
-          // Voice assistant is switched off on the server (410 Gone). Re-enable together with VoiceModel.
+          // Voice assistant is switched off on the server (410 Gone); bring the button back with the server.
           showVoiceButton={false}
           // Image input is not built yet (the button had no handler). Show it again once it is.
           showImageButton={false}
