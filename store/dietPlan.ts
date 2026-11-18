@@ -191,6 +191,14 @@ export const useDateSelectorForDietplan = (
 export const useDietPlanMutations = () => {
   const queryClient = useQueryClient();
 
+  const generatePlan = useMutation({
+    // Failures surface through the global mutation error toast; the empty state stays so the user can retry.
+    mutationFn: (date: string) => dietPlanApi.generate(date),
+    onSuccess: (data, date) => {
+      queryClient.setQueryData(dietPlanKeys.byDate(date), data);
+    },
+  });
+
   const reGeneratePlan = useMutation({
     // Failures surface through the global mutation error toast; never fake a plan.
     mutationFn: (dietPlanId: number) =>
@@ -291,11 +299,13 @@ export const useDietPlanMutations = () => {
 
   return {
     // Mutations
+    generatePlan,
     reGeneratePlan,
     refreshPlan,
     replaceMeal,
 
     // States
+    isGenerating: generatePlan.isPending,
     isRegenerating: reGeneratePlan.isPending,
     isRefreshing: refreshPlan.isPending,
     isReplacing: replaceMeal.isPending,
@@ -305,6 +315,7 @@ export const useDietPlanMutations = () => {
     replaceError: replaceMeal.error,
 
     // Async Actions
+    generate: generatePlan.mutateAsync,
     reGenerate: reGeneratePlan.mutateAsync,
     refresh: refreshPlan.mutateAsync,
     replace: replaceMeal.mutateAsync,
@@ -373,6 +384,6 @@ export const useDietPlanManager = (initialDate?: string) => {
 
     // Combined loading states
     isLoading:
-      dietPlan.isLoading || mutations.isRegenerating || mutations.isRefreshing,
+      dietPlan.isLoading || mutations.isGenerating || mutations.isRegenerating || mutations.isRefreshing,
   };
 };

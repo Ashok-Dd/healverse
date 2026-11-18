@@ -1,13 +1,18 @@
 import { images } from "@/constants";
 import React from "react";
-import { Image, Text, View } from "react-native";
+import { Image, ImageSourcePropType, Text, View } from "react-native";
 
-const PlaceHolder = ({ message }: { message: string }) => {
+interface PlaceHolderProps {
+  message: string;
+  image?: ImageSourcePropType;
+}
+
+const PlaceHolder = ({ message, image = images.emptyState }: PlaceHolderProps) => {
   return (
     <View className="flex-1 items-center justify-center py-6">
       <View className="items-center gap-5 justify-center">
         <Image
-          source={images.emptyState}
+          source={image}
           resizeMode="contain"
           className="h-52 w-full"
           accessible={false}
