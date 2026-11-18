@@ -1,11 +1,24 @@
 name: Android APK
 
 # Builds the APK on EAS (Expo cloud) and publishes it as a GitHub Release.
-# Trigger: push a tag like v1.0.1, or run manually from the Actions tab.
+# Triggers:
+#   - push a tag like v1.0.1 (builds and releases it);
+#   - run manually from the Actions tab on main: with "publish" ticked and a tag name it also
+#     creates the release, otherwise it only builds the APK as a workflow artifact.
+# A release is only made for a commit that is on main and whose app.json version matches the tag.
 on:
   push:
     tags: ["v*"]
   workflow_dispatch:
+    inputs:
+      publish:
+        description: "Create the GitHub Release (needs the tag below)"
+        type: boolean
+        default: false
+      tag:
+        description: "Release tag, e.g. v1.0.1 (must match app.json version)"
+        type: string
+        required: false
 
 concurrency:
   group: android-${{ github.ref }}
@@ -25,11 +38,14 @@ jobs:
       contents: write # create the GitHub Release
     env:
       EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+      # Empty means "build only, no release".
+      RELEASE_TAG: ${{ startsWith(github.ref, 'refs/tags/v') && github.ref_name || (inputs.publish && inputs.tag) || '' }}
     steps:
       - name: Check out
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
+          fetch-depth: 0 # the "is on main" check needs history
 
       - name: Set up Node
         uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
@@ -44,14 +60,26 @@ jobs:
             exit 1
           fi
 
+      - name: Publish needs a tag
+        if: github.event_name == 'workflow_dispatch' && inputs.publish && inputs.tag == ''
+        run: |
+          echo "::error::Tick publish only together with a tag name (for example v1.0.1)"
+          exit 1
+
       - name: Tag must match app.json version
-        if: startsWith(github.ref, 'refs/tags/v')
-        env:
-          TAG: ${{ github.ref_name }}
+        if: env.RELEASE_TAG != ''
         run: |
           APP_VERSION="$(node -p "require('./app.json').expo.version")"
-          if [ "${TAG#v}" != "$APP_VERSION" ]; then
-            echo "::error::Tag $TAG does not match app.json version $APP_VERSION"
+          if [ "${RELEASE_TAG#v}" != "$APP_VERSION" ]; then
+            echo "::error::Tag $RELEASE_TAG does not match app.json version $APP_VERSION"
+            exit 1
+          fi
+
+      - name: Release commit must be on main
+        if: env.RELEASE_TAG != ''
+        run: |
+          if ! git merge-base --is-ancestor "$GITHUB_SHA" origin/main; then
+            echo "::error::Commit $GITHUB_SHA is not on main; merge it first, then release"
             exit 1
           fi
 
@@ -62,8 +90,6 @@ jobs:
         run: npm run typecheck
 
       - name: Lint
-        # Existing lint errors (react/no-unescaped-entities etc.) predate this workflow; report, do not block.
-        continue-on-error: true
         run: npm run lint
 
       - name: Build APK on EAS (waits for the result)
@@ -91,12 +117,12 @@ jobs:
           if-no-files-found: error
 
       - name: Publish GitHub Release
-        if: startsWith(github.ref, 'refs/tags/v')
+        if: env.RELEASE_TAG != ''
         env:
           GH_TOKEN: ${{ github.token }}
-          TAG: ${{ github.ref_name }}
         run: |
-          gh release create "$TAG" healverse.apk \
+          gh release create "$RELEASE_TAG" healverse.apk \
             --repo "$GITHUB_REPOSITORY" \
-            --title "HealVerse $TAG" \
+            --target "$GITHUB_SHA" \
+            --title "HealVerse $RELEASE_TAG" \
             --generate-notes
