@@ -9,7 +9,7 @@ import { images } from "@/constants";
 import { useThemeColors } from "@/constants/theme";
 import { useOutboxEntries } from "@/hooks/useOutboxEntries";
 import { dayOf } from "@/lib/day";
-import { getCurrentDate } from "@/store/dietPlan";
+import { getCurrentDate } from "@/lib/today";
 import { healthQueryKeys, useDateSelectorForHealthStore, useFoodLogs } from "@/store/healthStore";
 import { useQueryClient } from "@tanstack/react-query";
 import { router, useLocalSearchParams } from "expo-router";

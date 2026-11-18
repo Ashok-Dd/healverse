@@ -1,5 +1,6 @@
 import { useAuthStore } from "@/store/authStore";
-import { getCurrentDate, isValidDateForData } from "@/store/dietPlan";
+import { getCurrentDate } from "@/lib/today";
+import { isValidDateForData } from "@/store/dietPlan";
 import { healthAPIs, healthQueryKeys } from "@/store/healthStore";
 import { useQueryClient } from "@tanstack/react-query";
 import { useEffect } from "react";
