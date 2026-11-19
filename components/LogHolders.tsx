@@ -60,7 +60,7 @@ export const FoodLogHolder = ({ log }: { log: FoodLog }) => (
           unit={item.unit}
           calories={item.calories}
           protein={item.protein}
-          fats={item.fats}
+          fat={item.fat}
           carbs={item.carbs}
         />
       </Pressable>
