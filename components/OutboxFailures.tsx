@@ -14,8 +14,10 @@ const describe = (entry: OutboxEntry): string => {
       return `Exercise, ${entry.payload.exerciseName}`;
     case "chat":
       return `Message: ${entry.payload.content.slice(0, 40)}`;
-    case "food-photo":
-      return `Meal photo (${entry.payload.mealType.toLowerCase()})`;
+    case "food-log":
+      return entry.payload.description
+        ? `Meal: ${entry.payload.description.slice(0, 40)}`
+        : `Meal photo (${entry.payload.mealType.toLowerCase()})`;
   }
 };
 
@@ -31,7 +33,9 @@ export function OutboxFailures() {
   };
   const discard = (entry: OutboxEntry) => {
     useOutboxStore.getState().remove(entry.id);
-    if (entry.kind === "food-photo") void deleteOutboxImage(entry.payload.imageUri);
+    if (entry.kind === "food-log" && entry.payload.imageUri) {
+      void deleteOutboxImage(entry.payload.imageUri);
+    }
   };
 
   return (

@@ -22,7 +22,17 @@ export const logExercise = (data: CreateExerciseLogData): void => queueAndSend("
 export const sendChatMessage = (conversationId: string, content: string): void =>
   queueAndSend("chat", { conversationId, content });
 
-export async function logFoodPhoto(imageUri: string, mealType: MealType): Promise<void> {
-  const storedUri = await copyImageToOutbox(imageUri);
-  queueAndSend("food-photo", { imageUri: storedUri, mealType, loggedAt: new Date().toISOString() });
+/** Logs a meal from a photo, a description, or both. The caller makes sure at least one is given. */
+export async function logFood(meal: {
+  imageUri?: string;
+  description?: string;
+  mealType: MealType;
+}): Promise<void> {
+  const imageUri = meal.imageUri ? await copyImageToOutbox(meal.imageUri) : undefined;
+  queueAndSend("food-log", {
+    imageUri,
+    description: meal.description,
+    mealType: meal.mealType,
+    loggedAt: new Date().toISOString(),
+  });
 }

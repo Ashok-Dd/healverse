@@ -1,25 +1,43 @@
 import Skeleton from "@/components/skeleton/Skeleton";
 import { SyncBadge } from "@/components/ui/SyncBadge";
-import type { FoodPhotoEntry } from "@/lib/outbox";
+import type { FoodLogEntry } from "@/lib/outbox";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { ActivityIndicator, Image, Text, View } from "react-native";
 
-/** A meal photo that is waiting to upload or being analysed. Nutrition appears once the server has analysed it. */
-export function QueuedFoodCard({ entry }: { entry: FoodPhotoEntry }) {
+/** A meal (photo, description or both) that is waiting to upload or being analysed. Nutrition appears once the server has analysed it. */
+export function QueuedFoodCard({ entry }: { entry: FoodLogEntry }) {
   const analysing = entry.status === "syncing";
+  const { mealType, imageUri, description } = entry.payload;
+
   return (
-    <View className="mr-3 min-w-[310px] flex-row items-center gap-4 rounded-xl bg-muted p-4">
-      <View className="h-20 w-20 items-center justify-center">
-        <Image
-          source={{ uri: entry.payload.imageUri }}
-          className="h-20 w-20 rounded-lg"
-          resizeMode="cover"
-        />
+    <View className="mr-3 min-w-[310px] flex-row items-center gap-3 rounded-xl bg-muted p-3">
+      <View className="h-[72px] w-[72px] items-center justify-center">
+        {imageUri ? (
+          <Image
+            source={{ uri: imageUri }}
+            className="h-[72px] w-[72px] rounded-xl"
+            resizeMode="cover"
+          />
+        ) : (
+          <View className="h-[72px] w-[72px] items-center justify-center rounded-xl bg-secondary">
+            <MaterialCommunityIcons
+              name="text-box-outline"
+              size={28}
+              className="text-secondary-foreground"
+            />
+          </View>
+        )}
         {analysing && <ActivityIndicator className="absolute" />}
       </View>
-      <View className="flex-1 gap-2">
+      <View className="flex-1 gap-1">
         <Text className="font-body-semibold text-base text-foreground">
-          {analysing ? `Analysing ${entry.payload.mealType.toLowerCase()}...` : entry.payload.mealType}
+          {analysing ? `Analysing ${mealType.toLowerCase()}...` : mealType}
         </Text>
+        {description ? (
+          <Text className="font-body text-xs text-muted-foreground" numberOfLines={2}>
+            {description}
+          </Text>
+        ) : null}
         {analysing ? (
           <>
             <Skeleton />
