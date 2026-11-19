@@ -12,7 +12,7 @@ interface WheelPickerProps {
 const toKey = (item: number) => item.toString();
 const toLabel = (item: number) => item.toString();
 
-/** Vertical number wheel with a highlighted centre row. */
+/** Vertical number wheel with a highlighted centre row. `value` is read once, when it mounts. */
 export function WheelPicker({ data, value, onChange, itemHeight = 64 }: WheelPickerProps) {
   return (
     <View className="items-center justify-center">
@@ -24,8 +24,7 @@ export function WheelPicker({ data, value, onChange, itemHeight = 64 }: WheelPic
         keyExtractor={toKey}
         itemHeight={itemHeight}
         className="w-40"
-        selectedTextClassName="font-display-bold text-3xl text-foreground"
-        idleTextClassName="font-body-semibold text-xl text-muted-foreground"
+        textClassName="font-display-bold text-3xl text-foreground"
       />
     </View>
   );
