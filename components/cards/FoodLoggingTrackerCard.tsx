@@ -50,7 +50,7 @@ const FoodLoggingTrackerCard = ({ date }: FoodLoggingTrackerCardProps) => {
 
                 {/* Show existing food logs for the day */}
                 {foodLogs?.map((foodLog: any, index: number) => (
-                    <View key={`existing-${index}`} className="mr-3 bg-muted rounded-xl">
+                    <View key={`existing-${index}`} className="mr-3 w-[322px] overflow-hidden bg-muted rounded-xl">
                         <TouchableOpacity onPress={() => router.push(`/(root)/food-log/${foodLog.id}`)}>
                             <FoodLogCard foodLog={foodLog} />
                         </TouchableOpacity>
