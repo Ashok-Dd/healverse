@@ -27,7 +27,10 @@ export async function clearLocalSessionData(reason: SessionEnd = "sign-out"): Pr
   const keepOutbox = reason === "expired";
   cancelOutboxRetry();
   useOutboxStore.getState().reset();
-  getQueryClient().clear();
+  const queryClient = getQueryClient();
+  // A request still in flight would otherwise write the old user's data back after the wipe.
+  await queryClient.cancelQueries();
+  queryClient.clear();
   useUserProfileStore.getState().clearProfile();
   try {
     wipePersistedCache({ keepOutbox });
