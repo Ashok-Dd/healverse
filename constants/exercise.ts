@@ -38,6 +38,4 @@ export const INTENSITY_LEVELS: IntensityLevel[] = [
     { level: "HIGH", color: "#f59e0b", label: "High" },
 ];
 
-export const ITEM_HEIGHT = 50;
-export const PICKER_HEIGHT = 200;
 export const DURATION_OPTIONS = Array.from({ length: 60 }, (_, i) => (i + 1) * 5);
