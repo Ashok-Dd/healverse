@@ -4,6 +4,18 @@ import type { DailySummary, ExerciseLog, FoodItem, FoodLog, WaterLog } from "@/t
 import type { QueryClient } from "@tanstack/react-query";
 
 
+/** A food log from any cached day, so a screen can open a log without asking the server. */
+export function findCachedFoodLog(queryClient: QueryClient, id: number): FoodLog | undefined {
+  const days = queryClient.getQueriesData<FoodLog[]>({
+    queryKey: [...healthQueryKeys.foodLogs.all, "date"],
+  });
+  for (const [, logs] of days) {
+    const found = logs?.find((log) => log.id === id);
+    if (found) return found;
+  }
+  return undefined;
+}
+
 const withoutDuplicate = <T extends { id: number }>(list: T[] | undefined, item: T): T[] => [
   ...(list ?? []).filter((existing) => existing.id !== item.id),
   item,

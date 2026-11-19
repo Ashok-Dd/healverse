@@ -1,6 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
-import React, { useEffect, useState } from "react";
-import { Keyboard, Modal, Platform, Pressable, Text, View } from "react-native";
+import { useKeyboardHeight } from "@/hooks/useKeyboardHeight";
+import React from "react";
+import { Modal, Pressable, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 type IconName = React.ComponentProps<typeof Ionicons>["name"];
@@ -14,30 +15,6 @@ interface SheetModalProps {
   children: React.ReactNode;
   /** Buttons pinned under the content. */
   footer: React.ReactNode;
-}
-
-/** Height of the open keyboard, 0 when closed. KeyboardAvoidingView does not work inside a translucent Modal. */
-function useKeyboardHeight(active: boolean): number {
-  const [height, setHeight] = useState(0);
-
-  useEffect(() => {
-    if (!active) return;
-    const show = Keyboard.addListener(
-      Platform.OS === "ios" ? "keyboardWillShow" : "keyboardDidShow",
-      (event) => setHeight(event.endCoordinates.height)
-    );
-    const hide = Keyboard.addListener(
-      Platform.OS === "ios" ? "keyboardWillHide" : "keyboardDidHide",
-      () => setHeight(0)
-    );
-    return () => {
-      show.remove();
-      hide.remove();
-      setHeight(0);
-    };
-  }, [active]);
-
-  return height;
 }
 
 /** Bottom sheet used by the quick-add dialogs (water, exercise). Tapping outside closes it. */
