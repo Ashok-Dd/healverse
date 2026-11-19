@@ -53,6 +53,13 @@
       ],
       "expo-secure-store",
       [
+        "expo-notifications",
+        {
+          "color": "#CF4632",
+          "defaultChannel": "meal-reminders"
+        }
+      ],
+      [
         "expo-location",
         {
           "locationAlwaysAndWhenInUsePermission": "Allow app to use your location."

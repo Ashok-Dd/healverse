@@ -4,10 +4,12 @@ import { SegmentedControl } from "@/components/ui/SegmentedControl";
 import { ThemedStatusBar } from "@/components/ui/ThemedStatusBar";
 import { useSignOut } from "@/hooks/useSignOut";
 import { useAuthStore } from "@/store/authStore";
+import { useReminderStore } from "@/store/reminderStore";
 import { useThemeStore, type ThemePreference } from "@/store/themeStore";
+import { MEAL_REMINDERS, MEALS, type Meal } from "@/utils/notifications";
 import Constants from "expo-constants";
 import React from "react";
-import { ScrollView, Text, View } from "react-native";
+import { Alert, Linking, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 const THEME_OPTIONS: { label: string; value: ThemePreference }[] = [
@@ -22,15 +24,41 @@ const THEME_HINT: Record<ThemePreference, string> = {
   dark: "Always use the dark theme.",
 };
 
+const MEAL_ICONS: Record<Meal, React.ComponentProps<typeof SettingsRow>["icon"]> = {
+  breakfast: "sunny-outline",
+  lunch: "restaurant-outline",
+  dinner: "moon-outline",
+};
+
+const formatTime = ({ hour, minute }: { hour: number; minute: number }) =>
+  new Date(2000, 0, 1, hour, minute).toLocaleTimeString([], {
+    hour: "numeric",
+    minute: "2-digit",
+  });
+
 /**
  * Only settings that work today live here. Ideas that need more work (profile editing, units,
- * notifications, ...) are listed in docs/settings-backlog.md.
+ * ...) are listed in docs/settings-backlog.md.
  */
 export default function Settings() {
   const username = useAuthStore((s) => s.user?.username);
   const preference = useThemeStore((s) => s.preference);
   const setPreference = useThemeStore((s) => s.setPreference);
+  const reminders = useReminderStore((s) => s.enabled);
+  const setReminder = useReminderStore((s) => s.setEnabled);
   const signOut = useSignOut();
+
+  const toggleReminder = async (meal: Meal, on: boolean) => {
+    if (await setReminder(meal, on)) return;
+    Alert.alert(
+      "Notifications are off",
+      "Allow notifications for HealVerse in your phone settings to get meal reminders.",
+      [
+        { text: "Not now", style: "cancel" },
+        { text: "Open settings", onPress: () => Linking.openSettings() },
+      ]
+    );
+  };
 
   return (
     <>
@@ -54,6 +82,18 @@ export default function Settings() {
                 {THEME_HINT[preference]}
               </Text>
             </View>
+          </SettingsSection>
+
+          <SettingsSection title="Meal reminders">
+            {MEALS.map((meal, index) => (
+              <SettingsRow
+                key={meal}
+                icon={MEAL_ICONS[meal]}
+                label={`${MEAL_REMINDERS[meal].label} · ${formatTime(MEAL_REMINDERS[meal])}`}
+                divider={index < MEALS.length - 1}
+                toggle={{ value: reminders[meal], onChange: (on) => toggleReminder(meal, on) }}
+              />
+            ))}
           </SettingsSection>
 
           <SettingsSection title="Account">
