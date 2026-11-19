@@ -23,7 +23,7 @@ Reference for the app (`healverse-client`). Written 2026-11-15 against server PR
 | B10 | Firebase: see manual steps. File was not read. | n/a |
 | C11 | `eas.json` `preview` = APK, `environment: preview`, `EXPO_PUBLIC_API_URL`. `production` has no URL on purpose (build fails until an HTTPS URL is set). | Verified: file. Not run: eas build. |
 | C12 | `scripts/eas-pre-install.js` (npm hook `eas-build-pre-install`) copies `$GOOGLE_SERVICES_JSON` to `android/app/`. | Verified: `eas env:set --help` lists `--type file`. **Not verified:** exact file-variable path behaviour on the build runner (docs say the variable holds a path). |
-| C13 | `.github/workflows/android.yml`: tags `v*` + manual; tag must equal `app.json` version; typecheck (blocks), lint (does not block, see below); `eas-cli@27.10.0 build`; APK downloaded; `gh release create`. Actions pinned to SHAs from `git ls-remote`: checkout v7.0.1, setup-node v7.1.0, upload-artifact v7.0.2. Release created with `gh` (no third-party action). | Verified: SHAs resolved. **Not run:** actionlint (Docker daemon not running), the workflow itself. **Not verified:** `eas build --json` output field `.[0].artifacts.buildUrl` (docs do not show it). |
+| C13 | `.eas/workflows/android-apk.yml`: EAS Workflow, tag `v*` (or `eas workflow:run`) builds the `preview` profile; the APK is installed from the build page on expo.dev, nothing is stored in GitHub. Replaced the GitHub Actions `android.yml` (which also created a GitHub Release). | **Not run.** Needs the Expo GitHub app connected to the repo for the tag trigger; the tag/`app.json` version check of the old workflow no longer exists, so check it by hand. |
 | Cleanup | Deleted 11 unreferenced images, 13 unreferenced components/files, `LOGOUT_IMPLEMENTATION.md`, broken `reset-project` script. Removed 22 unused npm deps. Kept `@shopify/flash-list` (peer of `react-native-ruler-picker`; bundle failed without it). | Verified: tsc + production bundle. |
 | Size | Images 59 MB to about 1.2 MB (900 px max, 256-colour PNG). R8 minify + resource shrink on, `x86`/`x86_64` ABIs dropped. Bundle is Hermes bytecode, 6 MB. | Not run: real APK size. R8 can break reflection-based libraries: test the release APK. |
 | Icons | `app.json` points to `icon.png`, `adaptive-icon.png`, `splash-icon.png`. Placeholders until final art is supplied. | Not run. |
@@ -32,7 +32,7 @@ Reference for the app (`healverse-client`). Written 2026-11-15 against server PR
 - Dev client build on EAS **succeeded** after replacing `google-services.json` with the new package's file.
 - Dev client could not reach Metro (CLEARTEXT error): a network security config disables the debug cleartext allowance. Fixed in commit `3dc3262` with a debug-only permissive config; **needs one more dev build** (or use `npx expo start --dev-client --tunnel -c` meanwhile).
 - Icons: transparent mark cut from the ChatGPT sheet; `icon`, `adaptive-icon`, `adaptive-icon-monochrome`, `splash-icon`, `logo`, `favicon` generated and wired (commit d3ec7ee). Background colour `#0B8714`.
-- Open items: HTTPS URL in `eas.json` (security review flagged the HTTP exception), `preview` file variable, EXPO_TOKEN secret, first preview build, device testing of everything marked "Not run", 12 pre-existing lint errors, `eas-cli` upgrade on your PC.
+- Open items: HTTPS URL in `eas.json` (security review flagged the HTTP exception), `preview` file variable, first preview build, device testing of everything marked "Not run", 12 pre-existing lint errors, `eas-cli` upgrade on your PC.
 
 **Pre-existing, not fixed:** `npm run lint` reports 12 errors (react/no-unescaped-entities in onboarding and other files) and about 46 warnings. Fixed on 2026-11-18: lint is clean and the CI lint step now blocks.
 
@@ -197,8 +197,7 @@ Today's signing state: the release build type uses the **debug keystore** (`andr
   2. First build by hand (creates the keystore): `npm i -g eas-cli && eas login && eas build -p android --profile preview`.
   3. Firebase file: `eas secret:create` is deprecated. Use: `eas env:set preview --name GOOGLE_SERVICES_JSON --type file --visibility secret --value ./google-services.json --scope project --non-interactive`
      (done in the repo: `scripts/eas-pre-install.js` copies it to `android/app/google-services.json`).
-  4. Create an Expo access token (expo.dev -> Account settings -> Access tokens) and save it as the GitHub secret `EXPO_TOKEN`.
-- Workflow: see `.github/workflows/android.yml` (written, **not yet run**; replaces the old starter that used unpinned actions).
+- Workflow: `.eas/workflows/android-apk.yml` (see section 6 for connecting GitHub and releasing).
 
 ### Option B: build with Gradle inside GitHub Actions (free, no Expo account needed)
 
@@ -257,15 +256,26 @@ Start with **A** to get a first installable APK quickly; move to **B** if you hi
 ## 6. Releasing
 
 1. Bump the version in `app.json` (`version`) and merge to `main`.
-2. Release, either way (both spend one EAS build):
-   - **Tag push:** `git tag v1.0.1 && git push origin v1.0.1` (push only that tag). The workflow builds the APK and attaches it to a **GitHub Release** named after the tag.
-   - **Manual run** (use this if the tag push does not start the workflow, as happened with v1.0.0): Actions, "Android APK", Run workflow on `main`, tick **publish**, enter the tag (`v1.0.1`). It builds and creates the release and the tag.
-   A release is refused unless the tag matches `app.json` `version` and the commit is on `main`. `versionCode` goes up on every build (`autoIncrement` in `eas.json`, EAS remote versioning), so a new APK always installs over the previous one.
-   A manual run without **publish** only builds the APK and keeps it as a workflow artifact.
-3. Testers open the Release page on their phone, download `healverse.apk`, and allow "Install unknown apps" for their browser when Android asks.
-   If the client repo is **private**, testers must be GitHub collaborators to download release files.
+2. Build the APK (spends one EAS build), either way:
+   - **Tag push:** `git tag v1.0.1 && git push origin v1.0.1` (push only that tag). Tag a commit that is on `main` and whose
+     `app.json` version matches the tag: nothing checks it for you. Needs the one-time GitHub connection below.
+   - **From a terminal** (works without the GitHub connection): `npx eas-cli workflow:run .eas/workflows/android-apk.yml`.
+   `versionCode` goes up on every build (`autoIncrement` in `eas.json`, EAS remote versioning), so a new APK always installs over the previous one.
+3. Testers open the build page on expo.dev (Builds, pick the build, Install, or share its link) on their phone and install the APK;
+   Android asks to allow "Install unknown apps" for the browser. Anyone with the link can download it.
 4. For the **Play Store** later you need a Google Play developer account (one-time fee), an **AAB** (not APK) from the `production` profile / `bundleRelease`,
    a privacy policy (the app collects health data), and HTTPS. iOS needs a separate Apple developer account and is not covered here.
+
+### Connecting GitHub to Expo (one time, for the tag trigger)
+
+The Expo project belongs to the Expo account `srikar-tech`; the GitHub repository is owned by someone else. Only the **owner of the GitHub
+account (or an organisation owner)** can install a GitHub app on a repository, so a collaborator cannot do step 2 alone.
+
+1. A member of the Expo account/project opens `https://expo.dev/accounts/srikar-tech/projects/healverse/github` and chooses to install the GitHub app.
+2. GitHub asks which account to install it on: the repository owner approves it, ideally for **only this repository**.
+3. Back on that expo.dev page, select the repository `Ashok-Dd/healverse` and connect it.
+
+Until then, builds still work with `eas workflow:run` as above.
 
 ## 7. Release checklist
 
