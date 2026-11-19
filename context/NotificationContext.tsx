@@ -1,54 +1,24 @@
+import { useReminderStore } from "@/store/reminderStore";
 import { NotificationService } from "@/utils/notifications";
 import * as Notifications from "expo-notifications";
-import React, { createContext, ReactNode, useContext, useEffect, useMemo } from "react";
+import React, { ReactNode, useEffect } from "react";
 
-interface NotificationContextType {}
+/**
+ * Restores the saved meal reminders and opens the right screen when one is tapped. It never asks
+ * for permission: that happens when the user turns a reminder on (see reminderStore).
+ */
+export const NotificationProvider = ({ children }: { children: ReactNode }) => {
+  const hydrate = useReminderStore((s) => s.hydrate);
+  // Also covers a tap that launched the app from a closed state.
+  const response = Notifications.useLastNotificationResponse();
 
-const NotificationContext = createContext<NotificationContextType | undefined>(
-  undefined
-);
-
-export const useNotification = () => {
-  const context = useContext(NotificationContext);
-  if (context === undefined) {
-    throw new Error(
-      "useNotification must be used within a NotificationProvider"
-    );
-  }
-  return context;
-};
-
-interface NotificationProviderProps {
-  children: ReactNode;
-}
-
-export const NotificationProvider: React.FC<NotificationProviderProps> = ({
-  children,
-}) => {
   useEffect(() => {
-    NotificationService.requestPermissions();
+    hydrate();
+  }, [hydrate]);
 
-    // Set up notification listeners
-    const notificationListener = Notifications.addNotificationReceivedListener(
-      NotificationService.handleNotificationReceived
-    );
+  useEffect(() => {
+    if (response) NotificationService.handleNotificationResponse(response);
+  }, [response]);
 
-    const responseListener =
-      Notifications.addNotificationResponseReceivedListener(
-        NotificationService.handleNotificationResponse
-      );
-
-    return () => {
-      Notifications.removeNotificationSubscription(notificationListener);
-      Notifications.removeNotificationSubscription(responseListener);
-    };
-  }, []);
-
-  const value = useMemo<NotificationContextType>(() => ({}), []);
-
-  return (
-    <NotificationContext.Provider value={value}>
-      {children}
-    </NotificationContext.Provider>
-  );
+  return <>{children}</>;
 };

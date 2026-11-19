@@ -5,6 +5,7 @@ The Settings screen only contains things that work today:
 | Item | What it does |
 | --- | --- |
 | Theme (System / Light / Dark) | Saved on the device, applied on launch |
+| Meal reminders (breakfast 8:00, lunch 13:00, dinner 20:00) | Local daily notifications, one switch per meal. Permission is asked when a switch is turned on. Tap opens the Logging tab |
 | Signed in as | Shows the username |
 | Sign out | Clears local data and the token |
 | Version | App version from `app.json` |
@@ -20,7 +21,6 @@ last column is done.
 | Unit system (metric / imperial) | Modal changed nothing | Client: a persisted units preference used by the weight and height rulers, the profile card and logs |
 | Add exercise calories to daily goal | A switch bound to local state only | Server: dashboard summary must apply the flag; a profile field or setting to store it |
 | Language, Country | Modal changed nothing | Client: i18n setup and translations. There is no localisation yet |
-| Notifications | Not present before | Client: a toggle using `NotificationService` once there is a feature that sends reminders (for example meal times). Needs permission handling and a stored schedule |
 | Rate us | Only logged to the console | Store listing URL (Play Store link) and `expo-store-review` |
 | Contact us | Only logged to the console | A support email or form; open with `Linking.openURL("mailto:...")` |
 | Terms of Service, Privacy Policy | Only logged to the console | Hosted URLs; open with `expo-web-browser`. Required for the Play Store listing anyway |
