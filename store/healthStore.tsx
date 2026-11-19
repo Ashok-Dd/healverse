@@ -13,6 +13,8 @@ import type { QueryClient } from "@tanstack/react-query";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCallback, useState } from "react";
 import { useOutboxEntries } from "@/hooks/useOutboxEntries";
+import { dayOf } from "@/lib/day";
+import type { UpdateFoodLogPayload } from "@/lib/foodEdit";
 import {
   exerciseLogFromEntry,
   isOnDay,
@@ -20,8 +22,10 @@ import {
   waterLogFromEntry,
 } from "@/lib/outboxOverlay";
 import { withPausedAsLoading } from "@/lib/queryStatus";
-import { getCurrentDate, isValidDateForData } from "./dietPlan";
+import { useToday } from "@/lib/today";
+import { isValidDateForData } from "./dietPlan";
 
+import { findCachedFoodLog } from "@/lib/healthCache";
 import { healthQueryKeys } from "@/lib/healthQueryKeys";
 
 // Re-exported so existing imports from "@/store/healthStore" keep working.
@@ -79,16 +83,16 @@ export const useDateSelectorForHealthStore = (
   options: UseDateSelectorOptions = {}
 ) => {
   const queryClient = useQueryClient();
-  const currentDate = getCurrentDate();
-  const [selectedDate, setSelectedDate] = useState(
-    options.initialDate || currentDate
-  );
+  const currentDate = useToday();
+  // Only a day the user picked is remembered. Otherwise the selection follows "today".
+  const [pickedDate, setPickedDate] = useState<string | null>(options.initialDate ?? null);
+  const selectedDate = pickedDate ?? currentDate;
 
   const selectDate = useCallback(
     (date: string | null | undefined) => {
       // Safely handle date input
       const safeDate = date && typeof date === "string" ? date : currentDate;
-      setSelectedDate(safeDate);
+      setPickedDate(safeDate === currentDate ? null : safeDate);
 
       // Prefetch data for the selected date if valid and autoFetch is enabled
       if (options.autoFetch !== false && isValidDateForData(safeDate)) {
@@ -139,6 +143,10 @@ export const useDateSelectorForHealthStore = (
   };
 };
 
+/** Drops the cached day totals so they are fetched again after a log was changed or removed. */
+const refreshSummary = (queryClient: QueryClient, date: string) =>
+  queryClient.invalidateQueries({ queryKey: healthQueryKeys.summary(date) });
+
 export const useFoodLogs = {
   ByDate: (date: string) => {
     const query = useQuery({
@@ -168,254 +176,53 @@ export const useFoodLogs = {
     });
   },
 
+  /** One food log. A day that is already loaded supplies it, so it opens offline and at once. */
   ById: (id: number) => {
+    const queryClient = useQueryClient();
     return useQuery({
       queryKey: healthQueryKeys.foodLogs.byId(id),
       queryFn: () => healthAPIs.fetchFoodLogById(id),
+      initialData: () => findCachedFoodLog(queryClient, id),
       staleTime: 2 * 60 * 1000,
     });
   },
 };
 
-export const useFoodLogMutations = (date: string) => {
-  const queryClient: QueryClient = useQueryClient();
-
-  const calculateTotalNutrition = (items: FoodItem[]) => {
-    return items.reduce(
-      (total, item) => ({
-        calories: total.calories + item.calories,
-        protein: total.protein + item.protein,
-        carbs: total.carbs + item.carbs,
-        fat: total.fat + (item.fats || 0),
-      }),
-      { calories: 0, protein: 0, carbs: 0, fat: 0 }
-    );
-  };
+export const useFoodLogMutations = () => {
+  const queryClient = useQueryClient();
 
   const updateFoodLog = useMutation({
-    mutationFn: async ({
-      id,
-      updates,
-    }: {
-      id: number;
-      updates: UpdateFoodLogData;
-    }): Promise<FoodLog> => {
-      const response = await fetchApi<FoodLog>(`/api/food-logs/${id}`, {
+    mutationFn: async ({ id, payload }: { id: number; payload: UpdateFoodLogPayload }): Promise<FoodLog> =>
+      await fetchApi<FoodLog>(`/api/food-logs/${id}`, {
         method: "PUT",
         requiresAuth: true,
-        body: updates,
-      });
-      return response;
-    },
-    onSuccess: (updatedLog, variables) => {
-      const oldLog = (
-        queryClient.getQueryData<FoodLog[]>(
-          healthQueryKeys.foodLogs.byDate(date)
-        ) as FoodLog[]
-      )?.find((log) => log.id === updatedLog.id);
-
-      // Update food logs
-      queryClient.setQueryData<FoodLog[]>(
-        healthQueryKeys.foodLogs.byDate(date),
-        (old = []) =>
-          old.map((log) => (log.id === updatedLog.id ? updatedLog : log))
+        body: payload,
+      }),
+    onSuccess: (updatedLog) => {
+      const date = dayOf(updatedLog.loggedAt);
+      queryClient.setQueryData<FoodLog>(healthQueryKeys.foodLogs.byId(updatedLog.id), updatedLog);
+      queryClient.setQueryData<FoodLog[]>(healthQueryKeys.foodLogs.byDate(date), (old = []) =>
+        old.map((log) => (log.id === updatedLog.id ? updatedLog : log))
       );
-
-      // Update dashboard data with nutrition differences
-      if (oldLog) {
-        const oldNutrition = calculateTotalNutrition(oldLog.items);
-        const newNutrition = calculateTotalNutrition(updatedLog.items);
-
-        const nutritionDiff = {
-          calories: newNutrition.calories - oldNutrition.calories,
-          protein: newNutrition.protein - oldNutrition.protein,
-          carbs: newNutrition.carbs - oldNutrition.carbs,
-          fat: newNutrition.fat - oldNutrition.fat,
-        };
-
-        queryClient.setQueryData<DailySummary>(
-          healthQueryKeys.summary(date),
-          (old) => {
-            if (!old) return old;
-            return {
-              ...old,
-              consumedCalories: old.consumedCalories + nutritionDiff.calories,
-              consumedProtein: old.consumedProtein + nutritionDiff.protein,
-              consumedCarbs: old.consumedCarbs + nutritionDiff.carbs,
-              consumedFat: old.consumedFat + nutritionDiff.fat,
-            };
-          }
-        );
-      } else {
-        queryClient.invalidateQueries({
-          queryKey: healthQueryKeys.summary(date),
-        });
-      }
+      refreshSummary(queryClient, date);
     },
   });
 
   const deleteFoodLog = useMutation({
-    mutationFn: async (id: number): Promise<void> => {
-      await fetchApi(`/api/food-logs/${id}`, {
-        method: "DELETE",
-        requiresAuth: true,
-      });
+    mutationFn: async (log: FoodLog): Promise<void> => {
+      await fetchApi(`/api/food-logs/${log.id}`, { method: "DELETE", requiresAuth: true });
     },
-    onSuccess: (_, deletedId) => {
-      const deletedLog = (
-        queryClient.getQueryData<FoodLog[]>(
-          healthQueryKeys.foodLogs.byDate(date)
-        ) as FoodLog[]
-      )?.find((log) => log.id === deletedId);
-
-      // Remove from food logs
-      queryClient.setQueryData<FoodLog[]>(
-        healthQueryKeys.foodLogs.byDate(date),
-        (old = []) => old.filter((log) => log.id !== deletedId)
+    onSuccess: (_, log) => {
+      const date = dayOf(log.loggedAt);
+      queryClient.removeQueries({ queryKey: healthQueryKeys.foodLogs.byId(log.id) });
+      queryClient.setQueryData<FoodLog[]>(healthQueryKeys.foodLogs.byDate(date), (old = []) =>
+        old.filter((existing) => existing.id !== log.id)
       );
-
-      if (deletedLog) {
-        const deletedNutrition = calculateTotalNutrition(deletedLog.items);
-
-        queryClient.setQueryData<DailySummary>(
-          healthQueryKeys.summary(date),
-          (old) => {
-            if (!old) return old;
-            return {
-              ...old,
-              consumedCalories: Math.max(
-                0,
-                old.consumedCalories - deletedNutrition.calories
-              ),
-              consumedProtein: Math.max(
-                0,
-                old.consumedProtein - deletedNutrition.protein
-              ),
-              consumedCarbs: Math.max(
-                0,
-                old.consumedCarbs - deletedNutrition.carbs
-              ),
-              consumedFat: Math.max(0, old.consumedFat - deletedNutrition.fat),
-            };
-          }
-        );
-      } else {
-        queryClient.invalidateQueries({
-          queryKey: healthQueryKeys.summary(date),
-        });
-      }
-
-      queryClient.invalidateQueries({ queryKey: healthQueryKeys.foodLogs.all });
+      refreshSummary(queryClient, date);
     },
   });
 
-  // Keep other mutations the same...
-  const updateFoodItem = useMutation({
-    mutationFn: async ({
-      logId,
-      itemId,
-      updates,
-    }: {
-      logId: number;
-      itemId: number;
-      updates: Partial<
-        Pick<
-          FoodItem,
-          "quantity" | "unit" | "calories" | "protein" | "carbs" | "fats"
-        >
-      >;
-    }): Promise<FoodLog> => {
-      const response = await fetchApi<FoodLog>(
-        `/api/food-logs/${logId}/items/${itemId}`,
-        {
-          method: "PUT",
-          requiresAuth: true,
-          body: updates,
-        }
-      );
-      return response;
-    },
-    onSuccess: (updatedLog) => {
-      queryClient.setQueryData<FoodLog[]>(
-        healthQueryKeys.foodLogs.byDate(date),
-        (old = []) =>
-          old.map((log) => (log.id === updatedLog.id ? updatedLog : log))
-      );
-
-      queryClient.invalidateQueries({
-        queryKey: healthQueryKeys.summary(date),
-      });
-    },
-  });
-
-  const addFoodItem = useMutation({
-    mutationFn: async ({
-      logId,
-      item,
-    }: {
-      logId: number;
-      item: Omit<FoodItem, "id">;
-    }): Promise<FoodLog> => {
-      const response = await fetchApi<FoodLog>(
-        `/api/food-logs/${logId}/items`,
-        {
-          method: "POST",
-          requiresAuth: true,
-          body: item,
-        }
-      );
-      return response;
-    },
-    onSuccess: (updatedLog) => {
-      queryClient.setQueryData<FoodLog[]>(
-        healthQueryKeys.foodLogs.byDate(date),
-        (old = []) =>
-          old.map((log) => (log.id === updatedLog.id ? updatedLog : log))
-      );
-
-      queryClient.invalidateQueries({
-        queryKey: healthQueryKeys.summary(date),
-      });
-    },
-  });
-
-  const removeFoodItem = useMutation({
-    mutationFn: async ({
-      logId,
-      itemId,
-    }: {
-      logId: number;
-      itemId: number;
-    }): Promise<FoodLog> => {
-      const response = await fetchApi<FoodLog>(
-        `/api/food-logs/${logId}/items/${itemId}`,
-        {
-          method: "DELETE",
-          requiresAuth: true,
-        }
-      );
-      return response;
-    },
-    onSuccess: (updatedLog) => {
-      queryClient.setQueryData<FoodLog[]>(
-        healthQueryKeys.foodLogs.byDate(date),
-        (old = []) =>
-          old.map((log) => (log.id === updatedLog.id ? updatedLog : log))
-      );
-
-      queryClient.invalidateQueries({
-        queryKey: healthQueryKeys.summary(date),
-      });
-    },
-  });
-
-  return {
-    updateFoodLog,
-    deleteFoodLog,
-    updateFoodItem,
-    addFoodItem,
-    removeFoodItem,
-  };
+  return { updateFoodLog, deleteFoodLog };
 };
 
 export const useExerciseLogs = {
@@ -453,6 +260,7 @@ export const useExerciseLogs = {
 
 export const useExerciseLogMutations = (date: string) => {
   const queryClient = useQueryClient();
+  const listKey = healthQueryKeys.exerciseLogs.byDate(date);
 
   const updateExerciseLog = useMutation({
     mutationFn: async ({
@@ -461,26 +269,17 @@ export const useExerciseLogMutations = (date: string) => {
     }: {
       id: number;
       updates: UpdateExerciseLogData;
-    }): Promise<ExerciseLog> => {
-      const response = await fetchApi<ExerciseLog>(`/api/exercise-logs/${id}`, {
+    }): Promise<ExerciseLog> =>
+      await fetchApi<ExerciseLog>(`/api/exercise-logs/${id}`, {
         method: "PUT",
         requiresAuth: true,
         body: updates,
-      });
-      return response;
-    },
+      }),
     onSuccess: (updatedLog) => {
-      queryClient.setQueryData<ExerciseLog[]>(
-        healthQueryKeys.exerciseLogs.today(),
-        (old = []) =>
-          old.map((log) => (log.id === updatedLog.id ? updatedLog : log))
+      queryClient.setQueryData<ExerciseLog[]>(listKey, (old = []) =>
+        old.map((log) => (log.id === updatedLog.id ? updatedLog : log))
       );
-
-      queryClient.invalidateQueries({
-        queryKey: healthQueryKeys.summary(
-          getCurrentDate()
-        ),
-      });
+      refreshSummary(queryClient, date);
     },
   });
 
@@ -492,16 +291,10 @@ export const useExerciseLogMutations = (date: string) => {
       });
     },
     onSuccess: (_, deletedId) => {
-      queryClient.setQueryData<ExerciseLog[]>(
-        healthQueryKeys.exerciseLogs.today(),
-        (old = []) => old.filter((log) => log.id !== deletedId)
+      queryClient.setQueryData<ExerciseLog[]>(listKey, (old = []) =>
+        old.filter((log) => log.id !== deletedId)
       );
-
-      queryClient.invalidateQueries({
-        queryKey: healthQueryKeys.summary(
-          getCurrentDate()
-        ),
-      });
+      refreshSummary(queryClient, date);
     },
   });
 
@@ -528,6 +321,22 @@ export const useWaterLogs = {
 
 export const useWaterLogMutations = (date: string) => {
   const queryClient = useQueryClient();
+  const listKey = healthQueryKeys.waterLogs.byDate(date);
+
+  const updateWaterLog = useMutation({
+    mutationFn: async ({ id, amountMl }: { id: number; amountMl: number }): Promise<WaterLog> =>
+      await fetchApi<WaterLog>(`/api/water-logs/${id}`, {
+        method: "PUT",
+        requiresAuth: true,
+        body: { amountMl },
+      }),
+    onSuccess: (updatedLog) => {
+      queryClient.setQueryData<WaterLog[]>(listKey, (old = []) =>
+        old.map((log) => (log.id === updatedLog.id ? updatedLog : log))
+      );
+      refreshSummary(queryClient, date);
+    },
+  });
 
   const deleteWaterLog = useMutation({
     mutationFn: async (id: number): Promise<void> => {
@@ -537,23 +346,12 @@ export const useWaterLogMutations = (date: string) => {
       });
     },
     onSuccess: (_, deletedId) => {
-      queryClient.setQueryData<WaterLog[]>(
-        healthQueryKeys.waterLogs.today(),
-        (old = []) => old.filter((log) => log.id !== deletedId)
+      queryClient.setQueryData<WaterLog[]>(listKey, (old = []) =>
+        old.filter((log) => log.id !== deletedId)
       );
-
-      queryClient.invalidateQueries({
-        queryKey: healthQueryKeys.waterLogs.todayTotal(),
-      });
-      queryClient.invalidateQueries({
-        queryKey: healthQueryKeys.summary(
-          getCurrentDate()
-        ),
-      });
+      refreshSummary(queryClient, date);
     },
   });
 
-  return {
-    deleteWaterLog,
-  };
+  return { updateWaterLog, deleteWaterLog };
 };

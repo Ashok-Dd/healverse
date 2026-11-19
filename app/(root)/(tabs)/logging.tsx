@@ -1,38 +1,69 @@
+import DayStatusStrip from "@/components/DayStatusStrip";
 import { OutboxFailures } from "@/components/OutboxFailures";
 import { ThemedStatusBar } from "@/components/ui/ThemedStatusBar";
 import DaySelector from "@/components/DaySelector";
+import ErrorCard from "@/components/cards/ErrorCard";
 import ExerciseLogs from "@/components/ExerciseLogs";
 import FoodLogs from "@/components/FoodLogs";
 import GlobalHeader from "@/components/headers/GlobalHeader";
 import PlaceHolder from "@/components/PlaceHolder";
+import { images } from "@/constants";
+import LoggingSkeleton, { SkeletonLogCard } from "@/components/skeleton/LoggingSkeleton";
 import SummarySection from "@/components/SummarySection";
 import WaterLogs from "@/components/WaterLogs";
+import { WaterLogModal } from "@/components/WaterLogModel";
 import { useThemeColors } from "@/constants/theme";
-import { healthQueryKeys, useDateSelectorForHealthStore } from "@/store/healthStore";
-import { useQueryClient } from "@tanstack/react-query";
-import React, { useCallback, useState } from "react";
+import { useDayLogs } from "@/hooks/useDayLogs";
+import { useIsOnline } from "@/lib/network";
+import { useDateSelectorForHealthStore } from "@/store/healthStore";
+import React, { useState } from "react";
 import { RefreshControl, ScrollView } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function Logging() {
   const colors = useThemeColors();
-  const queryClient = useQueryClient();
+  const isOnline = useIsOnline();
   const { selectedDate, setSelectedDate, isValidDate } = useDateSelectorForHealthStore();
+  const day = useDayLogs(selectedDate);
   const [refreshing, setRefreshing] = useState(false);
+  const [waterOpen, setWaterOpen] = useState(false);
 
-  const handleRefresh = useCallback(async () => {
+  const handleRefresh = async () => {
     setRefreshing(true);
     try {
-      await Promise.all([
-        queryClient.refetchQueries({ queryKey: healthQueryKeys.summary(selectedDate) }),
-        queryClient.refetchQueries({ queryKey: healthQueryKeys.foodLogs.byDate(selectedDate) }),
-        queryClient.refetchQueries({ queryKey: healthQueryKeys.exerciseLogs.byDate(selectedDate) }),
-        queryClient.refetchQueries({ queryKey: healthQueryKeys.waterLogs.byDate(selectedDate) }),
-      ]);
+      await day.refetchAll();
     } finally {
       setRefreshing(false);
     }
-  }, [queryClient, selectedDate]);
+  };
+
+  const content = (() => {
+    if (day.isFirstLoad) {
+      return isOnline ? (
+        <>
+          <LoggingSkeleton />
+          <SkeletonLogCard />
+          <SkeletonLogCard />
+        </>
+      ) : (
+        <PlaceHolder
+          image={images.dietPlanUnavailable}
+          message="This day isn't saved on your phone yet. Connect to the internet to load it."
+        />
+      );
+    }
+    if (day.allFailed) {
+      return <ErrorCard onPress={() => day.refetchAll()} className="mx-0" />;
+    }
+    return (
+      <>
+        <SummarySection date={selectedDate} />
+        <ExerciseLogs date={selectedDate} />
+        <WaterLogs date={selectedDate} onLogWater={() => setWaterOpen(true)} />
+        <FoodLogs date={selectedDate} />
+      </>
+    );
+  })();
 
   return (
     <>
@@ -58,15 +89,22 @@ export default function Logging() {
 
           {isValidDate ? (
             <>
-              <SummarySection date={selectedDate} />
-              <ExerciseLogs date={selectedDate} />
-              <WaterLogs date={selectedDate} />
-              <FoodLogs date={selectedDate} />
+              <DayStatusStrip hasRefreshError={day.hasRefreshError} onRetry={() => day.refetchAll()} />
+              {content}
             </>
           ) : (
-            <PlaceHolder message="There's no data for this date." />
+            <PlaceHolder image={images.dietPlanUnavailable} message="There's no data for this date." />
           )}
         </ScrollView>
+
+        {waterOpen && (
+          <WaterLogModal
+            visible={waterOpen}
+            onClose={() => setWaterOpen(false)}
+            currentIntake={day.summary?.waterConsumedMl || 0}
+            dailyGoal={day.summary?.targetWaterMl || 0}
+          />
+        )}
       </SafeAreaView>
     </>
   );

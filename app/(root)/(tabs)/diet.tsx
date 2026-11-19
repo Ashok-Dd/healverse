@@ -1,5 +1,6 @@
 import { ThemedStatusBar } from "@/components/ui/ThemedStatusBar";
 import ErrorCard from "@/components/cards/ErrorCard";
+import GeneratePlanCard from "@/components/cards/GeneratePlanCard";
 import DaySelector from "@/components/DaySelector";
 import GlobalHeader from "@/components/headers/GlobalHeader";
 import MealCard from "@/components/MealCard";
@@ -9,7 +10,7 @@ import { PlanProgress } from "@/components/skeleton/PlanProgress";
 import { Button } from "@/components/ui/Button";
 import GuidanceButton from "@/components/ui/GuidanceButton";
 import IconButton from "@/components/ui/IconButton";
-import { INFO_ABOUT_DIET_PLAN } from "@/constants";
+import { images, INFO_ABOUT_DIET_PLAN } from "@/constants";
 import { useThemeColors } from "@/constants/theme";
 import { useIsOnline } from "@/lib/network";
 import { showToast } from "@/lib/toast";
@@ -35,6 +36,8 @@ export default function Diet() {
     totalNutrition,
     replaceMeal,
     isReplacing,
+    generate,
+    isGenerating,
     handleReGenerate,
     handleRefresh,
     isRegenerating,
@@ -50,6 +53,10 @@ export default function Diet() {
   const handleGenerateNewPlan = useCallback(() => {
     if (planId !== undefined) handleReGenerate(planId).catch(() => {});
   }, [planId, handleReGenerate]);
+
+  const handleGeneratePlan = useCallback(() => {
+    generate(selectedDate).catch(() => {});
+  }, [generate, selectedDate]);
 
   const handleReplaceMeal = useCallback(
     (mealType: MealType) => {
@@ -102,7 +109,9 @@ export default function Diet() {
   );
 
   const body = (() => {
-    if (isLoading || isRegenerating) return <PlanProgress regenerating={isRegenerating} />;
+    if (isRegenerating) return <PlanProgress kind="regenerating" />;
+    if (isGenerating) return <PlanProgress kind="generating" />;
+    if (isLoading) return <PlanProgress kind="loading" />;
     if (error && !dietPlan) {
       return (
         <ErrorCard
@@ -111,11 +120,22 @@ export default function Diet() {
         />
       );
     }
-    if (!isValidDate) return <PlaceHolder message="There's no meal plan for this date." />;
-    if (!dietPlan && !isOnline) {
-      return <PlaceHolder message="This day's plan is not saved on your phone yet. Connect to the internet to load it." />;
+    if (!isValidDate) {
+      return <PlaceHolder image={images.dietPlanUnavailable} message="There's no meal plan for this date." />;
     }
-    if (!dietPlan) return <PlaceHolder message="No meal plan for this day yet." />;
+    if (!dietPlan && !isOnline) {
+      return (
+        <PlaceHolder
+          image={images.dietPlanUnavailable}
+          message="This day's plan is not saved on your phone yet. Connect to the internet to load it."
+        />
+      );
+    }
+    if (!dietPlan) {
+      return isToday
+        ? <GeneratePlanCard onGenerate={handleGeneratePlan} canGenerate={isOnline} />
+        : <PlaceHolder image={images.dietPlanNonePast} message="There's no meal plan for this day." />;
+    }
 
     return (
       <FlatList

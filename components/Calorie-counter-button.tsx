@@ -1,4 +1,4 @@
-import { MealType } from "@/types/type";
+import { mealTypeForNow } from "@/lib/mealType";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import React, { useEffect, useRef } from "react";
@@ -7,14 +7,6 @@ import { Animated, StyleSheet, TouchableOpacity, View } from "react-native";
 const PulseButton = () => {
   const pulseAnim = useRef(new Animated.Value(1)).current;
   const bounceAnim = useRef(new Animated.Value(0)).current;
-
-  // Function to decide meal type based on time
-  const getMealType = (): MealType => {
-    const hour = new Date().getHours();
-    if (hour >= 5 && hour < 11) return "BREAKFAST";
-    if (hour >= 11 && hour < 16) return "LUNCH";
-    return "DINNER";
-  };
 
   // Calorie button pulse animation
   useEffect(() => {
@@ -73,8 +65,7 @@ const PulseButton = () => {
           accessibilityLabel="Log a meal"
           onPress={() => {
             handleButtonPress(() => {
-              const mealType = getMealType();
-              router.push(`/(root)/calorie-counter/${mealType}` as any);
+              router.push(`/(root)/calorie-counter/${mealTypeForNow()}` as any);
             });
           }}
         >

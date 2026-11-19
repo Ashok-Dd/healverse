@@ -1,176 +1,142 @@
-import { useDateSelectorForHealthStore, useWaterLogs } from "@/store/healthStore";
+import Skeleton from "@/components/skeleton/Skeleton";
+import InlineError from "@/components/ui/InlineError";
+import { SyncBadge } from "@/components/ui/SyncBadge";
+import { parseServerTime } from "@/lib/day";
+import { WaterAmountSheet } from "@/components/WaterAmountSheet";
+import { useIsOnline } from "@/lib/network";
+import { useWaterLogMutations, useWaterLogs } from "@/store/healthStore";
 import { WaterLog } from "@/types/type";
-import { Ionicons } from "@expo/vector-icons";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
 import React, { useState } from "react";
-import {
-    ActivityIndicator,
-    Modal,
-    Pressable,
-    ScrollView,
-    Text,
-    TouchableOpacity,
-    View,
-} from "react-native";
+import { ActivityIndicator, Alert, Pressable, Text, View } from "react-native";
 
+/** Every water entry of one day, with edit and delete (both need a connection). */
+const AllWaterLogs = ({ date }: { date: string }) => {
+  const isOnline = useIsOnline();
+  const { isLoading, error, data: waterLogs, refetch } = useWaterLogs.ByDate(date);
+  const { updateWaterLog, deleteWaterLog } = useWaterLogMutations(date);
+  const [editing, setEditing] = useState<WaterLog | null>(null);
 
+  const confirmDelete = (log: WaterLog) => {
+    Alert.alert("Delete this entry?", `${log.amountMl} mL`, [
+      { text: "Cancel", style: "cancel" },
+      {
+        text: "Delete",
+        style: "destructive",
+        // A failure is reported by the global mutation error toast (lib/react-query-client.ts).
+        onPress: () => deleteWaterLog.mutate(log.id),
+      },
+    ]);
+  };
 
-interface WaterLogsComponentProps {
-    onEdit?: (logId: number) => void;
-    onDelete?: (logId: number) => void;
-    onCopyFood?: (logId: number) => void;
-}
-
-const WaterLogsComponent: React.FC<WaterLogsComponentProps> = ({
-                                                                   onEdit,
-                                                                   onDelete,
-                                                                   onCopyFood,
-                                                               }) => {
-    const { selectedDate } = useDateSelectorForHealthStore();
-    const { isLoading, error, data: waterLogs } = useWaterLogs.ByDate(selectedDate);
-
-    const [selectedCard, setSelectedCard] = useState<number | null>(null);
-    const [modalVisible, setModalVisible] = useState<boolean>(false);
-    const [menuPosition, setMenuPosition] = useState<{ x: number; y: number }>({
-        x: 0,
-        y: 0,
-    });
-
-    const handleMenuPress = (cardId: number, event: any): void => {
-        setSelectedCard(cardId);
-        const { pageX, pageY } = event.nativeEvent;
-        setMenuPosition({ x: pageX - 100, y: pageY + 10 });
-        setModalVisible(true);
-    };
-
-    const handleEdit = (): void => {
-        setModalVisible(false);
-        if (selectedCard && onEdit) onEdit(selectedCard);
-    };
-
-    const handleDelete = (): void => {
-        setModalVisible(false);
-        if (selectedCard && onDelete) onDelete(selectedCard);
-    };
-
-    const handleCopyFood = (): void => {
-        setModalVisible(false);
-        if (selectedCard && onCopyFood) onCopyFood(selectedCard);
-    };
-
-    const closeModal = (): void => {
-        setModalVisible(false);
-        setSelectedCard(null);
-    };
-
-    const renderWaterCard = (log: WaterLog): React.ReactElement => (
-        <View key={log.id} className="mb-3">
-            <View className="bg-card rounded-xl p-4 ">
-                <View className="flex-row items-center">
-                    <View className="w-12 h-12 rounded-xl bg-accent items-center justify-center mr-3">
-                        <Ionicons name="water" size={24} color="#4CAF50" />
-                    </View>
-                    <View className="flex-1">
-                        <Text className="text-sm text-foreground mb-1">Water</Text>
-                        <Text className="text-xs text-muted-foreground mb-2">{log.loggedAt}</Text>
-                        <View className="flex-row items-center">
-                            <Ionicons name="water-outline" size={16} className="text-primary" />
-                            <Text className="text-xs text-primary font-body-semibold ml-1">
-                                {log.amountMl} mL
-                            </Text>
-                        </View>
-                    </View>
-                    <TouchableOpacity
-                        className="p-2"
-                        onPress={(event) => handleMenuPress(log.id, event)}
-                    >
-                        <Ionicons name="ellipsis-vertical" size={20} className="text-muted-foreground" />
-                    </TouchableOpacity>
-                </View>
-            </View>
-        </View>
-    );
-
-    const renderContent = () => {
-        if (isLoading) {
-            return (
-                <View className="flex-1 justify-center items-center mt-10">
-                    <ActivityIndicator size="large" color="#4CAF50" />
-                    <Text className="mt-2 text-muted-foreground">Loading water logs...</Text>
-                </View>
-            );
-        }
-
-        if (error) {
-            return (
-                <View className="flex-1 justify-center items-center mt-10">
-                    <Ionicons name="alert-circle" size={32} className="text-destructive" />
-                    <Text className="mt-2 text-destructive">Failed to load water logs</Text>
-                </View>
-            );
-        }
-
-
-        if (!waterLogs?.length) {
-            return (
-                <View className="flex-1 justify-center items-center mt-10">
-                    <Ionicons name="water-outline" size={32} className="text-primary" />
-                    <Text className="mt-2 text-muted-foreground">No water logs found</Text>
-                </View>
-            );
-        }
-
-        return waterLogs.map(renderWaterCard);
-    };
-
+  if (isLoading) {
     return (
-        <View className="flex-1">
-            {/* Content */}
-            <ScrollView className="flex-1 px-4">
-                {renderContent()}
-            </ScrollView>
-
-            {/* Menu Modal */}
-            <Modal transparent visible={modalVisible} onRequestClose={closeModal}>
-                <Pressable className="flex-1" onPress={closeModal}>
-                    <View
-                        className="absolute bg-card rounded-xl w-32 py-1 shadow-2xl border border-border"
-                        style={{
-                            top: menuPosition.y,
-                            right: 20,
-                            elevation: 10,
-                        }}
-                    >
-                        <TouchableOpacity
-                            className="flex-row items-center px-4 py-3"
-                            onPress={handleEdit}
-                        >
-                            <Text className="text-base text-foreground font-normal">Edit</Text>
-                        </TouchableOpacity>
-
-                        <View className="h-px bg-border" />
-
-                        <TouchableOpacity
-                            className="flex-row items-center px-4 py-3"
-                            onPress={handleDelete}
-                        >
-                            <Text className="text-base text-foreground font-normal">Delete</Text>
-                        </TouchableOpacity>
-
-                        <View className="h-px bg-border" />
-
-                        <TouchableOpacity
-                            className="flex-row items-center px-4 py-3"
-                            onPress={handleCopyFood}
-                        >
-                            <Text className="text-base text-foreground font-normal">
-                                Copy Food
-                            </Text>
-                        </TouchableOpacity>
-                    </View>
-                </Pressable>
-            </Modal>
-        </View>
+      <View accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
+        <Skeleton height={56} radius={16} width="100%" className="mb-2" />
+        <Skeleton height={56} radius={16} width="100%" />
+      </View>
     );
+  }
+
+  if (error && !waterLogs) {
+    return <InlineError message="Couldn't load your water logs." onRetry={() => refetch()} />;
+  }
+
+  if (!waterLogs?.length) {
+    return (
+      <View className="min-h-[72px] items-center justify-center rounded-2xl border border-dashed border-border px-4 py-3">
+        <Text className="text-center font-body text-sm text-muted-foreground">
+          No water logged on this day.
+        </Text>
+      </View>
+    );
+  }
+
+  return (
+    <View className="gap-2">
+      {!isOnline && (
+        <Text className="px-1 font-body text-xs text-muted-foreground">
+          Editing and deleting need an internet connection.
+        </Text>
+      )}
+      {waterLogs.map((log) => {
+        const deleting = deleteWaterLog.isPending && deleteWaterLog.variables === log.id;
+        const canChange = isOnline && !deleteWaterLog.isPending;
+        return (
+        <View
+          key={log.id}
+          className={`flex-row items-center gap-3 rounded-2xl bg-muted p-3 ${
+            deleting ? "opacity-50" : ""
+          }`}
+        >
+          <View className="h-10 w-10 items-center justify-center rounded-full bg-secondary">
+            <MaterialCommunityIcons name="cup-water" size={20} className="text-info" />
+          </View>
+          <View className="flex-1">
+            <Text className="font-body-bold text-base text-foreground">{log.amountMl} mL</Text>
+            <Text className="font-body text-xs text-muted-foreground">
+              {parseServerTime(log.loggedAt).toLocaleTimeString([], {
+                hour: "2-digit",
+                minute: "2-digit",
+              })}
+            </Text>
+            <SyncBadge status={log.outboxStatus} />
+          </View>
+          {!log.outboxStatus && (
+            <View className="flex-row">
+              <Pressable
+                onPress={() => setEditing(log)}
+                disabled={!canChange}
+                hitSlop={4}
+                accessibilityRole="button"
+                accessibilityLabel={`Edit ${log.amountMl} millilitres`}
+                className={`h-11 w-11 items-center justify-center rounded-full active:opacity-70 ${
+                  canChange ? "" : "opacity-40"
+                }`}
+              >
+                <MaterialCommunityIcons name="pencil-outline" size={20} className="text-foreground" />
+              </Pressable>
+              <Pressable
+                onPress={() => confirmDelete(log)}
+                disabled={!canChange}
+                hitSlop={4}
+                accessibilityRole="button"
+                accessibilityLabel={`Delete ${log.amountMl} millilitres`}
+                className={`h-11 w-11 items-center justify-center rounded-full active:opacity-70 ${
+                  canChange ? "" : "opacity-40"
+                }`}
+              >
+                {deleting ? (
+                  <ActivityIndicator size="small" />
+                ) : (
+                  <MaterialCommunityIcons name="trash-can-outline" size={20} className="text-destructive" />
+                )}
+              </Pressable>
+            </View>
+          )}
+        </View>
+        );
+      })}
+
+      {editing && (
+        <WaterAmountSheet
+          visible
+          title="Edit water"
+          submitLabel="Save"
+          initialAmount={Number(editing.amountMl)}
+          onClose={() => setEditing(null)}
+          saving={updateWaterLog.isPending}
+          closeOnSubmit={false}
+          onSubmit={(amountMl) =>
+            updateWaterLog.mutate(
+              { id: editing.id, amountMl },
+              { onSuccess: () => setEditing(null) }
+            )
+          }
+        />
+      )}
+    </View>
+  );
 };
 
-export default WaterLogsComponent;
+export default AllWaterLogs;

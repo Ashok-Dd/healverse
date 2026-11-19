@@ -39,7 +39,8 @@ export function useQueryCachePersistence(): boolean {
 
     let cancelled = false;
     let unsubscribe: (() => void) | undefined;
-    const options = buildPersistOptions(queryClient, createCachePersister(userId));
+    const persister = createCachePersister(userId);
+    const options = buildPersistOptions(queryClient, persister);
 
     persistQueryClientRestore(options)
       .catch(() => undefined)
@@ -52,6 +53,7 @@ export function useQueryCachePersistence(): boolean {
     return () => {
       cancelled = true;
       unsubscribe?.();
+      persister.dispose();
     };
   }, [queryClient, isInitializing, userId]);
 

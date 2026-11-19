@@ -1,254 +1,173 @@
 import { ExerciseModal } from "@/components/models/ExerciseModel";
-import {
-    useDateSelectorForHealthStore, useExerciseLogMutations,
-    useExerciseLogs,
-} from "@/store/healthStore";
-import { ExerciseIntensity, ExerciseLog } from "@/types/type";
-import { Ionicons } from "@expo/vector-icons";
+import Skeleton from "@/components/skeleton/Skeleton";
+import InlineError from "@/components/ui/InlineError";
+import { SyncBadge } from "@/components/ui/SyncBadge";
+import { useExerciseData } from "@/hooks/useExerciseData";
+import { parseServerTime } from "@/lib/day";
+import { useIsOnline } from "@/lib/network";
+import { useExerciseLogMutations, useExerciseLogs } from "@/store/healthStore";
+import { ExerciseLog } from "@/types/type";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
 import React, { useState } from "react";
-import {
-    Modal,
-    Pressable,
-    Text,
-    TouchableOpacity,
-    View,
-} from "react-native";
+import { ActivityIndicator, Alert, Pressable, Text, View } from "react-native";
 
-const AllLoggedExercises: React.FC = () => {
-    const { selectedDate } = useDateSelectorForHealthStore();
-    const { isLoading, data: loggedExercises } = useExerciseLogs.ByDate(selectedDate);
+/** Every exercise entry of one day, with edit and delete (both need a connection). */
+const AllLoggedExercises = ({ date }: { date: string }) => {
+  const isOnline = useIsOnline();
+  const { isLoading, error, data: loggedExercises, refetch } = useExerciseLogs.ByDate(date);
+  const { updateExerciseLog, deleteExerciseLog } = useExerciseLogMutations(date);
+  const { calculateCalories } = useExerciseData();
 
-    const {
-        updateExerciseLog,
-        deleteExerciseLog
-    } = useExerciseLogMutations(selectedDate)
+  const [editing, setEditing] = useState<ExerciseLog | null>(null);
 
+  const confirmDelete = (exercise: ExerciseLog) => {
+    Alert.alert("Delete this exercise?", exercise.exerciseName, [
+      { text: "Cancel", style: "cancel" },
+      {
+        text: "Delete",
+        style: "destructive",
+        // A failure is reported by the global mutation error toast (lib/react-query-client.ts).
+        onPress: () => deleteExerciseLog.mutate(exercise.id),
+      },
+    ]);
+  };
 
-    // menu state
-    const [selectedExerciseId, setSelectedExerciseId] = useState<number | null>(
-        null
+  const saveEdit = () => {
+    if (!editing) return;
+    updateExerciseLog.mutate(
+      {
+        id: editing.id,
+        updates: {
+          exerciseName: editing.exerciseName,
+          durationMinutes: editing.durationMinutes,
+          intensity: editing.intensity,
+        },
+      },
+      { onSuccess: () => setEditing(null) }
     );
-    const [menuVisible, setMenuVisible] = useState(false);
-    const [menuPosition, setMenuPosition] = useState({ x: 0, y: 0 });
+  };
 
-    // update modal state
-    const [updateModalVisible, setUpdateModalVisible] = useState(false);
-    const [updateExercise, setUpdateExercise] = useState<ExerciseLog | null>(null);
-
-    // delete modal state
-    const [deleteModalVisible, setDeleteModalVisible] = useState(false);
-
-    const handleMenuPress = (exerciseId: number, event: any) => {
-        setSelectedExerciseId(exerciseId);
-        const { pageX, pageY } = event.nativeEvent;
-        setMenuPosition({ x: pageX - 100, y: pageY + 10 });
-        setMenuVisible(true);
-    };
-
-    const handleEdit = () => {
-        const exercise = loggedExercises?.find((e) => e.id === selectedExerciseId);
-        if (exercise) {
-            setUpdateExercise(exercise);
-            setUpdateModalVisible(true);
-        }
-        setMenuVisible(false);
-    };
-
-    const handleDelete = () => {
-        setDeleteModalVisible(true);
-        setMenuVisible(false);
-    };
-
-    const handleConfirmDelete = () => {
-        deleteExerciseLog.mutate(selectedExerciseId!, {
-            onSuccess: () => {
-                setDeleteModalVisible(false);
-                setSelectedExerciseId(null);
-            },
-            // On failure, leave the modal open so the user can retry — the
-            // global mutation error toast (lib/react-query-client.ts) already
-            // tells them what went wrong.
-        });
-    };
-
-    const handleSaveUpdate = async  (updatedData: {
-        intensity: ExerciseIntensity;
-        durationMinutes: number;
-    }) => {
-        updateExerciseLog.mutate({
-            id : updateExercise?.id!,
-            updates : {
-                exerciseName : updateExercise?.exerciseName,
-                durationMinutes : updatedData?.durationMinutes,
-                intensity : updatedData.intensity,
-            }
-        }, {
-            onSuccess: () => {
-                setUpdateModalVisible(false);
-                setUpdateExercise(null);
-            },
-        })
-    };
-
-    const renderExerciseItem = (exercise: ExerciseLog) => (
-        <View key={exercise.id} className="mb-6">
-            <View className="mx-4 bg-background rounded-2xl p-4">
-                <View className="flex-row items-center">
-                    <View className="w-12 h-12 bg-accent rounded-full items-center justify-center mr-4">
-                        <Text className="text-2xl">🏋️</Text>
-                    </View>
-
-                    <View className="flex-1">
-                        <Text className="text-lg font-body-semibold text-foreground mb-1">
-                            {exercise.exerciseName} | {exercise.intensity} |{" "}
-                            {exercise.durationMinutes} min
-                        </Text>
-
-                        <View className="flex-row items-center mb-2">
-                            <Ionicons name="walk" size={16} className="text-muted-foreground" />
-                            <Text className="text-muted-foreground ml-2">
-                                Exercise {exercise.loggedAt}
-                            </Text>
-                        </View>
-
-                        <View className="flex-row items-center">
-                            <Ionicons name="flame" size={16} color="#10b981" />
-                            <Text className="text-accent-foreground font-body-semibold ml-1">
-                                -{exercise.caloriesBurned}kcal
-                            </Text>
-                        </View>
-                    </View>
-
-                    <TouchableOpacity
-                        className="p-2"
-                        onPress={(event) => handleMenuPress(exercise.id, event)}
-                    >
-                        <Ionicons name="ellipsis-vertical" size={20} className="text-muted-foreground" />
-                    </TouchableOpacity>
-                </View>
-            </View>
-        </View>
-    );
-
+  if (isLoading) {
     return (
-        <View className="">
-            {isLoading && (
-                <Text className="text-center text-muted-foreground">Loading...</Text>
-            )}
-
-            {!isLoading && loggedExercises && loggedExercises.length > 0 && (
-                <>
-                    {loggedExercises?.map((exercise) => renderExerciseItem(exercise))}
-                </>
-            )}
-
-            {!isLoading && loggedExercises && loggedExercises.length === 0 && (
-                <View className="flex-1 justify-center items-center mt-10">
-                    <Ionicons name="fitness" size={32} className="text-primary" />
-                    <Text className="mt-2 text-muted-foreground">No exercises logged</Text>
-                </View>
-            )}
-
-            {/* Menu Modal */}
-            <Modal
-                transparent
-                visible={menuVisible}
-                onRequestClose={() => setMenuVisible(false)}
-                animationType="none"
-            >
-                <Pressable className="flex-1" onPress={() => setMenuVisible(false)}>
-                    <View
-                        className="absolute bg-card rounded-xl w-32 py-1 shadow-2xl border border-border"
-                        style={{
-                            top: menuPosition.y,
-                            right: 20,
-                            elevation: 10,
-                        }}
-                    >
-                        <TouchableOpacity
-                            className="flex-row items-center px-4 py-3"
-                            onPress={handleEdit}
-                        >
-                            <Text className="text-base text-foreground font-normal">Edit</Text>
-                        </TouchableOpacity>
-
-                        <View className="h-px bg-border mx-0" />
-
-                        <TouchableOpacity
-                            className="flex-row items-center px-4 py-3"
-                            onPress={handleDelete}
-                        >
-                            <Text className="text-base text-foreground font-normal">Delete</Text>
-                        </TouchableOpacity>
-                    </View>
-                </Pressable>
-            </Modal>
-
-            {/* Update Modal */}
-            {updateExercise && (
-                <ExerciseModal
-                    visible={updateModalVisible}
-                    exercise={updateExercise}
-                    selectedIntensity={updateExercise.intensity}
-                    selectedDuration={updateExercise.durationMinutes}
-                    calculatedCalories={updateExercise.caloriesBurned}
-                    onIntensityChange={(newIntensity) =>
-                        setUpdateExercise((prev) =>
-                            prev ? { ...prev, intensity: newIntensity } : prev
-                        )
-                    }
-                    onDurationChange={(newDuration) =>
-                        setUpdateExercise((prev) =>
-                            prev ? { ...prev, durationMinutes: newDuration } : prev
-                        )
-                    }
-                    onSave={() =>
-                        handleSaveUpdate({
-                            intensity: updateExercise?.intensity!,
-                            durationMinutes: updateExercise?.durationMinutes!,
-                        })
-                    }
-                    onCancel={() => {
-                        setUpdateModalVisible(false);
-                        setUpdateExercise(null);
-                    }}
-                />
-            )}
-
-            {/* Delete Confirmation Modal */}
-            <Modal
-                transparent
-                visible={deleteModalVisible}
-                animationType="fade"
-                onRequestClose={() => setDeleteModalVisible(false)}
-            >
-                <Pressable
-                    className="flex-1 bg-black/40 items-center justify-center"
-                    onPress={() => setDeleteModalVisible(false)}
-                >
-                    <View className="bg-card p-6 rounded-xl w-80">
-                        <Text className="text-lg font-body-semibold mb-4">
-                            Delete this exercise?
-                        </Text>
-                        <View className="flex-row justify-end">
-                            <TouchableOpacity
-                                className="px-4 py-2 mr-2"
-                                onPress={() => setDeleteModalVisible(false)}
-                            >
-                                <Text className="text-muted-foreground">Cancel</Text>
-                            </TouchableOpacity>
-                            <TouchableOpacity
-                                className="px-4 py-2 bg-destructive rounded"
-                                onPress={handleConfirmDelete}
-                            >
-                                <Text className="text-primary-foreground">Delete</Text>
-                            </TouchableOpacity>
-                        </View>
-                    </View>
-                </Pressable>
-            </Modal>
-        </View>
+      <View accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
+        <Skeleton height={64} radius={16} width="100%" className="mb-2" />
+        <Skeleton height={64} radius={16} width="100%" />
+      </View>
     );
+  }
+
+  if (error && !loggedExercises) {
+    return <InlineError message="Couldn't load your exercises." onRetry={() => refetch()} />;
+  }
+
+  if (!loggedExercises?.length) {
+    return (
+      <View className="min-h-[72px] items-center justify-center rounded-2xl border border-dashed border-border px-4 py-3">
+        <Text className="text-center font-body text-sm text-muted-foreground">
+          No exercise logged on this day.
+        </Text>
+      </View>
+    );
+  }
+
+  return (
+    <View className="gap-2">
+      {!isOnline && (
+        <Text className="px-1 font-body text-xs text-muted-foreground">
+          Editing and deleting need an internet connection.
+        </Text>
+      )}
+
+      {loggedExercises.map((exercise) => {
+        const deleting = deleteExerciseLog.isPending && deleteExerciseLog.variables === exercise.id;
+        const canChange = isOnline && !exercise.outboxStatus && !deleteExerciseLog.isPending;
+        return (
+          <View
+            key={exercise.id}
+            className={`flex-row items-center gap-3 rounded-2xl bg-muted p-3 ${
+              deleting ? "opacity-50" : ""
+            }`}
+          >
+            <View className="h-10 w-10 items-center justify-center rounded-full bg-accent">
+              <MaterialCommunityIcons name="dumbbell" size={20} className="text-accent-foreground" />
+            </View>
+
+            <View className="flex-1">
+              <Text className="font-body-bold text-sm text-foreground" numberOfLines={1}>
+                {exercise.exerciseName}
+              </Text>
+              <Text className="font-body text-xs text-muted-foreground">
+                {exercise.durationMinutes} min · {exercise.intensity.toLowerCase()} ·{" "}
+                {parseServerTime(exercise.loggedAt).toLocaleTimeString([], {
+                  hour: "2-digit",
+                  minute: "2-digit",
+                })}
+              </Text>
+              <View className="flex-row items-center gap-1">
+                <MaterialCommunityIcons name="fire" size={14} className="text-destructive" />
+                <Text className="font-body-semibold text-xs text-destructive">
+                  {exercise.caloriesBurned} kcal
+                </Text>
+              </View>
+              <SyncBadge status={exercise.outboxStatus} />
+            </View>
+
+            {!exercise.outboxStatus && (
+              <View className="flex-row">
+                <Pressable
+                  onPress={() => setEditing(exercise)}
+                  disabled={!canChange}
+                  hitSlop={4}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Edit ${exercise.exerciseName}`}
+                  className={`h-11 w-11 items-center justify-center rounded-full active:opacity-70 ${
+                    canChange ? "" : "opacity-40"
+                  }`}
+                >
+                  <MaterialCommunityIcons name="pencil-outline" size={20} className="text-foreground" />
+                </Pressable>
+                <Pressable
+                  onPress={() => confirmDelete(exercise)}
+                  disabled={!canChange}
+                  hitSlop={4}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Delete ${exercise.exerciseName}`}
+                  className={`h-11 w-11 items-center justify-center rounded-full active:opacity-70 ${
+                    canChange ? "" : "opacity-40"
+                  }`}
+                >
+                  {deleting ? (
+                    <ActivityIndicator size="small" />
+                  ) : (
+                    <MaterialCommunityIcons name="trash-can-outline" size={20} className="text-destructive" />
+                  )}
+                </Pressable>
+              </View>
+            )}
+          </View>
+        );
+      })}
+
+      {editing && (
+        <ExerciseModal
+          visible
+          exercise={editing}
+          selectedIntensity={editing.intensity}
+          selectedDuration={editing.durationMinutes}
+          calculatedCalories={calculateCalories(
+            editing.exerciseName,
+            editing.durationMinutes,
+            editing.intensity
+          )}
+          onIntensityChange={(intensity) => setEditing({ ...editing, intensity })}
+          onDurationChange={(durationMinutes) => setEditing({ ...editing, durationMinutes })}
+          onSave={saveEdit}
+          onCancel={() => setEditing(null)}
+          saving={updateExerciseLog.isPending}
+        />
+      )}
+    </View>
+  );
 };
 
 export default AllLoggedExercises;

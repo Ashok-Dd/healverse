@@ -140,7 +140,7 @@ export interface FoodItem {
   calories: number;
   protein: number;
   carbs: number;
-  fats: number;
+  fat: number;
 }
 
 /** Sync state of a log that was made on this device and has not reached the server yet. */
@@ -370,6 +370,8 @@ export interface RegisterCredentials {
     password: string;
   };
   profile: Omit<UserProfile, "id" | "createdAt" | "updatedAt">;
+  /** IANA id of the device's time zone, so the first requests already use the right day. */
+  timeZone?: string;
 }
 
 export interface AuthResponse {

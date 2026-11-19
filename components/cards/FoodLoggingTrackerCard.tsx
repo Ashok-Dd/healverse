@@ -1,8 +1,7 @@
 // FoodLoggingTrackerCard.tsx - Optimized main component
 import Skeleton from "@/components/skeleton/Skeleton";
 import { images } from "@/constants";
-import { useOutboxEntries } from "@/hooks/useOutboxEntries";
-import { dayOf } from "@/lib/day";
+import { useQueuedFoodEntries } from "@/hooks/useQueuedFoodEntries";
 import { useFoodLogs } from "@/store/healthStore";
 import { router } from "expo-router";
 import React from "react";
@@ -16,12 +15,10 @@ interface FoodLoggingTrackerCardProps {
 
 const FoodLoggingTrackerCard = ({ date }: FoodLoggingTrackerCardProps) => {
     const { data: foodLogs, isLoading: foodLogsLoading } = useFoodLogs.ByDate(date);
-    const queuedPhotos = useOutboxEntries("food-photo").filter(
-        (entry) => dayOf(entry.payload.loggedAt) === date
-    );
+    const queuedMeals = useQueuedFoodEntries(date);
 
     // Only claim "nothing logged" once the request has actually finished.
-    if (!foodLogsLoading && queuedPhotos.length === 0 && (!foodLogs || foodLogs.length === 0)) {
+    if (!foodLogsLoading && queuedMeals.length === 0 && (!foodLogs || foodLogs.length === 0)) {
         return (
             <View className="bg-muted rounded-xl px-1 py-1">
                 <View className="flex flex-row items-center">
@@ -47,13 +44,13 @@ const FoodLoggingTrackerCard = ({ date }: FoodLoggingTrackerCardProps) => {
                 showsHorizontalScrollIndicator={false}
                 contentContainerStyle={{ paddingHorizontal: 4 }}
             >
-                {queuedPhotos.map((entry) => (
+                {queuedMeals.map((entry) => (
                     <QueuedFoodCard key={entry.id} entry={entry} />
                 ))}
 
                 {/* Show existing food logs for the day */}
                 {foodLogs?.map((foodLog: any, index: number) => (
-                    <View key={`existing-${index}`} className="mr-3 bg-muted rounded-xl">
+                    <View key={`existing-${index}`} className="mr-3 w-[322px] overflow-hidden bg-muted rounded-xl">
                         <TouchableOpacity onPress={() => router.push(`/(root)/food-log/${foodLog.id}`)}>
                             <FoodLogCard foodLog={foodLog} />
                         </TouchableOpacity>

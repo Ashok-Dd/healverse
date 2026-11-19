@@ -1,167 +1,98 @@
-import Constants from 'expo-constants';
-import * as Device from 'expo-device';
-import * as Notifications from 'expo-notifications';
-import * as SecureStore from "expo-secure-store";
-import { Platform } from 'react-native';
+import * as Notifications from "expo-notifications";
+import { router } from "expo-router";
+import { Platform } from "react-native";
 
+export type Meal = "breakfast" | "lunch" | "dinner";
 
+export const MEALS: readonly Meal[] = ["breakfast", "lunch", "dinner"];
 
-// function handleRegistrationError(errorMessage: string) {
-//   alert(errorMessage);
-//   throw new Error(errorMessage);
-// }
+interface MealReminderConfig {
+  label: string;
+  hour: number;
+  minute: number;
+  body: string;
+}
 
-// export async function registerForPushNotificationsAsync() {
-//   if (Platform.OS === 'android') {
-//     await Notifications.setNotificationChannelAsync('default', {
-//       name: 'default',
-//       importance: Notifications.AndroidImportance.MAX,
-//       vibrationPattern: [0, 250, 250, 250],
-//       lightColor: '#FF231F7C',
-//     });
-//   }
+export const MEAL_REMINDERS: Record<Meal, MealReminderConfig> = {
+  breakfast: {
+    label: "Breakfast",
+    hour: 8,
+    minute: 0,
+    body: "Time for breakfast. Log it to stay on track.",
+  },
+  lunch: {
+    label: "Lunch",
+    hour: 13,
+    minute: 14,
+    body: "Time for lunch. Log it to stay on track.",
+  },
+  dinner: {
+    label: "Dinner",
+    hour: 20,
+    minute: 0,
+    body: "Time for dinner. Log it to stay on track.",
+  },
+};
 
-//   if (Device.isDevice) {
-//     const { status: existingStatus } = await Notifications.getPermissionsAsync();
-//     let finalStatus = existingStatus;
-//     if (existingStatus !== 'granted') {
-//       const { status } = await Notifications.requestPermissionsAsync();
-//       finalStatus = status;
-//     }
-//     if (finalStatus !== 'granted') {
-//       handleRegistrationError('Permission not granted to get push token for push notification!');
-//       return;
-//     }
-//     const projectId =
-//       Constants?.expoConfig?.extra?.eas?.projectId ?? Constants?.easConfig?.projectId;
-//     if (!projectId) {
-//       handleRegistrationError('Project ID not found');
-//     }
-//     try {
-//       const pushTokenString = (
-//         await Notifications.getExpoPushTokenAsync({
-//           projectId,
-//         })
-//       ).data;
-//       console.log(pushTokenString);
-//       return pushTokenString;
-//     } catch (e: unknown) {
-//       handleRegistrationError(`${e}`);
-//     }
-//   } else {
-//     handleRegistrationError('Must use physical device for push notifications');
-//   }
-// }
+const MEAL_REMINDER_TYPE = "meal-reminder";
+const MEAL_CHANNEL_ID = "meal-reminders";
 
+const reminderId = (meal: Meal) => `${MEAL_REMINDER_TYPE}-${meal}`;
 
-// Configure notifications globally
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
     shouldShowBanner: true,
-    shouldPlaySound: true,
-    shouldSetBadge: true,
     shouldShowList: true,
+    shouldPlaySound: false,
+    shouldSetBadge: false,
   }),
 });
 
-
 export class NotificationService {
-  private static STORAGE_KEY = "notification_settings";
-
-  static async requestPermissions(): Promise<boolean> {
-    try {
-      if (Platform.OS === "android") {
-        await Notifications.setNotificationChannelAsync("default", {
-          name: "General Notifications",
-          importance: Notifications.AndroidImportance.DEFAULT,
-          sound: "default",
-          vibrationPattern: [0, 250, 250, 250],
-          description: "General notification channel",
-        });
-      }
-
-      if (Device.isDevice) {
-        const { status: existingStatus } = await Notifications.getPermissionsAsync();
-        let finalStatus = existingStatus;
-
-        if (existingStatus !== "granted") {
-          const { status } = await Notifications.requestPermissionsAsync();
-          finalStatus = status;
-        }
-
-        if (finalStatus !== "granted") {
-          console.log("Notification permissions not granted");
-          return false;
-        }
-
-        const projectId =
-          Constants.expoConfig?.extra?.eas?.projectId ?? Constants.easConfig?.projectId;
-        if (projectId) {
-          const token = await Notifications.getExpoPushTokenAsync({ projectId });
-          console.log("Push token:", token.data);
-        }
-
-        return true;
-      } else {
-        console.log("Must use physical device for Push Notifications");
-        return false;
-      }
-    } catch (error) {
-      console.error("Error requesting notification permissions:", error);
-      return false;
-    }
+  /** Whether the user has already allowed notifications. Never shows a prompt. */
+  static async hasPermission(): Promise<boolean> {
+    const { granted } = await Notifications.getPermissionsAsync();
+    return granted;
   }
 
-  // ✅ Using SecureStore instead of AsyncStorage
-  static async getNotificationSettings() {
-    try {
-      const stored = await SecureStore.getItemAsync(this.STORAGE_KEY);
-      return stored
-        ? JSON.parse(stored)
-        : {
-            enabled: true,
-            sound: true,
-            vibration: true,
-            followUpEnabled: true,
-            followUpDelay: 15,
-          };
-    } catch (error) {
-      console.error("Error getting notification settings:", error);
-      return {
-        enabled: true,
-        sound: true,
-        vibration: true,
-        followUpEnabled: true,
-        followUpDelay: 15,
-      };
-    }
+  /** Asks for permission only when it was not decided yet; false if the user declined. */
+  static async requestPermission(): Promise<boolean> {
+    const current = await Notifications.getPermissionsAsync();
+    if (current.granted) return true;
+    if (!current.canAskAgain) return false;
+    const { granted } = await Notifications.requestPermissionsAsync();
+    return granted;
   }
 
-  static async updateNotificationSettings(settings: any): Promise<void> {
-    try {
-      await SecureStore.setItemAsync(this.STORAGE_KEY, JSON.stringify(settings));
-    } catch (error) {
-      console.error("Error updating notification settings:", error);
+  /** Repeats every day at the meal's time. Scheduling again replaces the earlier one. */
+  static async scheduleMealReminder(meal: Meal): Promise<void> {
+    const { label, hour, minute, body } = MEAL_REMINDERS[meal];
+    if (Platform.OS === "android") {
+      await Notifications.setNotificationChannelAsync(MEAL_CHANNEL_ID, {
+        name: "Meal reminders",
+        importance: Notifications.AndroidImportance.DEFAULT,
+      });
     }
+    await Notifications.scheduleNotificationAsync({
+      identifier: reminderId(meal),
+      content: { title: label, body, data: { type: MEAL_REMINDER_TYPE, meal } },
+      trigger: {
+        type: Notifications.SchedulableTriggerInputTypes.DAILY,
+        hour,
+        minute,
+        channelId: MEAL_CHANNEL_ID,
+      },
+    });
   }
 
-  static async handleNotificationReceived(notification: Notifications.Notification) {
-    try {
-      const { data } = notification.request.content;
-      console.log("Notification received:", data);
-      // No-op for unknown/unhandled notification types.
-      // Future features (e.g. diet/meal reminders) can branch on data.type here.
-    } catch (error) {
-      console.error("Error handling notification:", error);
-    }
+  static async cancelMealReminder(meal: Meal): Promise<void> {
+    await Notifications.cancelScheduledNotificationAsync(reminderId(meal));
   }
 
-  static async handleNotificationResponse(response: Notifications.NotificationResponse) {
-    try {
-      const { data } = response.notification.request.content;
-      console.log("Notification tapped:", data);
-    } catch (error) {
-      console.error("Error handling notification response:", error);
+  static handleNotificationResponse(response: Notifications.NotificationResponse) {
+    const { data } = response.notification.request.content;
+    if (data?.type === MEAL_REMINDER_TYPE) {
+      router.push("/(root)/(tabs)/logging");
     }
   }
 }

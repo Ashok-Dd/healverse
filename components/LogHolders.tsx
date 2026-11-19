@@ -55,13 +55,12 @@ export const FoodLogHolder = ({ log }: { log: FoodLog }) => (
         className="active:opacity-80"
       >
         <FoodItemCard
-          id={item.id}
           name={item.name}
           quantity={item.quantity}
           unit={item.unit}
           calories={item.calories}
           protein={item.protein}
-          fats={item.fats}
+          fat={item.fat}
           carbs={item.carbs}
         />
       </Pressable>

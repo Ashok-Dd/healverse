@@ -2,6 +2,7 @@ import type { CreateExerciseLogData, MealType, OutboxStatus } from "@/types/type
 import * as Crypto from "expo-crypto";
 import { create } from "zustand";
 import { getCacheStorage } from "./cacheStorage";
+import { purgeOtherUsersMealPhotos } from "./mealPhotos";
 import { deleteOutboxImage } from "./outboxFiles";
 
 /**
@@ -32,13 +33,19 @@ export interface ChatEntry extends EntryBase {
   kind: "chat";
   payload: { conversationId: string; content: string };
 }
-export interface FoodPhotoEntry extends EntryBase {
-  kind: "food-photo";
-  /** `imageUri` points at a copy inside the app's own storage, so it survives a restart. */
-  payload: { imageUri: string; mealType: MealType; loggedAt: string };
+/** A meal from a photo, a description, or both (at least one is always set). */
+export interface FoodLogEntry extends EntryBase {
+  kind: "food-log";
+  payload: {
+    /** Points at a copy inside the app's own storage, so it survives a restart. */
+    imageUri?: string;
+    description?: string;
+    mealType: MealType;
+    loggedAt: string;
+  };
 }
 
-export type OutboxEntry = WaterEntry | ExerciseEntry | ChatEntry | FoodPhotoEntry;
+export type OutboxEntry = WaterEntry | ExerciseEntry | ChatEntry | FoodLogEntry;
 export type OutboxKind = OutboxEntry["kind"];
 export type PayloadOf<K extends OutboxKind> = Extract<OutboxEntry, { kind: K }>["payload"];
 
@@ -57,13 +64,20 @@ function purgeOtherUsersQueues(currentUserId: number): void {
       if (!key.startsWith(OUTBOX_KEY_PREFIX) || key === storageKey(currentUserId)) continue;
       const leftovers = JSON.parse(storage.getString(key) ?? "[]") as OutboxEntry[];
       for (const entry of leftovers) {
-        if (entry.kind === "food-photo") void deleteOutboxImage(entry.payload.imageUri);
+        if (entry.kind === "food-log" && entry.payload.imageUri) {
+          void deleteOutboxImage(entry.payload.imageUri);
+        }
       }
       storage.delete(key);
     }
   } catch {
     // Storage unavailable: nothing was saved to purge.
   }
+}
+
+/** Queues saved by app 1.0.1 hold meal photos as `food-photo`; the payload is the same shape. */
+function upgradeLegacyEntry(entry: OutboxEntry): OutboxEntry {
+  return (entry.kind as string) === "food-photo" ? { ...entry, kind: "food-log" } as OutboxEntry : entry;
 }
 
 interface OutboxState {
@@ -98,10 +112,11 @@ export const useOutboxStore = create<OutboxState>()((set, get) => {
 
     hydrate: (userId) => {
       purgeOtherUsersQueues(userId);
+      void purgeOtherUsersMealPhotos(userId);
       let saved: OutboxEntry[] = [];
       try {
         const raw = getCacheStorage().getString(storageKey(userId));
-        saved = raw ? (JSON.parse(raw) as OutboxEntry[]) : [];
+        saved = raw ? (JSON.parse(raw) as OutboxEntry[]).map(upgradeLegacyEntry) : [];
       } catch {
         saved = [];
       }

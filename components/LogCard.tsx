@@ -1,14 +1,16 @@
 import IconButton from "@/components/ui/IconButton";
+import InlineError from "@/components/ui/InlineError";
 import { Ionicons } from "@expo/vector-icons";
 import React from "react";
 import { Pressable, Text, View } from "react-native";
+import Skeleton from "./skeleton/Skeleton";
 
 type IconName = React.ComponentProps<typeof Ionicons>["name"];
 
 interface LogCardProps<T> {
   icon: IconName;
   title: string;
-  /** Shown when there are no items yet. */
+  /** Shown when there are no items yet. The whole empty row adds a log when pressed. */
   description: string;
   actionLabel: string;
   onAction: () => void;
@@ -17,9 +19,16 @@ interface LogCardProps<T> {
   items: T[];
   getKey: (item: T) => string | number;
   renderItem: (item: T) => React.ReactElement;
+  /** No data yet and a request is on its way. */
+  loading?: boolean;
+  /** The list could not be loaded and there is nothing cached to show instead. */
+  error?: { message?: string; onRetry: () => void };
 }
 
-/** Section card for a kind of log (food, water, exercise) with an add action. */
+/**
+ * Section card for a kind of log (food, water, exercise). Loading and failure only replace the
+ * list: the header and the add action stay, because logging never depends on the list loading.
+ */
 function LogCard<T>({
   icon,
   title,
@@ -30,8 +39,49 @@ function LogCard<T>({
   items,
   getKey,
   renderItem,
+  loading = false,
+  error,
 }: LogCardProps<T>) {
   const hasItems = items.length > 0;
+
+  const body = (() => {
+    if (error) {
+      return (
+        <InlineError
+          message={error.message ?? `Couldn't load ${title.toLowerCase()}.`}
+          onRetry={error.onRetry}
+        />
+      );
+    }
+    if (loading) {
+      return (
+        <View accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
+          <Skeleton height={56} radius={16} className="mb-2" />
+          <Skeleton height={56} radius={16} />
+        </View>
+      );
+    }
+    if (hasItems) {
+      return (
+        <View className="gap-2">
+          {items.map((item) => (
+            <React.Fragment key={getKey(item)}>{renderItem(item)}</React.Fragment>
+          ))}
+        </View>
+      );
+    }
+    return (
+      <Pressable
+        onPress={onAction}
+        accessibilityRole="button"
+        accessibilityLabel={actionLabel}
+        className="min-h-[72px] items-center justify-center gap-1 rounded-2xl border border-dashed border-border px-4 py-3 active:opacity-80"
+      >
+        <Text className="text-center font-body text-sm text-muted-foreground">{description}</Text>
+        <Text className="font-body-semibold text-sm text-ring">+ {actionLabel}</Text>
+      </Pressable>
+    );
+  })();
 
   return (
     <View className="mb-3 rounded-3xl border border-border bg-card p-4">
@@ -57,19 +107,13 @@ function LogCard<T>({
         )}
       </View>
 
-      {hasItems ? (
-        <View className="gap-2">
-          {items.map((item) => (
-            <React.Fragment key={getKey(item)}>{renderItem(item)}</React.Fragment>
-          ))}
-        </View>
-      ) : (
-        <Text className="font-body text-sm text-muted-foreground">{description}</Text>
-      )}
+      {body}
 
-      <View className="mt-3 flex-row justify-end">
-        <IconButton iconName="plus" label={actionLabel} variant="accent" onPress={onAction} />
-      </View>
+      {(hasItems || loading || error) && (
+        <View className="mt-3 flex-row justify-end">
+          <IconButton iconName="plus" label={actionLabel} variant="accent" onPress={onAction} />
+        </View>
+      )}
     </View>
   );
 }

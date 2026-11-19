@@ -1,4 +1,5 @@
 import { dayNames } from "@/constants/data";
+import { formatLocalDate } from "@/lib/today";
 import { generateWeekDates } from "@/lib/utils";
 import React, { memo, useCallback, useMemo, useState } from "react";
 import { Pressable, Text, View } from "react-native";
@@ -12,9 +13,6 @@ interface DaySelectorProps {
   /** Show the previous / next week arrows. */
   showButton?: boolean;
 }
-
-// Dates are exchanged as UTC `YYYY-MM-DD` strings; see getCurrentDate in store/dietPlan.ts.
-const toDateString = (date: Date) => date.toISOString().split("T")[0];
 
 const startOfWeek = () => {
   const today = new Date();
@@ -58,7 +56,7 @@ const DaySelector = memo(function DaySelector({
 
       <View className="flex-1 flex-row justify-between">
         {weekDates.map((date) => {
-          const dateString = toDateString(date);
+          const dateString = formatLocalDate(date);
           const selected = dateString === selectedDate;
           const isToday = date.toDateString() === todayString;
 

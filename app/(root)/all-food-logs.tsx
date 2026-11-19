@@ -5,10 +5,10 @@ import DaySelector from "@/components/DaySelector";
 import { BackHeader } from "@/components/headers/BackHeader";
 import { OutboxFailures } from "@/components/OutboxFailures";
 import PlaceHolder from "@/components/PlaceHolder";
+import { images } from "@/constants";
 import { useThemeColors } from "@/constants/theme";
-import { useOutboxEntries } from "@/hooks/useOutboxEntries";
-import { dayOf } from "@/lib/day";
-import { getCurrentDate } from "@/store/dietPlan";
+import { useQueuedFoodEntries } from "@/hooks/useQueuedFoodEntries";
+import { getCurrentDate } from "@/lib/today";
 import { healthQueryKeys, useDateSelectorForHealthStore, useFoodLogs } from "@/store/healthStore";
 import { useQueryClient } from "@tanstack/react-query";
 import { router, useLocalSearchParams } from "expo-router";
@@ -36,9 +36,7 @@ export default function AllFoodLogs() {
     initialDate,
   });
   const foodLogs = useFoodLogs.ByDate(selectedDate);
-  const queuedPhotos = useOutboxEntries("food-photo").filter(
-    (entry) => dayOf(entry.payload.loggedAt) === selectedDate
-  );
+  const queuedMeals = useQueuedFoodEntries(selectedDate);
   const logs = foodLogs.data ?? [];
   const [refreshing, setRefreshing] = useState(false);
 
@@ -52,12 +50,12 @@ export default function AllFoodLogs() {
   }, [queryClient, selectedDate]);
 
   const renderContent = () => {
-    if (!isValidDate) return <PlaceHolder message="There's no data for this date." />;
+    if (!isValidDate) return <PlaceHolder image={images.dietPlanUnavailable} message="There's no data for this date." />;
 
-    if (queuedPhotos.length > 0 || logs.length > 0) {
+    if (queuedMeals.length > 0 || logs.length > 0) {
       return (
         <View className="w-full pt-3">
-          {queuedPhotos.map((entry) => (
+          {queuedMeals.map((entry) => (
             <View key={`queued-${entry.id}`} className="mb-3 w-full rounded-xl bg-muted">
               <QueuedFoodCard entry={entry} />
             </View>

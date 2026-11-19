@@ -10,8 +10,10 @@ export function useSignOut() {
   const logout = useAuthStore((s) => s.logout);
 
   const performLogout = useCallback(async () => {
-    await clearLocalSessionData();
+    // Drop the token first: while it exists, mounted screens can refetch the old user's data
+    // into the cache that is about to be cleared.
     await logout();
+    await clearLocalSessionData();
     router.replace("/(auth)/welcome");
   }, [logout]);
 

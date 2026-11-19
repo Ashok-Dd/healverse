@@ -1,6 +1,7 @@
+import { useThemeColors } from "@/constants/theme";
 import { Ionicons } from "@expo/vector-icons";
 import React from "react";
-import { Pressable, Text, View } from "react-native";
+import { Pressable, Switch, Text, View } from "react-native";
 
 type IconName = React.ComponentProps<typeof Ionicons>["name"];
 
@@ -33,9 +34,20 @@ interface SettingsRowProps {
   destructive?: boolean;
   /** Draws a divider under the row. */
   divider?: boolean;
+  /** Shows an on/off switch instead of the value and chevron. */
+  toggle?: { value: boolean; onChange: (next: boolean) => void };
 }
 
-export function SettingsRow({ icon, label, value, onPress, destructive, divider }: SettingsRowProps) {
+export function SettingsRow({
+  icon,
+  label,
+  value,
+  onPress,
+  destructive,
+  divider,
+  toggle,
+}: SettingsRowProps) {
+  const colors = useThemeColors();
   const tone = destructive ? "text-destructive" : "text-foreground";
 
   const content = (
@@ -52,6 +64,14 @@ export function SettingsRow({ icon, label, value, onPress, destructive, divider 
         <Ionicons name={icon} size={18} className={tone} />
       </View>
       <Text className={`flex-1 font-body-semibold text-base ${tone}`}>{label}</Text>
+      {toggle ? (
+        <Switch
+          value={toggle.value}
+          onValueChange={toggle.onChange}
+          accessibilityLabel={label}
+          trackColor={{ true: colors.primary }}
+        />
+      ) : null}
       {value ? (
         <Text className="font-body text-sm text-muted-foreground" numberOfLines={1}>
           {value}

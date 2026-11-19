@@ -1,4 +1,6 @@
 import { fetchApi } from "@/lib/fetchApi";
+import { dayOf } from "@/lib/day";
+import { formatLocalDate, getCurrentDate, shiftDate, useToday } from "@/lib/today";
 import { dietPlanApi } from "@/services/api";
 import { useAuthStore } from "@/store/authStore";
 import { DietPlan, Meal, MealType } from "@/types/type";
@@ -16,14 +18,6 @@ export const dietPlanKeys = {
 
 // ==================== UTILITY FUNCTIONS ====================
 /**
- * "Today" as `YYYY-MM-DD` in UTC. This must match the server: it stores `loggedAt` as a UTC
- * wall-clock time and fetches a day by that UTC range, so a local date would miss logs made
- * between local midnight and the UTC day change (e.g. 00:00-05:30 in India).
- * TODO: switch to the user's local date once the server is told the user's time zone.
- */
-export const getCurrentDate = (): string => new Date().toISOString().split("T")[0];
-
-/**
  * Data can be shown for dates from the day the account was created up to today.
  * `YYYY-MM-DD` strings compare correctly as plain strings.
  */
@@ -33,8 +27,7 @@ export const isValidDateForData = (date: string | undefined | null): boolean => 
   const createdAt = useAuthStore.getState().user?.createdAt as string | Date | undefined;
   if (!createdAt) return false;
 
-  const createdDate =
-    typeof createdAt === "string" ? createdAt.split("T")[0] : createdAt.toISOString().split("T")[0];
+  const createdDate = typeof createdAt === "string" ? dayOf(createdAt) : formatLocalDate(createdAt);
 
   return date >= createdDate && date <= getCurrentDate();
 };
@@ -126,16 +119,16 @@ export const useDateSelectorForDietplan = (
   options: UseDateSelectorOptions = {}
 ) => {
   const queryClient = useQueryClient();
-  const currentDate = getCurrentDate();
-  const [selectedDate, setSelectedDate] = useState(
-    options.initialDate || currentDate
-  );
+  const currentDate = useToday();
+  // Only a day the user picked is remembered. Otherwise the selection follows "today".
+  const [pickedDate, setPickedDate] = useState<string | null>(options.initialDate ?? null);
+  const selectedDate = pickedDate ?? currentDate;
 
   const selectDate = useCallback(
     (date: string | null | undefined) => {
       // Safely handle date input
       const safeDate = date && typeof date === "string" ? date : currentDate;
-      setSelectedDate(safeDate);
+      setPickedDate(safeDate === currentDate ? null : safeDate);
 
       // Prefetch data for the selected date if valid and autoFetch is enabled
       if (options.autoFetch !== false && isValidDateForData(safeDate)) {
@@ -154,15 +147,11 @@ export const useDateSelectorForDietplan = (
   }, [currentDate, selectDate]);
 
   const selectPreviousDay = useCallback(() => {
-    const prevDate = new Date(selectedDate);
-    prevDate.setDate(prevDate.getDate() - 1);
-    selectDate(prevDate.toISOString().split("T")[0]);
+    selectDate(shiftDate(selectedDate, -1));
   }, [selectedDate, selectDate]);
 
   const selectNextDay = useCallback(() => {
-    const nextDate = new Date(selectedDate);
-    nextDate.setDate(nextDate.getDate() + 1);
-    selectDate(nextDate.toISOString().split("T")[0]);
+    selectDate(shiftDate(selectedDate, 1));
   }, [selectedDate, selectDate]);
 
   const isToday = selectedDate === currentDate;
@@ -189,6 +178,14 @@ export const useDateSelectorForDietplan = (
 // ==================== HOOK 3: DIET PLAN MUTATIONS ====================
 export const useDietPlanMutations = () => {
   const queryClient = useQueryClient();
+
+  const generatePlan = useMutation({
+    // Failures surface through the global mutation error toast; the empty state stays so the user can retry.
+    mutationFn: (date: string) => dietPlanApi.generate(date),
+    onSuccess: (data, date) => {
+      queryClient.setQueryData(dietPlanKeys.byDate(date), data);
+    },
+  });
 
   const reGeneratePlan = useMutation({
     // Failures surface through the global mutation error toast; never fake a plan.
@@ -290,11 +287,13 @@ export const useDietPlanMutations = () => {
 
   return {
     // Mutations
+    generatePlan,
     reGeneratePlan,
     refreshPlan,
     replaceMeal,
 
     // States
+    isGenerating: generatePlan.isPending,
     isRegenerating: reGeneratePlan.isPending,
     isRefreshing: refreshPlan.isPending,
     isReplacing: replaceMeal.isPending,
@@ -304,6 +303,7 @@ export const useDietPlanMutations = () => {
     replaceError: replaceMeal.error,
 
     // Async Actions
+    generate: generatePlan.mutateAsync,
     reGenerate: reGeneratePlan.mutateAsync,
     refresh: refreshPlan.mutateAsync,
     replace: replaceMeal.mutateAsync,
@@ -372,6 +372,6 @@ export const useDietPlanManager = (initialDate?: string) => {
 
     // Combined loading states
     isLoading:
-      dietPlan.isLoading || mutations.isRegenerating || mutations.isRefreshing,
+      dietPlan.isLoading || mutations.isGenerating || mutations.isRegenerating || mutations.isRefreshing,
   };
 };

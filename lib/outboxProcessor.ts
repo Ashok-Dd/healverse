@@ -3,6 +3,7 @@ import type { ExerciseLog, FoodLog, Message, WaterLog } from "@/types/type";
 import { onlineManager, type QueryClient } from "@tanstack/react-query";
 import { applyExerciseLog, applyFoodLog, applyWaterLog } from "./healthCache";
 import { type ChatEntry, type OutboxEntry, type OutboxKind, useOutboxStore } from "./outbox";
+import { keepMealPhoto } from "./mealPhotos";
 import { deleteOutboxImage } from "./outboxFiles";
 
 // After this many server-side failures (5xx, 429) in a row an entry is parked as failed, so the
@@ -13,7 +14,11 @@ const RETRY_MAX_DELAY_MS = 5 * 60_000;
 
 const idempotencyHeader = (entry: OutboxEntry) => ({ "Idempotency-Key": entry.id });
 
-async function sendChatMessage(entry: ChatEntry, queryClient: QueryClient): Promise<void> {
+async function sendChatMessage(
+  entry: ChatEntry,
+  queryClient: QueryClient,
+  isCurrent: () => boolean
+): Promise<void> {
   const { conversationId, content } = entry.payload;
   const reply = await fetchApi<Message>(`/api/conversations/${conversationId}/messages`, {
     method: "POST",
@@ -21,6 +26,7 @@ async function sendChatMessage(entry: ChatEntry, queryClient: QueryClient): Prom
     body: { sender: "USER", content },
     headers: idempotencyHeader(entry),
   });
+  if (!isCurrent()) return;
   // The server stores the user's message too; show it (the next refetch swaps in the real one).
   // This copy stays in the cache, so its id must never repeat. `entry.seq` restarts at 1 whenever
   // the queue is empty, which made every second message share an id (and a list key) with an
@@ -40,7 +46,17 @@ async function sendChatMessage(entry: ChatEntry, queryClient: QueryClient): Prom
   void queryClient.invalidateQueries({ queryKey: ["conversations"] });
 }
 
-async function sendEntry(entry: OutboxEntry, queryClient: QueryClient): Promise<void> {
+/**
+ * Uploads one entry and puts the confirmed result into the cache. `isCurrent` says whether the
+ * session that queued the entry is still the active one: the upload can finish after a sign-out
+ * (or after another user signed in), and its response must then be dropped, never written into
+ * the new session's cache.
+ */
+async function sendEntry(
+  entry: OutboxEntry,
+  queryClient: QueryClient,
+  isCurrent: () => boolean
+): Promise<void> {
   switch (entry.kind) {
     case "water": {
       const log = await fetchApi<WaterLog>("/api/water-logs/log", {
@@ -49,7 +65,7 @@ async function sendEntry(entry: OutboxEntry, queryClient: QueryClient): Promise<
         body: entry.payload,
         headers: idempotencyHeader(entry),
       });
-      applyWaterLog(queryClient, log);
+      if (isCurrent()) applyWaterLog(queryClient, log);
       break;
     }
     case "exercise": {
@@ -59,32 +75,40 @@ async function sendEntry(entry: OutboxEntry, queryClient: QueryClient): Promise<
         body: entry.payload,
         headers: idempotencyHeader(entry),
       });
-      applyExerciseLog(queryClient, log);
+      if (isCurrent()) applyExerciseLog(queryClient, log);
       break;
     }
-    case "food-photo": {
+    case "food-log": {
+      const { imageUri, description, mealType, loggedAt } = entry.payload;
       const formData = new FormData();
-      formData.append("image", {
-        uri: entry.payload.imageUri,
-        name: "meal.jpg",
-        type: "image/jpeg",
-      } as unknown as Blob);
-      formData.append("mealType", entry.payload.mealType);
-      formData.append("loggedAt", entry.payload.loggedAt);
-      const log = await fetchApi<FoodLog>("/api/food-logs/log/image", {
+      if (imageUri) {
+        formData.append("image", {
+          uri: imageUri,
+          name: "meal.jpg",
+          type: "image/jpeg",
+        } as unknown as Blob);
+      }
+      if (description) formData.append("description", description);
+      formData.append("mealType", mealType);
+      formData.append("loggedAt", loggedAt);
+      const log = await fetchApi<FoodLog>("/api/food-logs/log", {
         method: "POST",
         requiresAuth: true,
         body: formData,
         headers: idempotencyHeader(entry),
       });
-      applyFoodLog(queryClient, log);
+      if (isCurrent()) {
+        applyFoodLog(queryClient, log);
+        const userId = useOutboxStore.getState().userId;
+        if (imageUri && userId != null) await keepMealPhoto(userId, log.id, imageUri);
+      }
       break;
     }
     case "chat":
-      await sendChatMessage(entry, queryClient);
+      await sendChatMessage(entry, queryClient, isCurrent);
       break;
   }
-  void queryClient.invalidateQueries({ queryKey: ["gamification", "summary"] });
+  if (isCurrent()) void queryClient.invalidateQueries({ queryKey: ["gamification", "summary"] });
 }
 
 const nextMacrotask = (): Promise<void> => new Promise((resolve) => setTimeout(resolve, 0));
@@ -111,7 +135,7 @@ export function cancelOutboxRetry(): void {
  * Sends queued entries to the server, oldest first. Safe to call at any time: it does nothing
  * while offline or while another run is active.
  *
- * Order is kept per kind (water, exercise, chat, photo): if one entry cannot be sent for a
+ * Order is kept per kind (water, exercise, chat, meal): if one entry cannot be sent for a
  * temporary reason, later entries of the same kind wait behind it, while other kinds go on.
  * - Offline / timeout: stays pending; the reconnect listener runs the queue again.
  * - Server error (5xx, 429): stays pending with a backoff, parked as failed after a few tries.
@@ -132,13 +156,18 @@ export async function processOutbox(queryClient: QueryClient): Promise<void> {
       if (!entry) return;
 
       store().update(entry.id, { status: "syncing" });
+      const sessionUserId = store().userId;
+      const isCurrent = () => store().userId === sessionUserId;
       try {
-        await sendEntry(entry, queryClient);
+        await sendEntry(entry, queryClient, isCurrent);
+        if (!isCurrent()) return;
         // Let the cache listeners render the confirmed log first, so the queued copy is not
         // dropped a moment before the real one appears.
         await nextMacrotask();
         store().remove(entry.id);
-        if (entry.kind === "food-photo") await deleteOutboxImage(entry.payload.imageUri);
+        if (entry.kind === "food-log" && entry.payload.imageUri) {
+          await deleteOutboxImage(entry.payload.imageUri);
+        }
       } catch (error) {
         const status = error instanceof ApiError ? error.status : 0;
         const message = error instanceof Error ? error.message : "Could not sync";

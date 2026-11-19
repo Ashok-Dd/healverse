@@ -1,13 +1,12 @@
 import { useOutboxStore } from "@/lib/outbox";
+import { deleteAllMealPhotos } from "@/lib/mealPhotos";
 import { deleteAllOutboxImages } from "@/lib/outboxFiles";
 import { cancelOutboxRetry } from "@/lib/outboxProcessor";
 import { wipePersistedCache } from "@/lib/queryPersistence";
 import { getQueryClient } from "@/lib/react-query-client";
+import { useReminderStore } from "@/store/reminderStore";
 import { useUserProfileStore } from "@/store/userProfile";
 import * as Notifications from "expo-notifications";
-import * as SecureStore from "expo-secure-store";
-
-const NOTIFICATION_SETTINGS_KEY = "notification_settings";
 
 /**
  * - `sign-out`: the user left on purpose. Everything goes, including logs that were still
@@ -28,18 +27,24 @@ export async function clearLocalSessionData(reason: SessionEnd = "sign-out"): Pr
   const keepOutbox = reason === "expired";
   cancelOutboxRetry();
   useOutboxStore.getState().reset();
-  getQueryClient().clear();
+  const queryClient = getQueryClient();
+  // A request still in flight would otherwise write the old user's data back after the wipe.
+  await queryClient.cancelQueries();
+  queryClient.clear();
   useUserProfileStore.getState().clearProfile();
   try {
     wipePersistedCache({ keepOutbox });
-    if (!keepOutbox) await deleteAllOutboxImages();
+    if (!keepOutbox) {
+      await deleteAllOutboxImages();
+      await deleteAllMealPhotos();
+    }
   } catch {
     // Encrypted storage unavailable: there is no persisted copy to remove.
   }
+  useReminderStore.getState().reset();
   try {
     await Notifications.cancelAllScheduledNotificationsAsync();
-    await SecureStore.deleteItemAsync(NOTIFICATION_SETTINGS_KEY);
   } catch {
-    // Ignore: nothing scheduled, or storage unavailable.
+    // Ignore: nothing scheduled.
   }
 }

@@ -2,26 +2,27 @@ import React from "react";
 import { Text, View } from "react-native";
 
 interface PlanProgressProps {
-  /** True when an existing plan is being replaced, false for the first load of a day. */
-  regenerating?: boolean;
+  /** `loading` reads a stored plan (fast); the other two are AI calls that can take close to a minute. */
+  kind: "loading" | "generating" | "regenerating";
 }
 
 /**
- * Shown while a diet plan is generated. Generation is an AI call that can take close to a
- * minute, so the screen says so instead of looking frozen.
+ * Placeholder while the Diet tab waits. For a generation it says so, instead of looking frozen.
  */
-export function PlanProgress({ regenerating = false }: PlanProgressProps) {
+export function PlanProgress({ kind }: PlanProgressProps) {
   return (
     <View className="flex-1 px-1 pt-4">
-      <View accessibilityLiveRegion="polite" className="mb-5 rounded-3xl bg-accent p-5">
-        <Text className="font-display text-lg text-accent-foreground">
-          {regenerating ? "Creating a fresh plan..." : "Preparing your meal plan..."}
-        </Text>
-        <Text className="mt-1 font-body text-sm text-foreground">
-          Your dietitian is building meals around your goals. This can take up to a minute, and
-          you can leave this screen while it works.
-        </Text>
-      </View>
+      {kind !== "loading" && (
+        <View accessibilityLiveRegion="polite" className="mb-5 rounded-3xl bg-accent p-5">
+          <Text className="font-display text-lg text-accent-foreground">
+            {kind === "regenerating" ? "Creating a fresh plan..." : "Preparing your meal plan..."}
+          </Text>
+          <Text className="mt-1 font-body text-sm text-foreground">
+            Your dietitian is building meals around your goals. This can take up to a minute, and
+            you can leave this screen while it works.
+          </Text>
+        </View>
+      )}
 
       {[0, 1, 2].map((i) => (
         <View
