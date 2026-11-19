@@ -36,7 +36,6 @@ const FoodLogScreen = () => {
                                 // see each item contain calories , carbs , protions , fats
                                 <FoodItemCard
                                     key={item.id}
-                                    id={item.id}
                                     name={item.name}
                                     quantity={item.quantity}
                                     unit={item.unit}

@@ -31,7 +31,7 @@ const NutrientBadge = ({
   const t = TONES[tone];
 
   return (
-    <View className="flex-row items-center gap-1 rounded-full bg-muted px-2 py-1">
+    <View className="flex-row items-center gap-1 rounded-full border border-border bg-card px-2 py-1">
       <Icon name={iconName as any} className={t.icon} size={12} />
       <Text className={`font-body-semibold text-xs ${t.text}`}>
         {value}
