@@ -21,7 +21,6 @@ import {
 } from "@/lib/outboxOverlay";
 import { withPausedAsLoading } from "@/lib/queryStatus";
 import { useToday } from "@/lib/today";
-import { getCurrentDate } from "@/lib/today";
 import { isValidDateForData } from "./dietPlan";
 
 import { healthQueryKeys } from "@/lib/healthQueryKeys";
@@ -212,8 +211,13 @@ export const useExerciseLogs = {
   },
 };
 
+/** Drops the cached day totals so they are fetched again after a log was changed or removed. */
+const refreshSummary = (queryClient: QueryClient, date: string) =>
+  queryClient.invalidateQueries({ queryKey: healthQueryKeys.summary(date) });
+
 export const useExerciseLogMutations = (date: string) => {
   const queryClient = useQueryClient();
+  const listKey = healthQueryKeys.exerciseLogs.byDate(date);
 
   const updateExerciseLog = useMutation({
     mutationFn: async ({
@@ -222,26 +226,17 @@ export const useExerciseLogMutations = (date: string) => {
     }: {
       id: number;
       updates: UpdateExerciseLogData;
-    }): Promise<ExerciseLog> => {
-      const response = await fetchApi<ExerciseLog>(`/api/exercise-logs/${id}`, {
+    }): Promise<ExerciseLog> =>
+      await fetchApi<ExerciseLog>(`/api/exercise-logs/${id}`, {
         method: "PUT",
         requiresAuth: true,
         body: updates,
-      });
-      return response;
-    },
+      }),
     onSuccess: (updatedLog) => {
-      queryClient.setQueryData<ExerciseLog[]>(
-        healthQueryKeys.exerciseLogs.today(),
-        (old = []) =>
-          old.map((log) => (log.id === updatedLog.id ? updatedLog : log))
+      queryClient.setQueryData<ExerciseLog[]>(listKey, (old = []) =>
+        old.map((log) => (log.id === updatedLog.id ? updatedLog : log))
       );
-
-      queryClient.invalidateQueries({
-        queryKey: healthQueryKeys.summary(
-          getCurrentDate()
-        ),
-      });
+      refreshSummary(queryClient, date);
     },
   });
 
@@ -253,16 +248,10 @@ export const useExerciseLogMutations = (date: string) => {
       });
     },
     onSuccess: (_, deletedId) => {
-      queryClient.setQueryData<ExerciseLog[]>(
-        healthQueryKeys.exerciseLogs.today(),
-        (old = []) => old.filter((log) => log.id !== deletedId)
+      queryClient.setQueryData<ExerciseLog[]>(listKey, (old = []) =>
+        old.filter((log) => log.id !== deletedId)
       );
-
-      queryClient.invalidateQueries({
-        queryKey: healthQueryKeys.summary(
-          getCurrentDate()
-        ),
-      });
+      refreshSummary(queryClient, date);
     },
   });
 
@@ -285,4 +274,25 @@ export const useWaterLogs = {
       queued.filter((entry) => isOnDay(entry, date)).map(waterLogFromEntry)
     );
   },
+};
+
+export const useWaterLogMutations = (date: string) => {
+  const queryClient = useQueryClient();
+
+  const deleteWaterLog = useMutation({
+    mutationFn: async (id: number): Promise<void> => {
+      await fetchApi(`/api/water-logs/${id}`, {
+        method: "DELETE",
+        requiresAuth: true,
+      });
+    },
+    onSuccess: (_, deletedId) => {
+      queryClient.setQueryData<WaterLog[]>(healthQueryKeys.waterLogs.byDate(date), (old = []) =>
+        old.filter((log) => log.id !== deletedId)
+      );
+      refreshSummary(queryClient, date);
+    },
+  });
+
+  return { deleteWaterLog };
 };

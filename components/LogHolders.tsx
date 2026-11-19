@@ -55,7 +55,6 @@ export const FoodLogHolder = ({ log }: { log: FoodLog }) => (
         className="active:opacity-80"
       >
         <FoodItemCard
-          id={item.id}
           name={item.name}
           quantity={item.quantity}
           unit={item.unit}
