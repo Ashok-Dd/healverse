@@ -3,6 +3,7 @@ import type { ExerciseLog, FoodLog, Message, WaterLog } from "@/types/type";
 import { onlineManager, type QueryClient } from "@tanstack/react-query";
 import { applyExerciseLog, applyFoodLog, applyWaterLog } from "./healthCache";
 import { type ChatEntry, type OutboxEntry, type OutboxKind, useOutboxStore } from "./outbox";
+import { keepMealPhoto } from "./mealPhotos";
 import { deleteOutboxImage } from "./outboxFiles";
 
 // After this many server-side failures (5xx, 429) in a row an entry is parked as failed, so the
@@ -96,7 +97,11 @@ async function sendEntry(
         body: formData,
         headers: idempotencyHeader(entry),
       });
-      if (isCurrent()) applyFoodLog(queryClient, log);
+      if (isCurrent()) {
+        applyFoodLog(queryClient, log);
+        const userId = useOutboxStore.getState().userId;
+        if (imageUri && userId != null) await keepMealPhoto(userId, log.id, imageUri);
+      }
       break;
     }
     case "chat":

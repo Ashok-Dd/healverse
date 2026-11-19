@@ -2,6 +2,7 @@ import type { CreateExerciseLogData, MealType, OutboxStatus } from "@/types/type
 import * as Crypto from "expo-crypto";
 import { create } from "zustand";
 import { getCacheStorage } from "./cacheStorage";
+import { purgeOtherUsersMealPhotos } from "./mealPhotos";
 import { deleteOutboxImage } from "./outboxFiles";
 
 /**
@@ -111,6 +112,7 @@ export const useOutboxStore = create<OutboxState>()((set, get) => {
 
     hydrate: (userId) => {
       purgeOtherUsersQueues(userId);
+      void purgeOtherUsersMealPhotos(userId);
       let saved: OutboxEntry[] = [];
       try {
         const raw = getCacheStorage().getString(storageKey(userId));

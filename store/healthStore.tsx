@@ -13,6 +13,8 @@ import type { QueryClient } from "@tanstack/react-query";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCallback, useState } from "react";
 import { useOutboxEntries } from "@/hooks/useOutboxEntries";
+import { dayOf } from "@/lib/day";
+import type { UpdateFoodLogPayload } from "@/lib/foodEdit";
 import {
   exerciseLogFromEntry,
   isOnDay,
@@ -23,6 +25,7 @@ import { withPausedAsLoading } from "@/lib/queryStatus";
 import { useToday } from "@/lib/today";
 import { isValidDateForData } from "./dietPlan";
 
+import { findCachedFoodLog } from "@/lib/healthCache";
 import { healthQueryKeys } from "@/lib/healthQueryKeys";
 
 // Re-exported so existing imports from "@/store/healthStore" keep working.
@@ -140,6 +143,10 @@ export const useDateSelectorForHealthStore = (
   };
 };
 
+/** Drops the cached day totals so they are fetched again after a log was changed or removed. */
+const refreshSummary = (queryClient: QueryClient, date: string) =>
+  queryClient.invalidateQueries({ queryKey: healthQueryKeys.summary(date) });
+
 export const useFoodLogs = {
   ByDate: (date: string) => {
     const query = useQuery({
@@ -169,13 +176,53 @@ export const useFoodLogs = {
     });
   },
 
+  /** One food log. A day that is already loaded supplies it, so it opens offline and at once. */
   ById: (id: number) => {
+    const queryClient = useQueryClient();
     return useQuery({
       queryKey: healthQueryKeys.foodLogs.byId(id),
       queryFn: () => healthAPIs.fetchFoodLogById(id),
+      initialData: () => findCachedFoodLog(queryClient, id),
       staleTime: 2 * 60 * 1000,
     });
   },
+};
+
+export const useFoodLogMutations = () => {
+  const queryClient = useQueryClient();
+
+  const updateFoodLog = useMutation({
+    mutationFn: async ({ id, payload }: { id: number; payload: UpdateFoodLogPayload }): Promise<FoodLog> =>
+      await fetchApi<FoodLog>(`/api/food-logs/${id}`, {
+        method: "PUT",
+        requiresAuth: true,
+        body: payload,
+      }),
+    onSuccess: (updatedLog) => {
+      const date = dayOf(updatedLog.loggedAt);
+      queryClient.setQueryData<FoodLog>(healthQueryKeys.foodLogs.byId(updatedLog.id), updatedLog);
+      queryClient.setQueryData<FoodLog[]>(healthQueryKeys.foodLogs.byDate(date), (old = []) =>
+        old.map((log) => (log.id === updatedLog.id ? updatedLog : log))
+      );
+      refreshSummary(queryClient, date);
+    },
+  });
+
+  const deleteFoodLog = useMutation({
+    mutationFn: async (log: FoodLog): Promise<void> => {
+      await fetchApi(`/api/food-logs/${log.id}`, { method: "DELETE", requiresAuth: true });
+    },
+    onSuccess: (_, log) => {
+      const date = dayOf(log.loggedAt);
+      queryClient.removeQueries({ queryKey: healthQueryKeys.foodLogs.byId(log.id) });
+      queryClient.setQueryData<FoodLog[]>(healthQueryKeys.foodLogs.byDate(date), (old = []) =>
+        old.filter((existing) => existing.id !== log.id)
+      );
+      refreshSummary(queryClient, date);
+    },
+  });
+
+  return { updateFoodLog, deleteFoodLog };
 };
 
 export const useExerciseLogs = {
@@ -210,10 +257,6 @@ export const useExerciseLogs = {
     });
   },
 };
-
-/** Drops the cached day totals so they are fetched again after a log was changed or removed. */
-const refreshSummary = (queryClient: QueryClient, date: string) =>
-  queryClient.invalidateQueries({ queryKey: healthQueryKeys.summary(date) });
 
 export const useExerciseLogMutations = (date: string) => {
   const queryClient = useQueryClient();
