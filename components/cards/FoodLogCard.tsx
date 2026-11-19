@@ -2,9 +2,9 @@ import NutrientBadge from "@/components/ui/NutritionBadge";
 import { parseServerTime } from "@/lib/day";
 import { calculateTotals } from "@/lib/utils";
 import { FoodItem } from "@/types/type";
-import { MaterialCommunityIcons } from "@expo/vector-icons";
+import { MealPhoto } from "@/components/ui/MealPhoto";
 import React, { memo } from "react";
-import { Image, Text, View } from "react-native";
+import { Text, View } from "react-native";
 
 interface FoodLogCardProps {
     foodLog: any;
@@ -15,17 +15,11 @@ const FoodLogCard = memo(({ foodLog }: FoodLogCardProps) => {
 
     return (
         <View className="p-3 rounded-xl items-center min-w-[310px] gap-3 mr-3 flex-row">
-            {foodLog.imageUrl ? (
-                <Image
-                    source={{ uri: foodLog.imageUrl }}
-                    className="w-[72px] h-[72px] rounded-xl border border-border"
-                    resizeMode="cover"
-                />
-            ) : (
-                <View className="w-[72px] h-[72px] rounded-xl bg-secondary items-center justify-center">
-                    <MaterialCommunityIcons name="silverware-fork-knife" size={28} className="text-secondary-foreground" />
-                </View>
-            )}
+            <MealPhoto
+                logId={foodLog.id}
+                imageUrl={foodLog.imageUrl}
+                className="w-[72px] h-[72px] rounded-xl"
+            />
 
             <View className="flex-1 gap-1">
                 <Text className="text-foreground text-base font-body-semibold" numberOfLines={1}>

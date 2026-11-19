@@ -1,4 +1,5 @@
 import { useOutboxStore } from "@/lib/outbox";
+import { deleteAllMealPhotos } from "@/lib/mealPhotos";
 import { deleteAllOutboxImages } from "@/lib/outboxFiles";
 import { cancelOutboxRetry } from "@/lib/outboxProcessor";
 import { wipePersistedCache } from "@/lib/queryPersistence";
@@ -30,7 +31,10 @@ export async function clearLocalSessionData(reason: SessionEnd = "sign-out"): Pr
   useUserProfileStore.getState().clearProfile();
   try {
     wipePersistedCache({ keepOutbox });
-    if (!keepOutbox) await deleteAllOutboxImages();
+    if (!keepOutbox) {
+      await deleteAllOutboxImages();
+      await deleteAllMealPhotos();
+    }
   } catch {
     // Encrypted storage unavailable: there is no persisted copy to remove.
   }
