@@ -278,6 +278,22 @@ export const useWaterLogs = {
 
 export const useWaterLogMutations = (date: string) => {
   const queryClient = useQueryClient();
+  const listKey = healthQueryKeys.waterLogs.byDate(date);
+
+  const updateWaterLog = useMutation({
+    mutationFn: async ({ id, amountMl }: { id: number; amountMl: number }): Promise<WaterLog> =>
+      await fetchApi<WaterLog>(`/api/water-logs/${id}`, {
+        method: "PUT",
+        requiresAuth: true,
+        body: { amountMl },
+      }),
+    onSuccess: (updatedLog) => {
+      queryClient.setQueryData<WaterLog[]>(listKey, (old = []) =>
+        old.map((log) => (log.id === updatedLog.id ? updatedLog : log))
+      );
+      refreshSummary(queryClient, date);
+    },
+  });
 
   const deleteWaterLog = useMutation({
     mutationFn: async (id: number): Promise<void> => {
@@ -287,12 +303,12 @@ export const useWaterLogMutations = (date: string) => {
       });
     },
     onSuccess: (_, deletedId) => {
-      queryClient.setQueryData<WaterLog[]>(healthQueryKeys.waterLogs.byDate(date), (old = []) =>
+      queryClient.setQueryData<WaterLog[]>(listKey, (old = []) =>
         old.filter((log) => log.id !== deletedId)
       );
       refreshSummary(queryClient, date);
     },
   });
 
-  return { deleteWaterLog };
+  return { updateWaterLog, deleteWaterLog };
 };

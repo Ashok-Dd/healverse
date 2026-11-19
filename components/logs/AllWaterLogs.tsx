@@ -2,18 +2,20 @@ import Skeleton from "@/components/skeleton/Skeleton";
 import InlineError from "@/components/ui/InlineError";
 import { SyncBadge } from "@/components/ui/SyncBadge";
 import { parseServerTime } from "@/lib/day";
+import { WaterAmountSheet } from "@/components/WaterAmountSheet";
 import { useIsOnline } from "@/lib/network";
 import { useWaterLogMutations, useWaterLogs } from "@/store/healthStore";
 import { WaterLog } from "@/types/type";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
-import React from "react";
+import React, { useState } from "react";
 import { Alert, Pressable, Text, View } from "react-native";
 
-/** Every water entry of one day. Deleting needs a connection. */
+/** Every water entry of one day, with edit and delete (both need a connection). */
 const AllWaterLogs = ({ date }: { date: string }) => {
   const isOnline = useIsOnline();
   const { isLoading, error, data: waterLogs, refetch } = useWaterLogs.ByDate(date);
-  const { deleteWaterLog } = useWaterLogMutations(date);
+  const { updateWaterLog, deleteWaterLog } = useWaterLogMutations(date);
+  const [editing, setEditing] = useState<WaterLog | null>(null);
 
   const confirmDelete = (log: WaterLog) => {
     Alert.alert("Delete this entry?", `${log.amountMl} mL`, [
@@ -54,7 +56,7 @@ const AllWaterLogs = ({ date }: { date: string }) => {
     <View className="gap-2">
       {!isOnline && (
         <Text className="px-1 font-body text-xs text-muted-foreground">
-          Deleting needs an internet connection.
+          Editing and deleting need an internet connection.
         </Text>
       )}
       {waterLogs.map((log) => (
@@ -73,21 +75,46 @@ const AllWaterLogs = ({ date }: { date: string }) => {
             <SyncBadge status={log.outboxStatus} />
           </View>
           {!log.outboxStatus && (
-            <Pressable
-              onPress={() => confirmDelete(log)}
-              disabled={!isOnline}
-              hitSlop={4}
-              accessibilityRole="button"
-              accessibilityLabel={`Delete ${log.amountMl} millilitres`}
-              className={`h-11 w-11 items-center justify-center rounded-full active:opacity-70 ${
-                isOnline ? "" : "opacity-40"
-              }`}
-            >
-              <MaterialCommunityIcons name="trash-can-outline" size={20} className="text-destructive" />
-            </Pressable>
+            <View className="flex-row">
+              <Pressable
+                onPress={() => setEditing(log)}
+                disabled={!isOnline}
+                hitSlop={4}
+                accessibilityRole="button"
+                accessibilityLabel={`Edit ${log.amountMl} millilitres`}
+                className={`h-11 w-11 items-center justify-center rounded-full active:opacity-70 ${
+                  isOnline ? "" : "opacity-40"
+                }`}
+              >
+                <MaterialCommunityIcons name="pencil-outline" size={20} className="text-foreground" />
+              </Pressable>
+              <Pressable
+                onPress={() => confirmDelete(log)}
+                disabled={!isOnline}
+                hitSlop={4}
+                accessibilityRole="button"
+                accessibilityLabel={`Delete ${log.amountMl} millilitres`}
+                className={`h-11 w-11 items-center justify-center rounded-full active:opacity-70 ${
+                  isOnline ? "" : "opacity-40"
+                }`}
+              >
+                <MaterialCommunityIcons name="trash-can-outline" size={20} className="text-destructive" />
+              </Pressable>
+            </View>
           )}
         </View>
       ))}
+
+      {editing && (
+        <WaterAmountSheet
+          visible
+          title="Edit water"
+          submitLabel="Save"
+          initialAmount={Number(editing.amountMl)}
+          onClose={() => setEditing(null)}
+          onSubmit={(amountMl) => updateWaterLog.mutate({ id: editing.id, amountMl })}
+        />
+      )}
     </View>
   );
 };
