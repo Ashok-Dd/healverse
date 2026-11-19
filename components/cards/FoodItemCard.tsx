@@ -8,7 +8,7 @@ interface FoodItemCardProps {
   unit: string;
   calories: number;
   protein: number;
-  fats: number;
+  fat: number;
   carbs: number;
 }
 
@@ -18,7 +18,7 @@ const FoodItemCard: React.FC<FoodItemCardProps> = ({
   unit,
   calories,
   protein,
-  fats,
+  fat,
   carbs,
 }) => {
   return (
@@ -31,7 +31,7 @@ const FoodItemCard: React.FC<FoodItemCardProps> = ({
       <View className="flex-row flex-wrap gap-1">
         <NutrientBadge iconName="fire" value={calories} unit="kcal" tone="destructive" />
         <NutrientBadge iconName="food-drumstick" value={protein} unit="g" tone="info" />
-        <NutrientBadge iconType="Entypo" iconName="drop" value={fats} unit="g" tone="warning" />
+        <NutrientBadge iconType="Entypo" iconName="drop" value={fat} unit="g" tone="warning" />
         <NutrientBadge iconName="leaf" value={carbs} unit="g" tone="success" />
       </View>
     </View>

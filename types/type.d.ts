@@ -140,7 +140,7 @@ export interface FoodItem {
   calories: number;
   protein: number;
   carbs: number;
-  fats: number;
+  fat: number;
 }
 
 /** Sync state of a log that was made on this device and has not reached the server yet. */

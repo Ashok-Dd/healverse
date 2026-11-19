@@ -38,10 +38,10 @@ export const calculateTotals = (items: FoodItem[]) => {
       acc.calories += item.calories || 0;
       acc.protein += item.protein || 0;
       acc.carbs += item.carbs || 0;
-      acc.fats += item.fats || 0;
+      acc.fat += item.fat || 0;
       return acc;
     },
-    { calories: 0, protein: 0, carbs: 0, fats: 0 }
+    { calories: 0, protein: 0, carbs: 0, fat: 0 }
   );
 };
 

@@ -52,7 +52,7 @@ const FoodLogCard = memo(({ foodLog }: FoodLogCardProps) => {
                     <NutrientBadge
                         iconType="Entypo"
                         iconName="drop"
-                        value={totals.fats}
+                        value={totals.fat}
                         unit="g"
                         tone="warning"
                     />
