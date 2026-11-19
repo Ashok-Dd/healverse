@@ -2,7 +2,7 @@ import { ThemedStatusBar } from "@/components/ui/ThemedStatusBar";
 import { ExerciseCard } from "@/components/cards/ExerciseCard";
 import { ErrorState } from "@/components/ErrorState";
 import { BottomSection } from "@/components/ExerciseDataBottom";
-import ScreenHeader from "@/components/headers/ScreenHeader";
+import { BackHeader } from "@/components/headers/BackHeader";
 import { ExerciseModal } from "@/components/models/ExerciseModel";
 import { ExerciseDataSkeleton } from "@/components/skeleton/ExerciseDataSkeleton";
 import { useCurrentTime } from "@/hooks/useCurrentTime";
@@ -57,15 +57,10 @@ const ExerciseLogScreen: React.FC = () => {
 
   const handleSubmit = () => {
     if (selectedExercise) {
-      // console.log("Exercise logged:", selectedExercise);
-
-      // console.log(exerciseData)
-
       const exercise: Exercise | undefined = exerciseData.find(
         (f) => f.id === Number(selectedExercise)
       );
 
-      // console.log("Mutating : " , exercise);
       if (exercise) {
         logExercise({
           exerciseName: exercise.exerciseName,
@@ -79,22 +74,16 @@ const ExerciseLogScreen: React.FC = () => {
     }
   };
 
-  // console.log(selectedExercise);
-
   if (isLoading) return <ExerciseDataSkeleton />;
   if (error) return <ErrorState />;
 
   return (
-    <SafeAreaView className="flex-1 px-2 py-1 bg-card">
+    <SafeAreaView className="flex-1 bg-background" edges={["top", "bottom"]}>
       <ThemedStatusBar />
 
-      <ScreenHeader
-        title="Add Exercise Log"
-        iconName="plus-circle"
-        onPress={() => {}}
-      />
+      <BackHeader title="Add exercise" />
 
-      <View className="flex-1 py-4">
+      <View className="flex-1 pb-2">
         <FlatList
           data={exerciseData}
           keyExtractor={(item) => item.id.toString()}
