@@ -16,6 +16,10 @@ interface WaterAmountSheetProps {
   currentIntake?: number;
   /** Daily goal in mL. Without one the progress card is hidden. */
   dailyGoal?: number;
+  /** Spinner on the submit button and a locked sheet while the caller's request runs. */
+  saving?: boolean;
+  /** Close the sheet right after submitting. Turn off when the caller closes it once the request succeeds. */
+  closeOnSubmit?: boolean;
 }
 
 const PRESETS = [
@@ -34,6 +38,8 @@ export const WaterAmountSheet: React.FC<WaterAmountSheetProps> = ({
   onSubmit,
   currentIntake = 0,
   dailyGoal = 0,
+  saving = false,
+  closeOnSubmit = true,
 }) => {
   const colors = useThemeColors();
   const [waterAmount, setWaterAmount] = useState(initialAmount ? String(initialAmount) : "");
@@ -48,7 +54,7 @@ export const WaterAmountSheet: React.FC<WaterAmountSheetProps> = ({
 
   const save = () => {
     onSubmit(amount);
-    handleClose();
+    if (closeOnSubmit) handleClose();
   };
 
   const handleSave = () => {
@@ -74,8 +80,20 @@ export const WaterAmountSheet: React.FC<WaterAmountSheetProps> = ({
       subtitle="Stay hydrated through the day"
       footer={
         <>
-          <Button title="Cancel" variant="outline" className="flex-1" onPress={handleClose} />
-          <Button title={submitLabel} className="flex-1" disabled={!canSave} onPress={handleSave} />
+          <Button
+            title="Cancel"
+            variant="outline"
+            className="flex-1"
+            onPress={handleClose}
+            disabled={saving}
+          />
+          <Button
+            title={submitLabel}
+            className="flex-1"
+            disabled={!canSave}
+            loading={saving}
+            onPress={handleSave}
+          />
         </>
       }
     >

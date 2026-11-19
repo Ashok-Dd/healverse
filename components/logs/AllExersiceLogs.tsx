@@ -9,7 +9,7 @@ import { useExerciseLogMutations, useExerciseLogs } from "@/store/healthStore";
 import { ExerciseLog } from "@/types/type";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import React, { useState } from "react";
-import { Alert, Pressable, Text, View } from "react-native";
+import { ActivityIndicator, Alert, Pressable, Text, View } from "react-native";
 
 /** Every exercise entry of one day, with edit and delete (both need a connection). */
 const AllLoggedExercises = ({ date }: { date: string }) => {
@@ -79,9 +79,15 @@ const AllLoggedExercises = ({ date }: { date: string }) => {
       )}
 
       {loggedExercises.map((exercise) => {
-        const canChange = isOnline && !exercise.outboxStatus;
+        const deleting = deleteExerciseLog.isPending && deleteExerciseLog.variables === exercise.id;
+        const canChange = isOnline && !exercise.outboxStatus && !deleteExerciseLog.isPending;
         return (
-          <View key={exercise.id} className="flex-row items-center gap-3 rounded-2xl bg-muted p-3">
+          <View
+            key={exercise.id}
+            className={`flex-row items-center gap-3 rounded-2xl bg-muted p-3 ${
+              deleting ? "opacity-50" : ""
+            }`}
+          >
             <View className="h-10 w-10 items-center justify-center rounded-full bg-accent">
               <MaterialCommunityIcons name="dumbbell" size={20} className="text-accent-foreground" />
             </View>
@@ -130,7 +136,11 @@ const AllLoggedExercises = ({ date }: { date: string }) => {
                     canChange ? "" : "opacity-40"
                   }`}
                 >
-                  <MaterialCommunityIcons name="trash-can-outline" size={20} className="text-destructive" />
+                  {deleting ? (
+                    <ActivityIndicator size="small" />
+                  ) : (
+                    <MaterialCommunityIcons name="trash-can-outline" size={20} className="text-destructive" />
+                  )}
                 </Pressable>
               </View>
             )}
@@ -153,6 +163,7 @@ const AllLoggedExercises = ({ date }: { date: string }) => {
           onDurationChange={(durationMinutes) => setEditing({ ...editing, durationMinutes })}
           onSave={saveEdit}
           onCancel={() => setEditing(null)}
+          saving={updateExerciseLog.isPending}
         />
       )}
     </View>

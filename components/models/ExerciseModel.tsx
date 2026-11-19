@@ -21,6 +21,8 @@ interface ExerciseModalProps {
   onDurationChange: (duration: number) => void;
   onSave: () => void;
   onCancel: () => void;
+  /** Shows a spinner on Save and locks the sheet while the save is in flight. */
+  saving?: boolean;
 }
 
 export const ExerciseModal: React.FC<ExerciseModalProps> = ({
@@ -33,6 +35,7 @@ export const ExerciseModal: React.FC<ExerciseModalProps> = ({
   onDurationChange,
   onSave,
   onCancel,
+  saving = false,
 }) => {
   if (!exercise) return null;
 
@@ -47,8 +50,14 @@ export const ExerciseModal: React.FC<ExerciseModalProps> = ({
       subtitle={EXERCISE_DESCRIPTIONS[key] || EXERCISE_DESCRIPTIONS.default}
       footer={
         <>
-          <Button title="Cancel" variant="outline" className="flex-1" onPress={onCancel} />
-          <Button title="Save" className="flex-1" onPress={onSave} />
+          <Button
+            title="Cancel"
+            variant="outline"
+            className="flex-1"
+            onPress={onCancel}
+            disabled={saving}
+          />
+          <Button title="Save" className="flex-1" onPress={onSave} loading={saving} />
         </>
       }
     >

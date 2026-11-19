@@ -8,7 +8,7 @@ import { useWaterLogMutations, useWaterLogs } from "@/store/healthStore";
 import { WaterLog } from "@/types/type";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import React, { useState } from "react";
-import { Alert, Pressable, Text, View } from "react-native";
+import { ActivityIndicator, Alert, Pressable, Text, View } from "react-native";
 
 /** Every water entry of one day, with edit and delete (both need a connection). */
 const AllWaterLogs = ({ date }: { date: string }) => {
@@ -59,8 +59,16 @@ const AllWaterLogs = ({ date }: { date: string }) => {
           Editing and deleting need an internet connection.
         </Text>
       )}
-      {waterLogs.map((log) => (
-        <View key={log.id} className="flex-row items-center gap-3 rounded-2xl bg-muted p-3">
+      {waterLogs.map((log) => {
+        const deleting = deleteWaterLog.isPending && deleteWaterLog.variables === log.id;
+        const canChange = isOnline && !deleteWaterLog.isPending;
+        return (
+        <View
+          key={log.id}
+          className={`flex-row items-center gap-3 rounded-2xl bg-muted p-3 ${
+            deleting ? "opacity-50" : ""
+          }`}
+        >
           <View className="h-10 w-10 items-center justify-center rounded-full bg-secondary">
             <MaterialCommunityIcons name="cup-water" size={20} className="text-info" />
           </View>
@@ -78,32 +86,37 @@ const AllWaterLogs = ({ date }: { date: string }) => {
             <View className="flex-row">
               <Pressable
                 onPress={() => setEditing(log)}
-                disabled={!isOnline}
+                disabled={!canChange}
                 hitSlop={4}
                 accessibilityRole="button"
                 accessibilityLabel={`Edit ${log.amountMl} millilitres`}
                 className={`h-11 w-11 items-center justify-center rounded-full active:opacity-70 ${
-                  isOnline ? "" : "opacity-40"
+                  canChange ? "" : "opacity-40"
                 }`}
               >
                 <MaterialCommunityIcons name="pencil-outline" size={20} className="text-foreground" />
               </Pressable>
               <Pressable
                 onPress={() => confirmDelete(log)}
-                disabled={!isOnline}
+                disabled={!canChange}
                 hitSlop={4}
                 accessibilityRole="button"
                 accessibilityLabel={`Delete ${log.amountMl} millilitres`}
                 className={`h-11 w-11 items-center justify-center rounded-full active:opacity-70 ${
-                  isOnline ? "" : "opacity-40"
+                  canChange ? "" : "opacity-40"
                 }`}
               >
-                <MaterialCommunityIcons name="trash-can-outline" size={20} className="text-destructive" />
+                {deleting ? (
+                  <ActivityIndicator size="small" />
+                ) : (
+                  <MaterialCommunityIcons name="trash-can-outline" size={20} className="text-destructive" />
+                )}
               </Pressable>
             </View>
           )}
         </View>
-      ))}
+        );
+      })}
 
       {editing && (
         <WaterAmountSheet
@@ -112,7 +125,14 @@ const AllWaterLogs = ({ date }: { date: string }) => {
           submitLabel="Save"
           initialAmount={Number(editing.amountMl)}
           onClose={() => setEditing(null)}
-          onSubmit={(amountMl) => updateWaterLog.mutate({ id: editing.id, amountMl })}
+          saving={updateWaterLog.isPending}
+          closeOnSubmit={false}
+          onSubmit={(amountMl) =>
+            updateWaterLog.mutate(
+              { id: editing.id, amountMl },
+              { onSuccess: () => setEditing(null) }
+            )
+          }
         />
       )}
     </View>
