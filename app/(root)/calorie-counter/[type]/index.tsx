@@ -1,5 +1,5 @@
 // CalorieMeterPage.tsx - Fixed Version
-import { logFoodPhoto } from "@/lib/outboxActions";
+import { logFood } from "@/lib/outboxActions";
 import { MealType } from "@/types/type";
 import { Feather, Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { CameraType, CameraView, useCameraPermissions } from "expo-camera";
@@ -19,6 +19,8 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+
+const MAX_DESCRIPTION_LENGTH = 500;
 
 // Header Component
 interface HeaderProps {
@@ -70,11 +72,12 @@ const TextInputSection: React.FC<TextInputSectionProps> = ({
       <View className="flex-1 px-5 pt-8">
         <TextInput
           className="bg-muted p-4 rounded-lg text-base text-foreground min-h-32"
-          placeholder="Describe your food here..."
+          placeholder="Describe your food here, e.g. 2 boiled eggs and a banana"
           placeholderTextColor={colors.mutedForeground}
           value={value}
           onChangeText={onChangeText}
           multiline
+          maxLength={MAX_DESCRIPTION_LENGTH}
           autoFocus
           textAlignVertical="top"
         />
@@ -83,7 +86,7 @@ const TextInputSection: React.FC<TextInputSectionProps> = ({
           className="bg-primary py-4 px-8 rounded-3xl items-center mt-6"
           onPress={onContinue}
         >
-          <Text className="text-primary-foreground text-base font-body-bold">Continue</Text>
+          <Text className="text-primary-foreground text-base font-body-bold">Log meal</Text>
         </TouchableOpacity>
       </View>
     );
@@ -99,6 +102,31 @@ const TextInputSection: React.FC<TextInputSectionProps> = ({
           </Text>
         </View>
       </TouchableOpacity>
+    </View>
+  );
+};
+
+// Optional note that is sent with the photo
+interface PhotoNoteProps {
+  value: string;
+  onChangeText: (text: string) => void;
+}
+
+const PhotoNote: React.FC<PhotoNoteProps> = ({ value, onChangeText }) => {
+  const colors = useThemeColors();
+  return (
+    <View className="px-5 pb-4">
+      <TextInput
+        className="bg-muted p-4 rounded-lg text-base text-foreground"
+        placeholder="Add a note, e.g. cooked in 1 tsp oil (optional)"
+        placeholderTextColor={colors.mutedForeground}
+        value={value}
+        onChangeText={onChangeText}
+        maxLength={MAX_DESCRIPTION_LENGTH}
+        accessibilityLabel="Note about the photographed meal"
+        returnKeyType="done"
+        blurOnSubmit
+      />
     </View>
   );
 };
@@ -329,12 +357,15 @@ interface PermissionScreenProps {
   message: string;
   buttonText?: string;
   onPress?: () => void;
+  /** Lets the user describe the meal in text instead of taking a photo. */
+  onUseText?: () => void;
 }
 
 const PermissionScreen: React.FC<PermissionScreenProps> = ({
   message,
   buttonText,
   onPress,
+  onUseText,
 }) => {
   return (
     <SafeAreaView className="flex-1 bg-background">
@@ -345,6 +376,14 @@ const PermissionScreen: React.FC<PermissionScreenProps> = ({
           onPress={onPress}
         >
           <Text className="text-primary-foreground text-base font-body-bold">{buttonText}</Text>
+        </TouchableOpacity>
+      )}
+      {onUseText && (
+        <TouchableOpacity
+          className="mx-5 mt-3 items-center rounded-3xl border border-border bg-card px-8 py-4"
+          onPress={onUseText}
+        >
+          <Text className="text-foreground text-base font-body-bold">Describe the meal instead</Text>
         </TouchableOpacity>
       )}
     </SafeAreaView>
@@ -418,8 +457,11 @@ const CalorieMeterPage: React.FC = () => {
     }
   };
 
+  const mealType = (type as string).toUpperCase() as MealType;
+
   const cancelCapture = () => {
     setCapturedImage(null);
+    setTextInput("");
     setIsProcessing(false);
   };
 
@@ -440,7 +482,12 @@ const CalorieMeterPage: React.FC = () => {
         { compress: 0.7, format: ImageManipulator.SaveFormat.JPEG }
       );
 
-      await logFoodPhoto(resized.uri, (type as string).toUpperCase() as MealType);
+      await logFood({
+        imageUri: resized.uri,
+        description: textInput.trim() || undefined,
+        mealType,
+      });
+      setTextInput("");
 
       router.push("/(root)/(tabs)/tracker");
     } catch (error) {
@@ -456,13 +503,13 @@ const CalorieMeterPage: React.FC = () => {
   };
 
   const handleContinuePress = () => {
-    if (textInput.trim()) {
-      router.push("/(root)/all-food-logs");
-      setTextInput("");
-      setIsTextInputActive(false);
-    } else {
-      Alert.alert("Error", "Please enter some text first");
+    const description = textInput.trim();
+    if (!description) {
+      Alert.alert("Describe your meal", "Write what you ate first.");
+      return;
     }
+    logFood({ description, mealType });
+    router.push("/(root)/(tabs)/tracker");
   };
 
   const handleBackFromTextInput = () => {
@@ -482,19 +529,22 @@ const CalorieMeterPage: React.FC = () => {
     setCameraType(cameraType === "back" ? "front" : "back");
   };
 
-  // Permission screens
-  if (!cameraPermission) {
-    return <PermissionScreen message="Requesting camera permissions..." />;
-  }
+  // Typing a meal needs no camera, so the permission screens only apply to the photo view.
+  if (!isTextInputActive) {
+    if (!cameraPermission) {
+      return <PermissionScreen message="Requesting camera permissions..." />;
+    }
 
-  if (!cameraPermission.granted) {
-    return (
-      <PermissionScreen
-        message="Camera access is required for this feature."
-        buttonText="Grant Camera Permission"
-        onPress={requestCameraPermission}
-      />
-    );
+    if (!cameraPermission.granted) {
+      return (
+        <PermissionScreen
+          message="Camera access is required to photograph a meal."
+          buttonText="Grant Camera Permission"
+          onPress={requestCameraPermission}
+          onUseText={handleTextInputFocus}
+        />
+      );
+    }
   }
 
   return (
@@ -522,14 +572,18 @@ const CalorieMeterPage: React.FC = () => {
             cameraRef={cameraRef}
           />
 
-          {/* Text Input Field (when not active, appears under camera) */}
-          <TextInputSection
-            isActive={false}
-            value={textInput}
-            onChangeText={setTextInput}
-            onFocus={handleTextInputFocus}
-            onContinue={handleContinuePress}
-          />
+          {/* With a photo the box is an optional note sent along; without one it opens text-only logging. */}
+          {capturedImage ? (
+            <PhotoNote value={textInput} onChangeText={setTextInput} />
+          ) : (
+            <TextInputSection
+              isActive={false}
+              value={textInput}
+              onChangeText={setTextInput}
+              onFocus={handleTextInputFocus}
+              onContinue={handleContinuePress}
+            />
+          )}
 
           <CameraControls
             capturedImage={capturedImage}
