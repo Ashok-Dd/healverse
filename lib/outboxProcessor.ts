@@ -77,16 +77,20 @@ async function sendEntry(
       if (isCurrent()) applyExerciseLog(queryClient, log);
       break;
     }
-    case "food-photo": {
+    case "food-log": {
+      const { imageUri, description, mealType, loggedAt } = entry.payload;
       const formData = new FormData();
-      formData.append("image", {
-        uri: entry.payload.imageUri,
-        name: "meal.jpg",
-        type: "image/jpeg",
-      } as unknown as Blob);
-      formData.append("mealType", entry.payload.mealType);
-      formData.append("loggedAt", entry.payload.loggedAt);
-      const log = await fetchApi<FoodLog>("/api/food-logs/log/image", {
+      if (imageUri) {
+        formData.append("image", {
+          uri: imageUri,
+          name: "meal.jpg",
+          type: "image/jpeg",
+        } as unknown as Blob);
+      }
+      if (description) formData.append("description", description);
+      formData.append("mealType", mealType);
+      formData.append("loggedAt", loggedAt);
+      const log = await fetchApi<FoodLog>("/api/food-logs/log", {
         method: "POST",
         requiresAuth: true,
         body: formData,
@@ -126,7 +130,7 @@ export function cancelOutboxRetry(): void {
  * Sends queued entries to the server, oldest first. Safe to call at any time: it does nothing
  * while offline or while another run is active.
  *
- * Order is kept per kind (water, exercise, chat, photo): if one entry cannot be sent for a
+ * Order is kept per kind (water, exercise, chat, meal): if one entry cannot be sent for a
  * temporary reason, later entries of the same kind wait behind it, while other kinds go on.
  * - Offline / timeout: stays pending; the reconnect listener runs the queue again.
  * - Server error (5xx, 429): stays pending with a backoff, parked as failed after a few tries.
@@ -156,7 +160,9 @@ export async function processOutbox(queryClient: QueryClient): Promise<void> {
         // dropped a moment before the real one appears.
         await nextMacrotask();
         store().remove(entry.id);
-        if (entry.kind === "food-photo") await deleteOutboxImage(entry.payload.imageUri);
+        if (entry.kind === "food-log" && entry.payload.imageUri) {
+          await deleteOutboxImage(entry.payload.imageUri);
+        }
       } catch (error) {
         const status = error instanceof ApiError ? error.status : 0;
         const message = error instanceof Error ? error.message : "Could not sync";
