@@ -46,6 +46,9 @@ const friendlyMessage = (status: number, serverMessage?: string): string => {
     if (status === 410) {
         return serverMessage || "This feature is currently unavailable.";
     }
+    if (status === 503) {
+        return "Service is temporarily unavailable. Please try again shortly.";
+    }
     if (status >= 500) {
         return "Something went wrong on our side. Please try again.";
     }
